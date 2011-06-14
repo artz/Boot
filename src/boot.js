@@ -113,7 +113,7 @@
 		// set the source to thefirst argument.
 		//
 		// Artz: Removing this, think this is not 
-		// worth the KB.
+		// worth the bytes and/or non-intuitive.
 		
 		if ( l === i ) {
 			target = global;
@@ -328,8 +328,7 @@
 		// 3 - complete
 		// This check looks for #3, the equivalent of window.onload.
 		// "m" fits the bill nicely.
-		// indexOf is much faster than regex in Safari and IE (see /test/regex-vs-indexof.html)
-		
+		// indexOf is much faster than regex in Safari and IE (see /test/regex-vs-indexof-vs-doscroll.html)
 		if ( contains( document.readyState, "m" ) ) {
 			loaded();
 		} else {
@@ -415,15 +414,7 @@
 	http://web// logs.java.net/b// log/driscoll/archive/2009/09/08/eval-javascript-global-context
 */
 	function globalEval( data ) {
-		// eval in global scope for IE
-		/*if ( window.execScript ) {
-			window.execScript( src );
-		// other browsers
-		} else { 
-			window["eval"]( src );
-		}
-		// Use jQuery's version instead:
-		*/
+
 		( window.execScript || function( data ) {
 			window[ "eval" ].call( window, data );
 		} )( data );
@@ -479,37 +470,6 @@
 		return is( obj, strNumber );
 	}
 	global.isNumber = isNumber;
-/*
-	// A crude way of determining if an object is a window
-	function isWindow( obj ) {
-		return obj && isObject( obj ) && "setInterval" in obj;
-	}
-	global.isWindow = isWindow;
-
-	function isPlainObject( obj ) {
-		// Must be an Object.
-		// Because of IE, we also have to check the presence of the constructor property.
-		// Make sure that DOM nodes and window objects don't pass through, as well
-		if ( !obj || !isObject( obj ) || obj.nodeType || isWindow( obj ) ) {
-			return false;
-		}
-
-		// Not own constructor property must be Object
-		if ( obj.constructor &&
-			!hasOwn.call(obj, "constructor") &&
-			!hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
-			return false;
-		}
-
-		// Own properties are enumerated firstly, so to speed up,
-		// if last one is own, then all properties are own.
-		var key;
-		for ( key in obj ) {}
-
-		return key === undefined || hasOwn.call( obj, key );
-	}
-	global.isPlainObject = isPlainObject;
-*/
 
 /*
 	Function: Boot.trim
@@ -621,7 +581,7 @@
 	Notes:
 	
 	Consider making this a generic cacheResource function that can cache CSS too?
-	Or we can simply do cacheStylesheet = cacheScript
+	Or we can simply do cacheCSS = cacheScript (or cacheJS?)
 */
 	function cacheScript( src, delay ){
 		
@@ -660,7 +620,8 @@
 		}
 		return global;
 	}
-
+	global.cacheScript = cacheScript;
+	
 /*
 	Function: Boot.getScript
 	
@@ -751,7 +712,7 @@
 		
 		return global;
 	}
-
+	global.getScript = getScript;
 
 /*
 	Function: Boot.getJS
@@ -953,11 +914,8 @@
 		});
 		
 	}
-	
 	global.getJS = getJS;
-	global.getScript = getScript;
-	global.cacheScript = cacheScript;
-	
+
 	// log("Boot library initialized.");
 	
 })("Boot", this);
