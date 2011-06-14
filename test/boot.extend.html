@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.extend</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.extend</h1>
+<pre id="log"></pre>
+<script>
+// Initialize logging.
+var logElem = document.getElementById("log");
+
+Boot.log.init({
+	elem: logElem
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+var firstObject = {
+		"foo": "foo",
+		"bar": "bar",
+		"array": ["a", "b", "c"]
+	},
+	secondObject = {
+		"foo": "food",
+		"baz": "baz",
+		"object": {
+			"nested": {
+				"deep": true
+			}
+		}
+	},
+	mergedObject;
+	
+Boot.log("First object: " + firstObject.foo + " : " + firstObject.bar + " : " + firstObject.array[0] );
+Boot.log("Second object: " + secondObject.foo + " : " + secondObject.baz + " : " + secondObject.object.nested.deep );
+
+mergedObject = Boot.extend( {}, firstObject, secondObject );
+
+Boot.log("Merged object: " + mergedObject.foo + " : " + mergedObject.bar + " : " + mergedObject.baz + " : " + mergedObject.array[0] + " : " + mergedObject.object.nested.deep );
+
+Boot.log("First object: " + firstObject.foo + " : " + firstObject.bar );
+Boot.log("Second object: " + secondObject.foo + " : " + secondObject.baz );
+
+</script>
+<p>This paragraph of text should not be blocked.</p>
+<script type="text/javascript">
+document.write("<p>This was generated using a JavaScript document.write() and should not be blocked.");
+</script>
+</body>
+</html>

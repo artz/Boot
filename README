@@ -1,0 +1,60 @@
+README
+
+General information
+
+AUTHORS
+
+Dave Artz
+
+THANKS
+
+This library wouldn't be created to be quickly robust without the source of jQuery. Thanks also to Brandon Goode for all the help testing getJS across browsers in real world situations.
+
+NEWS
+
+A basic changelog, intended for users
+
+CHANGE LOG
+
+6/14/2011
+Officially pushed version 0.1 of Boot to GitHub.
+
+INSTALL
+
+Simply include boot.min.js at the top of your page after the <body> tag. Example:
+
+<body>
+<script src="http://path.to/boot.min.js"></script>
+
+COPYING / LICENSE
+
+Copyright (c) 2011 Dave Artz, http://boot.artzstudio.com
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+BUGS
+
+Tested to be working across the following browsers:
+
+Internet Explorer 6
+Internet Explorer 7
+Internet Explorer 8
+Firefox 3.6
+

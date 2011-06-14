@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Regex vs IndexOf Test</title>
+</head>
+<body>
+<h1>DOM Ready Polling Speed Tests</h1>
+<script>
+var maxCount = 9999,
+	i,
+	startTime = new Date().getTime();
+
+i = maxCount;
+while ( i-- ) {
+	document.readyState.indexOf("e") != -1;
+}
+document.write("<p>Completed " + maxCount + " loops using <b>indexOf</b> in " + ( new Date().getTime() - startTime ) + "ms.</p>" );
+
+startTime = new Date().getTime();
+i = maxCount;
+while ( i-- ) {
+	/e/.test(document.readyState);
+}
+document.write("<p>Completed " + maxCount + " loops using <b>regex</b> in " + ( new Date().getTime() - startTime ) + "ms.</p>" );
+
+startTime = new Date().getTime();
+i = maxCount;
+while ( i-- ) {
+	try {
+		// throws errors until after ondocumentready
+		d.documentElement.doScroll('left');
+	} catch (e) {
+
+	}
+}
+document.write("<p>Completed " + maxCount + " loops using <b>doScroll</b> in " + ( new Date().getTime() - startTime ) + "ms.</p>" );
+
+
+</script>
+</body>
+</html>

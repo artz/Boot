@@ -1,0 +1,70 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.Easync</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script type="text/javascript" src="../src/boot.js"></script>
+<script type="text/javascript" src="../src/boot.easync.js"></script>
+</head>
+<body>
+<h1>Boot.Easync</h1>
+<pre id="log"></pre>
+<script type="text/javascript">
+(function(B){
+// Initialize logging.
+B.log.init({
+	elem: document.getElementById("log")
+});
+B.log("boot.easync.html: Starting tests.");
+
+B.ready(function(){
+	B.log("<b>DOM READY</b>");
+});
+
+B.load(function(){
+	B.log("<b>WINDOW LOADED</b>");
+});
+})(Boot);
+</script>
+<script type="async/js">
+a = 1;
+function printMe(str){
+	return str;
+}
+Boot.log("<b>Starting the party, value should be 1: " + a + "</b>");
+</script>
+<script type="async/js" data-src="javascript.php?num=1"></script>
+<script type="async/js" data-src="javascript.php?num=2"></script>
+<script type="async/js">
+a = a + 2;
+Boot.log( "<b>Print after JavaScript #1 and #2 loaded. Value should be 3: " + a + "</b>");
+</script>
+<script type="async/js" data-src="javascript.php?num=3" data-defer="ready"></script>
+<script type="async/js" data-src="javascript.php?num=4" data-defer="load"></script>
+<script type="async/js" data-defer="load">
+a = "5";
+Boot.log("<b>Print after JavaScript #5, #3 and #4, value should be 5: " + printMe(a) + "</b>");
+</script>
+<script type="async/js" data-src="javascript.php?num=5"></script>
+<script type="cache/js" data-src="javascript.php?num=6" data-defer="load" data-delay="3"></script>
+<p>This paragraph of text should not be blocked.</p>
+<script type="text/javascript">
+document.write("<p>This was generated using a JavaScript document.write() and should not be blocked.");
+</script>
+</body>
+</html>

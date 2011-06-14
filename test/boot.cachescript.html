@@ -1,0 +1,116 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.cacheScript Tests</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.cacheScript Tests</h1>
+<pre id="log"></pre>
+<script>
+// Initialize logging.
+Boot.log.init({
+	elem: document.getElementById("log")
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+function getResource( type, src ) {
+	
+	var elem = document.createElement( type );
+	
+	elem.src = elem.data = src;
+	
+	if ( type === "script" ) {
+		elem.type = "c";
+	}
+	
+	if ( type === "img" || type === "object" ) {
+		elem.width = elem.height = 10;
+	}
+	
+	setTimeout(function(){
+		document.body.appendChild( elem );
+	}, 0);
+	
+}
+
+function getScript( src ) {
+	
+	var script = document.createElement("script");
+	
+	script.src = src;
+	script.async = true;
+	
+	setTimeout(function(){
+		document.body.appendChild( script );
+	}, 0);
+}
+
+Boot.log("Loading Object");
+getResource( "object", "javascript.php?num=1" );
+
+Boot.log("Loading Image");
+getResource( "img", "javascript.php?num=2" );
+
+Boot.log("Loading Fake Script");
+getResource( "script", "javascript.php?num=3" );
+
+setTimeout(function(){
+	
+	Boot.log("Loading real scripts to verify caching.");
+	
+	getScript("javascript.php?num=1");
+	getScript("javascript.php?num=2");
+	getScript("javascript.php?num=3");
+	
+}, 2000);
+
+Boot.log("All done.");
+</script>
+
+<style>
+.test-results .yes {
+	background-color: #9F6;
+}
+.test-results .no {
+	background-color: #F99;
+}
+.test-results {
+	border-collapse: collapse;
+}
+.test-results th, .test-results td {
+	padding: 5px 10px;
+	border: 3px solid #fff;
+}
+</style>
+<table class="test-results">
+<tr><th>Browser</th><th>Object</th><th>Image</th><th>Script</th></tr>
+<tr><td>Firefox 3.6</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+<tr><td>Firefox 4</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+<tr><td>Safari 5.0.5</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+<tr><td>Opera 11</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+<tr><td>Chrome 12</td><td class="no">No</td><td class="yes">Yes</td><td class="no">No</td></tr>
+<tr><td>Chrome 11</td><td class="no">No</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+<tr><td>IE 8</td><td class="no">No</td><td class="yes">Yes*</td><td class="yes">Yes</td></tr>
+<tr><td>IE 7</td><td class="no">No</td><td class="yes">Yes*</td><td class="yes">Yes</td></tr>
+<tr><td>IE 6</td><td class="no">No</td><td class="yes">Yes*</td><td class="yes">Yes</td></tr>
+</table>
+<i>* Demonstrated a clearly faster time.</i>
+</body>
+</html>

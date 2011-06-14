@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Untitled Document</title>
+<script src="../src/boot.js"></script>
+</head>
+
+<body>
+<script>
+
+// Initialize logging.
+Boot.log.init({
+	elem: document.getElementById("log")
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+if ( document.addEventListener ) {
+	
+	document.addEventListener( "DOMContentLoaded", function(){
+	
+		var script = document.createElement( "script" );
+		script.src = "javascript.php?num=1";
+		setTimeout(function(){
+			document.body.appendChild( script );
+		}, 0);
+
+	}, false ); 
+	
+	window.addEventListener( "load", function(){
+
+		var script = document.createElement( "script" );
+		script.src = "javascript.php?num=2";
+		script.async = false;
+		setTimeout(function(){
+			document.body.appendChild( script );
+		}, 0);
+
+	}, false );
+
+}
+</script>
+</body>
+</html>
