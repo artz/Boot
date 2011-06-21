@@ -14,3 +14,4 @@ if ( isset($_GET['sleep']) ) {
 }
 sleep($sleep);
 ?>
+body { background-color: #000 }

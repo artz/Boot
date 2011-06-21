@@ -1,0 +1,138 @@
+
+<!doctype html> 
+
+<html class="no-js"> 
+
+<head>
+
+<title>JS Loader Benchmarks - head.js</title> 
+
+<!-- Include Boot.js for logging purposes. -->
+<script src="../../src/boot.js"></script>
+<script src="js/jquery-1.6.1.min.js"></script> 
+
+<script>
+	// calculate difference between zero and window.onload
+	var now = new Date();
+	window.onload = function() {
+		document.getElementById("content").style.display = "block";	
+		document.getElementById("ms").innerHTML = (new Date()).getTime() - now.getTime(); 	
+	}
+</script> 
+
+
+<script> 
+jQuery.getScript("js/javascript.php?num=1", function(){
+	jQuery.getScript("js/javascript.php?num=2", function(){
+		jQuery.getScript("js/javascript.php?num=3", function(){
+			jQuery.getScript("js/javascript.php?num=4", function(){
+				jQuery.getScript("js/javascript.php?num=5", function(){
+					jQuery.getScript("js/javascript.php?num=6", function(){
+						jQuery.getScript("js/javascript.php?num=7", function(){
+							jQuery.getScript("js/javascript.php?num=8", function(){
+								jQuery.getScript("js/javascript.php?num=9", function(){
+									Boot.log("First 9 scripts loaded.");
+								});
+							});
+						});
+					});
+				});
+			});
+		});
+	});
+});
+</script> 
+ 
+ 
+	<!-- inline style so that we can focus on script loading only --> 
+	<style> 
+	html { background-color:#f9f9f9;	 }
+	body { color:#333; font:13px sans-serif; } 
+	#wrap { margin:50px auto;  width:800px;		 }
+	#nav { padding-left:30px; overflow: hidden; }
+	#nav a { float:left;	 margin-right:30px; color:#666; text-decoration:none; font-weight:bold; }
+	#nav em { display:block; font-style:normal; font-weight:normal; color:#999; }
+	#content { margin-top:10px; background-color:#fff;	 padding:30px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -moz-box-shadow: 0 0 5px rgba(0,0,0,.2); -webkit-box-shadow: 0 0 5px rgba(0,0,0,.2); }
+	h1 { color:#777; font-size:40px; margin:0; margin-bottom:-10px; }
+	h1 em { font-weight:normal; font-style:normal; color:#999; }
+	h3 { font-size: 20px; }
+	#time { font-size:150px; color:#888; }
+	#ms { font-weight:bold; color:#222; margin-right:-25px; }
+	#content p, #log { font-size:18px; margin:5px 0; color:#777; }
+	#content strong { color:#222; }
+	#footer { margin:5px 15px;	 }
+	#footer a { text-decoration:none; color:#666; font-size:11px; }
+	</style> 
+	
+</head>	
+ 
+<body> 
+ 
+	<div id="wrap"> 
+		
+		<div id="nav"> 
+			<a href="script.html">SCRIPT SRC <em>in head</em></a> 
+			<a href="script-bottom.html">SCRIPT SRC <em>on bottom</em></a> 
+			<a href="headjs.html">head.js <em>on head</em></a> 
+		</div> 
+		<script type="text/javascript">
+			// Example inline script that blocks rendering in Firefox and newer "async" capable browsers.
+		</script>
+		<div id="content"> 
+			
+			<h1></h1> 
+			
+			<div id="time"><span id="ms"></span> ms</div> 
+			
+			<p> 
+				Press <strong>CTRL+SHIFT+R</strong> to reload with an empty cache = first impression.
+			</p> 
+						
+			<p> 
+				<strong>View source</strong> to see how scripts are provided.
+			</p> 
+			
+			<p> 
+				Time is calculated when <code>window.onload</code> fires.
+			</p> 
+			
+			<p> 
+				Try with different browsers. The time difference varies a lot.
+			</p> 
+			
+			<p class="details">
+head.js() loads all the scripts asynchronously, but note that if an inline
+script is present midway through the document, <strong>it will block rendering</strong> until
+all scripts have finished loading in Firefox. 
+			</p> 
+			
+			<h3>Test Log</h3>
+			<div id="log"></div>
+			<script>Boot.log.init( { elem: document.getElementById("log") } ); Boot.log("Executing inline script at page bottom.");</script>
+		</div> 
+		
+		<div id="footer"> 
+<!--			<a href="../#theory">&laquo; headjs.com</a> 
+			
+			&nbsp; | &nbsp; <a href="https://github.com/headjs/headjs/issues">found a bug?</a>  -->
+		</div> 
+		
+	</div> 
+
+<script> 
+jQuery.getScript("js/javascript.php?num=10", function(){
+	jQuery.getScript("js/javascript.php?num=11", function(){
+		jQuery.getScript("js/javascript.php?num=12", function(){
+			jQuery.getScript("js/javascript.php?num=13", function(){
+				jQuery.getScript("js/javascript.php?num=14", function(){
+					Boot.log("Second 5 scripts loaded.");
+				});
+			});
+		});
+	});
+});
+</script> 
+		
+</body> 
+	
+	
