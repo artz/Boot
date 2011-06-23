@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.pub & Boot.sub</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.pub & Boot.sub</h1>
+<pre id="log"></pre>
+<script>
+// Initialize logging.
+var logElem = document.getElementById("log");
+
+Boot.log.init({
+	elem: logElem
+});
+Boot.log("boot.pubsub.html: Starting tests.");
+
+Boot.sub("test-event", function( data ){
+	Boot.log("boot.pubsub.html: foo (1) is <b>" + data.foo + "</b>, bar (2) is <b>" + this.bar + "</b>" );
+});
+
+Boot.pub("test-event", { foo: "1", bar: "2" } );
+
+</script>
+<p>This paragraph of text should not be blocked.</p>
+</body>
+</html>

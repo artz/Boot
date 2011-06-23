@@ -917,13 +917,64 @@
 	global.getJS = getJS;
 
 	// log("Boot library initialized.");
+
+/*
+	Function: Boot.sub
 	
+	Subscribes to an event, fires a callback once it is emitted.
+	http://en.wikipedia.org/wiki/Publish/subscribe
+	
+	Parameters:
+	
+	event
+	callback
+*/
+	var events = {};
+	function sub( event, callback ){
+		
+		var eventQueue = events[ event ] || ( events[ event ] = [] );
+		
+		eventQueue.push( callback );
+		
+		return global;
+		
+	}
+	global.sub = sub;
+
+/*
+	Function: Boot.pub
+	
+	Publishes an event, passing an optional object of data.
+	Triggers any events attached to the event.
+	http://en.wikipedia.org/wiki/Publish/subscribe
+	
+	Parameters:
+		- event
+		- data
+		
+	Returns:
+	
+	Boot
+
+*/
+	function pub( event, data ){
+		
+		var eventQueue = events[ event ];
+		
+		if ( eventQueue ) {
+			each( eventQueue, function(i){
+				eventQueue[i].call( data, data );
+			});
+		}
+		
+		return global;
+	}
+	global.pub = pub;
+
 	/*
 		To Do?
 		
-		- Screen detection
-		- Event system Boot.pub, Boot.sub http://en.wikipedia.org/wiki/Publish/subscribe
-		- 
+		- Screen detection? Maybe this is a plugin instead.
 		
 	*/
 	
