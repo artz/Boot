@@ -5,11 +5,11 @@
 
 <head>
 
-<title>JS Loader Benchmarks - &lt;script&gt; Tag</title> 
+<title>JS Loader Benchmarks - A.getJS</title> 
 
 <!-- Include Boot.js for logging purposes. -->
 <script src="../../src/boot.js"></script>
-<script src="js/LAB.min.js"></script> 
+<script src="js/A.getjs.min.js"></script> 
 
 <script>
 	// calculate difference between zero and window.onload
@@ -20,17 +20,19 @@
 	}
 </script> 
 
-<script src="js/javascript.php?num=1"></script>
-<script src="js/javascript.php?num=2"></script>
-<script src="js/javascript.php?num=3"></script>
-<script src="js/javascript.php?num=4"></script>
-<script src="js/javascript.php?num=5"></script>
-<script src="js/javascript.php?num=6"></script>
-<script src="js/javascript.php?num=7"></script>
-<script src="js/javascript.php?num=8"></script>
-<script src="js/javascript.php?num=9"></script>
-<script>
-	Boot.log("First 9 scripts loaded.");
+
+<script> 
+A.getJS("js/javascript.php?num=1")
+	.getJS("js/javascript.php?num=2")
+	.getJS("js/javascript.php?num=3")
+	.getJS("js/javascript.php?num=4")
+	.getJS("js/javascript.php?num=5")
+	.getJS("js/javascript.php?num=6")
+	.getJS("js/javascript.php?num=7")
+	.getJS("js/javascript.php?num=8")
+	.getJS("js/javascript.php?num=9", function(){
+		Boot.log("First 9 scripts loaded.");
+	});	
 </script> 
  
  
@@ -62,10 +64,10 @@
 	<div id="wrap"> 
 		
 		<div id="nav"> 
-			<a href="script.html" class="selected">&lt;script&gt; tag <em>in head</em></a> 
+			<a href="script.html">&lt;script&gt; tag <em>in head</em></a> 
 			<a href="jquery.getscript.html">jQuery.getScript() <em>in head</em></a> 
 			<a href="labjs.html">LABjs <em>in head</em></a> 
-			<a href="A.getjs.html">A.getJS <em>in head</em></a> 
+			<a href="A.getjs.html" class="selected">A.getJS <em>in head</em></a> 
 			<a href="headjs.html">head.js <em>in head</em></a> 
 			<a href="bootjs.html">Boot.getJS <em>in head</em></a> 
 			<a href="boot.easync.html">Boot.getJS <em>w/ Easync</em></a> 
@@ -92,8 +94,12 @@
 				Time is calculated when <code>window.onload</code> fires.
 			</p> 
 			
+			<p> 
+				Try with different browsers. The time difference varies a lot.
+			</p> 
+			
 			<p class="details">
-				Notice the UI does not render until all scripts have finished downloading in the &lt;head&gt;. This can take considerably long especially in IE browsers. Note that all scripts execute in order by default and they can be placed at the top and bottom of the page, avoiding race conditions.
+A.getJS was developed to be small enough (854 bytes, for reference LABjs is 4701 bytes) to include inline in HTML (no library required). While it downloads in parallel and preserves execution order, similar to Head JS it blocks render if inline scripts are included after the scripts in Firefox. A.getJS is used in production on AOL Autos. Like head.js and LABjs, if the chain is broken, race conditions may occur in browsers like IE and Safari that do not support async execution scripts.
 			</p> 
 			
 			<h3>Test Log</h3>
@@ -108,17 +114,16 @@
 		</div> 
 		
 	</div> 
-
-<script src="js/javascript.php?num=10"></script>
-<script src="js/javascript.php?num=11"></script>
-<script src="js/javascript.php?num=12"></script>
-<script src="js/javascript.php?num=13"></script>
-<script src="js/javascript.php?num=14"></script>
-<script>
-	Boot.log("Second 5 scripts loaded.");
-</script> 
-
-		
+	
+<script> 
+A.getJS("js/javascript.php?num=10")
+	.getJS("js/javascript.php?num=11")
+	.getJS("js/javascript.php?num=12")
+	.getJS("js/javascript.php?num=13")
+	.getJS("js/javascript.php?num=14", function(){
+		Boot.log("Second 5 scripts loaded.");
+	});	
+</script>
 </body> 
 	
 	

@@ -22,15 +22,15 @@
 
 
 <script> 
-head.js("js/javascript.php?num=1")
-	.js("js/javascript.php?num=2")
-	.js("js/javascript.php?num=3")
-	.js("js/javascript.php?num=4")
-	.js("js/javascript.php?num=5")
-	.js("js/javascript.php?num=6")	
-	.js("js/javascript.php?num=7")	
-	.js("js/javascript.php?num=8")	
-	.js("js/javascript.php?num=9", function(){
+head.js("js/javascript.php?num=1", 
+	"js/javascript.php?num=2", 
+	"js/javascript.php?num=3", 
+	"js/javascript.php?num=4",
+	"js/javascript.php?num=5",
+	"js/javascript.php?num=6",
+	"js/javascript.php?num=7",
+	"js/javascript.php?num=8",
+	"js/javascript.php?num=9", function(){
 		Boot.log("First 9 scripts loaded.");
 	});	
 </script> 
@@ -41,9 +41,10 @@ head.js("js/javascript.php?num=1")
 	html { background-color:#f9f9f9;	 }
 	body { color:#333; font:13px sans-serif; } 
 	#wrap { margin:50px auto;  width:800px;		 }
-	#nav { padding-left:30px; overflow: hidden; }
-	#nav a { float:left;	 margin-right:30px; color:#666; text-decoration:none; font-weight:bold; }
+	#nav { padding-left:10px; overflow: hidden; }
+	#nav a { float:left;	 margin-right:20px; color:#666; text-decoration:none; font-weight:bold; padding: 5px 10px; }
 	#nav em { display:block; font-style:normal; font-weight:normal; color:#999; }
+	#nav .selected { background-color: #f0e4e4;}
 	#content { margin-top:10px; background-color:#fff;	 padding:30px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -moz-box-shadow: 0 0 5px rgba(0,0,0,.2); -webkit-box-shadow: 0 0 5px rgba(0,0,0,.2); }
 	h1 { color:#777; font-size:40px; margin:0; margin-bottom:-10px; }
 	h1 em { font-weight:normal; font-style:normal; color:#999; }
@@ -63,10 +64,15 @@ head.js("js/javascript.php?num=1")
 	<div id="wrap"> 
 		
 		<div id="nav"> 
-			<a href="script.html">SCRIPT SRC <em>in head</em></a> 
-			<a href="script-bottom.html">SCRIPT SRC <em>on bottom</em></a> 
-			<a href="headjs.html">head.js <em>on head</em></a> 
-		</div> 
+			<a href="script.html">&lt;script&gt; tag <em>in head</em></a> 
+			<a href="jquery.getscript.html">jQuery.getScript() <em>in head</em></a> 
+			<a href="labjs.html">LABjs <em>in head</em></a> 
+			<a href="A.getjs.html">A.getJS <em>in head</em></a> 
+			<a href="headjs.html" class="selected">head.js <em>in head</em></a> 
+			<a href="bootjs.html">Boot.getJS <em>in head</em></a> 
+			<a href="boot.easync.html">Boot.getJS <em>w/ Easync</em></a> 
+		</div>
+		
 		<script type="text/javascript">
 			// Example inline script that blocks rendering in Firefox and newer "async" capable browsers.
 		</script>
@@ -74,7 +80,7 @@ head.js("js/javascript.php?num=1")
 			
 			<h1></h1> 
 			
-			<div id="time"><span id="ms"></span> ms</div> 
+			<div id="time"><span id="ms">...</span> ms</div> 
 
 			<p> 
 				Press <strong>CTRL+SHIFT+R</strong> to reload with an empty cache = first impression.
@@ -95,7 +101,8 @@ head.js("js/javascript.php?num=1")
 			<p class="details">
 head.js() loads all the scripts asynchronously, but note that if an inline
 script is present midway through the document, <strong>it will block rendering</strong> until
-all scripts have finished loading in Firefox. 
+all scripts have finished loading in Firefox. It may also lead to race conditions if more scripts are called outside
+the first chain.
 			</p> 
 			
 			<h3>Test Log</h3>
@@ -113,11 +120,11 @@ all scripts have finished loading in Firefox.
 
 
 <script> 
-head.js("js/javascript.php?num=10")
-	.js("js/javascript.php?num=11")
-	.js("js/javascript.php?num=12")
-	.js("js/javascript.php?num=13")
-	.js("js/javascript.php?num=14", function(){
+head.js("js/javascript.php?num=10",
+	"js/javascript.php?num=11",
+	"js/javascript.php?num=12",
+	"js/javascript.php?num=13",
+	"js/javascript.php?num=14", function(){
 		Boot.log("Second 5 scripts loaded.");
 	});
 </script> 

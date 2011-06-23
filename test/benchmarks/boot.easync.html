@@ -5,11 +5,10 @@
 
 <head>
 
-<title>JS Loader Benchmarks - &lt;script&gt; Tag</title> 
+<title>JS Loader Benchmarks - Boot Easync</title> 
 
-<!-- Include Boot.js for logging purposes. -->
 <script src="../../src/boot.js"></script>
-<script src="js/LAB.min.js"></script> 
+<script src="../../src/boot.easync.js"></script>
 
 <script>
 	// calculate difference between zero and window.onload
@@ -20,19 +19,23 @@
 	}
 </script> 
 
-<script src="js/javascript.php?num=1"></script>
-<script src="js/javascript.php?num=2"></script>
-<script src="js/javascript.php?num=3"></script>
-<script src="js/javascript.php?num=4"></script>
-<script src="js/javascript.php?num=5"></script>
-<script src="js/javascript.php?num=6"></script>
-<script src="js/javascript.php?num=7"></script>
-<script src="js/javascript.php?num=8"></script>
-<script src="js/javascript.php?num=9"></script>
-<script>
+<script type="async/js" data-src="js/javascript.php?num=1"></script>
+<script type="async/js" data-src="js/javascript.php?num=2"></script>
+<script type="async/js" data-src="js/javascript.php?num=3"></script>
+<script type="async/js" data-src="js/javascript.php?num=4"></script>
+<script type="async/js" data-src="js/javascript.php?num=5"></script>
+<script type="async/js" data-src="js/javascript.php?num=6"></script>
+<script type="async/js" data-src="js/javascript.php?num=7"></script>
+<script type="async/js" data-src="js/javascript.php?num=8"></script>
+<script type="async/js" data-src="js/javascript.php?num=9"></script>
+<script type="async/js">
 	Boot.log("First 9 scripts loaded.");
 </script> 
- 
+
+<script type="async/js" data-src="js/javascript.php?num=15" data-defer="load"></script>
+<script type="async/js" data-defer="load">
+	Boot.log("Last script loaded on window.load after all other scripts.");
+</script> 
  
 	<!-- inline style so that we can focus on script loading only --> 
 	<style> 
@@ -40,7 +43,7 @@
 	body { color:#333; font:13px sans-serif; } 
 	#wrap { margin:50px auto;  width:800px;		 }
 	#nav { padding-left:10px; overflow: hidden; }
-	#nav a { float:left;	 margin-right:20px; color:#666; text-decoration:none; font-weight:bold; padding: 5px 10px; }
+	#nav a { float:left; margin-right:20px; color:#666; text-decoration:none; font-weight:bold; padding: 5px 10px; }
 	#nav em { display:block; font-style:normal; font-weight:normal; color:#999; }
 	#nav .selected { background-color: #f0e4e4;}
 	#content { margin-top:10px; background-color:#fff;	 padding:30px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -moz-box-shadow: 0 0 5px rgba(0,0,0,.2); -webkit-box-shadow: 0 0 5px rgba(0,0,0,.2); }
@@ -62,13 +65,13 @@
 	<div id="wrap"> 
 		
 		<div id="nav"> 
-			<a href="script.html" class="selected">&lt;script&gt; tag <em>in head</em></a> 
+			<a href="script.html">&lt;script&gt; tag <em>in head</em></a> 
 			<a href="jquery.getscript.html">jQuery.getScript() <em>in head</em></a> 
 			<a href="labjs.html">LABjs <em>in head</em></a> 
 			<a href="A.getjs.html">A.getJS <em>in head</em></a> 
 			<a href="headjs.html">head.js <em>in head</em></a> 
 			<a href="bootjs.html">Boot.getJS <em>in head</em></a> 
-			<a href="boot.easync.html">Boot.getJS <em>w/ Easync</em></a> 
+			<a href="boot.easync.html" class="selected">Boot.getJS <em>w/ Easync</em></a> 
 		</div>
 		
 		<script type="text/javascript">
@@ -93,12 +96,12 @@
 			</p> 
 			
 			<p class="details">
-				Notice the UI does not render until all scripts have finished downloading in the &lt;head&gt;. This can take considerably long especially in IE browsers. Note that all scripts execute in order by default and they can be placed at the top and bottom of the page, avoiding race conditions.
+				Easync leverages the capabilities of Boot.getJS to load in scripts with a special type <code>&quot;async/js&quot;</code> in asynchronously. This makes upgrading to asynchronous JS extremely easy.
 			</p> 
 			
 			<h3>Test Log</h3>
 			<div id="log"></div>
-			<script>Boot.log.init( { elem: document.getElementById("log") } ); Boot.log("Executing inline script at page bottom.");</script>
+			<script type="async/js">Boot.log.init( { elem: document.getElementById("log") } ); Boot.log("Executing inline script at page bottom.");</script>
 		</div> 
 		
 		<div id="footer"> 
@@ -109,12 +112,12 @@
 		
 	</div> 
 
-<script src="js/javascript.php?num=10"></script>
-<script src="js/javascript.php?num=11"></script>
-<script src="js/javascript.php?num=12"></script>
-<script src="js/javascript.php?num=13"></script>
-<script src="js/javascript.php?num=14"></script>
-<script>
+<script type="async/js" data-src="js/javascript.php?num=10"></script>
+<script type="async/js" data-src="js/javascript.php?num=11"></script>
+<script type="async/js" data-src="js/javascript.php?num=12"></script>
+<script type="async/js" data-src="js/javascript.php?num=13"></script>
+<script type="async/js" data-src="js/javascript.php?num=14"></script>
+<script type="async/js">
 	Boot.log("Second 5 scripts loaded.");
 </script> 
 

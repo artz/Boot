@@ -20,7 +20,7 @@
 			scriptSrc,
 			scriptText,
 			scriptObject;
-			
+		
 		// If this script is using an Easync type.
 		if ( contains( scriptType, "async" ) || contains( scriptType, "cache" ) ) {
 			
@@ -47,7 +47,7 @@
 					B.globalEval( scriptText );						
 				}	
 			}
-			
+
 			B.getJS( scriptObject );
 		}
 		

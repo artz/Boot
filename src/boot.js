@@ -918,4 +918,13 @@
 
 	// log("Boot library initialized.");
 	
+	/*
+		To Do?
+		
+		- Screen detection
+		- Event system Boot.pub, Boot.sub http://en.wikipedia.org/wiki/Publish/subscribe
+		- 
+		
+	*/
+	
 })("Boot", this);

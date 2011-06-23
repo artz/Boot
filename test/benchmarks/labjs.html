@@ -42,9 +42,10 @@ $LAB.script("js/javascript.php?num=1").wait()
 	html { background-color:#f9f9f9;	 }
 	body { color:#333; font:13px sans-serif; } 
 	#wrap { margin:50px auto;  width:800px;		 }
-	#nav { padding-left:30px; overflow: hidden; }
-	#nav a { float:left;	 margin-right:30px; color:#666; text-decoration:none; font-weight:bold; }
+	#nav { padding-left:10px; overflow: hidden; }
+	#nav a { float:left;	 margin-right:20px; color:#666; text-decoration:none; font-weight:bold; padding: 5px 10px; }
 	#nav em { display:block; font-style:normal; font-weight:normal; color:#999; }
+	#nav .selected { background-color: #f0e4e4;}
 	#content { margin-top:10px; background-color:#fff;	 padding:30px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -moz-box-shadow: 0 0 5px rgba(0,0,0,.2); -webkit-box-shadow: 0 0 5px rgba(0,0,0,.2); }
 	h1 { color:#777; font-size:40px; margin:0; margin-bottom:-10px; }
 	h1 em { font-weight:normal; font-style:normal; color:#999; }
@@ -64,10 +65,15 @@ $LAB.script("js/javascript.php?num=1").wait()
 	<div id="wrap"> 
 		
 		<div id="nav"> 
-			<a href="script.html">SCRIPT SRC <em>in head</em></a> 
-			<a href="script-bottom.html">SCRIPT SRC <em>on bottom</em></a> 
-			<a href="headjs.html">head.js <em>on head</em></a> 
-		</div> 
+			<a href="script.html">&lt;script&gt; tag <em>in head</em></a> 
+			<a href="jquery.getscript.html">jQuery.getScript() <em>in head</em></a> 
+			<a href="labjs.html" class="selected">LABjs <em>in head</em></a> 
+			<a href="A.getjs.html">A.getJS <em>in head</em></a> 
+			<a href="headjs.html">head.js <em>in head</em></a> 
+			<a href="bootjs.html">Boot.getJS <em>in head</em></a>
+			<a href="boot.easync.html">Boot.getJS <em>w/ Easync</em></a> 
+		</div>
+		
 		<script type="text/javascript">
 			// Example inline script that blocks rendering in Firefox and newer "async" capable browsers.
 		</script>
@@ -75,7 +81,7 @@ $LAB.script("js/javascript.php?num=1").wait()
 			
 			<h1></h1> 
 			
-			<div id="time"><span id="ms"></span> ms</div> 
+			<div id="time"><span id="ms">...</span> ms</div> 
 			
 			<p> 
 				Press <strong>CTRL+SHIFT+R</strong> to reload with an empty cache = first impression.
@@ -95,7 +101,7 @@ $LAB.script("js/javascript.php?num=1").wait()
 			
 			<p class="details">
 LABjs loads all the scripts asynchronously, and allows the page to render despite inline JS.
- It's syntax is a little verbose, but provides developers flexibility in loading scripts.  The script's footprint is a bit large due to a lot of extra code for loading on the same domain using AJAX.
+ Its syntax is a little verbose, but provides developers flexibility in loading scripts.  The script's footprint is a bit large (4.7KB) due to a lot of extra code for loading on the same domain using AJAX.  It successfully avoids the render block in Firefox, unlike head.js and A.getJS.
 			</p> 
 			
 			<h3>Test Log</h3>
