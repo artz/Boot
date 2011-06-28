@@ -1,0 +1,358 @@
+<!doctype html>
+<!--[if lt IE 7 ]> <html class="no-js ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]>    <html class="no-js ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]>    <html class="no-js ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title></title>
+<meta name="description" content="">
+<meta name="author" content="Dave Artz">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script>
+
+(function(document, window){
+	
+	var logElement = document.createElement("ul"),
+		startTime = new Date().getTime();
+	logElement.className = "log";
+	logElement.style.fontFamily = "courier new";
+	logElement.style.backgroundColor = "#ccc";
+
+	window.log = function( msg ){
+		var logMessage = document.createElement("li");
+		logMessage.innerHTML = ( new Date().getTime() - startTime ) + "ms: " + msg;
+		logElement.appendChild( logMessage );
+	};
+			
+	// Generic bind function.
+	function bind( object, evt, method ) {
+		if (object.attachEvent) {
+			object.attachEvent("on" + evt, method);
+		} else if (object.addEventListener) {
+			object.addEventListener(evt, method, false);
+		}
+	}
+	
+	if ( document.readyState === "complete" ) {
+		document.body.appendChild( logElement );	
+	} else {
+		bind( window, "load", function(){
+			document.body.appendChild( logElement );
+		});
+	}
+	
+})(document, window);
+/*
+ * A.getJS v0.9
+ * http://www.artzstudio.com/A.js/getJS/
+ *
+ * Developed by: 
+ * - Dave Artz http://www.artzstudio.com/
+ *
+ * Copyright (c) 2011
+ * Not yet licensed cuz I lack free time.
+ */
+ 
+/*
+ * A.getJS is a script that loads JavaScript asynchronously while
+ * preserving execution order via a chaining interface.
+ * 
+ * @author        Dave Artz
+ * @copyright     (c) 2010 Dave Artz
+ */
+(function( document ) {
+
+function getScript ( url, callback, type ) {
+
+	var	script = document.createElement("script"),
+		done = 0,
+		startTime = new Date().getTime();
+	
+	script.src = url;
+	script.type = type || "";  // Assumes text/javascript.
+	
+	// This is for Firefox 4
+	// https://developer.mozilla.org/En/HTML/Element/Script
+	// We basically make it synchronously like in FF3.
+	// Not ideal, but we found <object> to be slower
+	// DOM nodes.
+	script.async = false;
+	
+	// Attach handlers for all browsers
+	script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
+
+		if ( !done && (!script[ strReadyState ] ||
+				script[ strReadyState ] == "loaded" || script[ strReadyState ] == "complete") ) {
+
+			// Tell global scripts object this script has loaded.
+			// Set scriptDone to prevent this function from being called twice.
+			done = 1;
+
+			callback( url );
+			log( "Downloaded " + url + " in " + (new Date().getTime() - startTime) + "ms" );
+			// Handle memory leak in IE
+			script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
+			docElement.removeChild( script );
+		}
+	};
+	
+	docElement.appendChild( script );
+}
+	
+function getJS ( urlKey, urlKeyCallback ) {
+		
+	function geckoCallback ( url ) {
+		// If both scripts loaded, it's time to party.
+		++urlCount == urlCountTotal && urlKeyCallback && urlKeyCallback();
+	}
+		
+	function getJSCallback ( url ) {
+			
+		// Remember that we have this script cached.
+		urlCached[ url ] = 1;
+
+		// If this callback happens to be for the first urlKey
+		// in the chain, we can trigger the execution. 
+		urlKey == urlKeyChain[0] && executeJS();
+	}
+	
+	function executeJS () {
+		
+		function executeCallback () {
+			// If all scripts have been cached in the set, it's time
+			// to execute the urlKey callback after the script loads.
+			if ( ++cacheCount == thisUrlsCount ) {
+				
+				// Execute the callback associated with this urlKey
+				thisUrlKeyCallback && thisUrlKeyCallback();
+				
+				// Kill the first item in the url chain and redo executeJS
+				urlKeyChain.shift();
+				executeJS();
+			}
+		}
+		
+		for ( var i = 0,
+				thisUrlKey = urlKeyChain[0] || "",
+				thisUrls = thisUrlKey.split( urlSplit ),
+				thisUrl,
+				thisUrlsCount = thisUrls.length,
+				thisUrlKeyCallback = urlKeyCallbacks[ thisUrlKey ],
+				cacheCount = 0; i < thisUrlsCount; i++ ) {
+			
+			thisUrl = thisUrls[i];
+
+			if ( urlCached[ thisUrl ] ) {
+				if ( urlExecuted[ thisUrl ] ) {
+					// If we already executed, just do the callback.
+					executeCallback();					
+				} else {
+					// Rememeber that this script already executed.
+					urlExecuted[ thisUrl ] = 1;
+					getScript( thisUrl, executeCallback );	
+				}
+			}
+		}
+	}
+
+	var urls = urlKey.split( urlSplit ),
+		urlCount = 0,
+		urlCountTotal = urls.length,
+		i = 0,
+		type,
+		urlKeyChain = this.c; // Contains an arays of urlKeys of this chain, if available.
+		
+	// Gecko does what we want out of the box, sort of.
+	// Bypass our super special callback.
+	if ( isGecko ) {
+		
+		getJSCallback = geckoCallback;
+		
+	// Manage callbacks and execution order manually.
+	} else {
+		
+		// We set this to something bogus so browsers do not 
+		// execute code on our initial request.
+		// http://ejohn.org/blog/javascript-micro-templating/
+		type = "c";
+		
+		// If this is a new chain, start a new array, otherwise push the new guy in.
+		// This is used to preserve execution order for non FF browsers.
+		if ( urlKeyChain ) {
+			// Push the urlKey into the chain.
+			urlKeyChain.push( urlKey );
+		} else {
+			// Create a new urlKeyChain to pass on to others.
+			urlKeyChain = [ urlKey ];
+		}
+
+		// Remember the original callback for this key for later.
+		urlKeyCallbacks[ urlKey ] = urlKeyCallback;
+	}
+				
+	// Cache the scripts requested.
+	for (; i < urlCountTotal; i++) {
+		// Fetch the script.
+		getScript( urls[i], getJSCallback, type );
+	}
+	
+	return {
+		c: urlKeyChain,
+		getJS: getJS
+	};
+}
+
+var	docElement = document.documentElement,
+//	Artz: Just making things smaller, uncomment if people care.
+//	head = document.getElementsByTagName("head")[0] || docElement,  
+	urlKeyCallbacks = {},
+	urlCached = {},
+	urlExecuted = {},
+	urlSplit = ",",	
+	
+	strReadyState = "readyState",
+	strOnReadyStateChange = "onreadystatechange",
+	strOnLoad = "onload",
+	
+	isGecko = ("MozAppearance" in docElement.style);
+
+// Open A.getJS for business!
+this.A || (A = {});
+A.getJS = getJS;
+
+A.getCSS = function( href ){
+	var link = document.createElement( "link" );
+	link.rel = "stylesheet";
+	link.href = href;
+	docElement.appendChild( link );
+};
+
+})( document );
+
+
+function getObject( elem, url, callback ) {
+
+	var	obj = document.createElement( elem ),
+		done = 0,
+		isImage = elem == strImage,
+startTime = new Date().getTime();
+	
+	// Attach handlers for all browsers
+	obj[ strOnLoad ] = obj[ strOnError ] = obj[ strOnReadyStateChange ] = function(){
+
+		if ( !done && ( isImage || !obj[ strReadyState ] ||
+				obj[ strReadyState ] == "loaded" || obj[ strReadyState ] == strComplete) ) {
+
+			// Tell global scripts object this script has loaded.
+			// Set scriptDone to prevent this function from being called twice.
+			done = 1;
+ log( "<i>Downloaded " + url + " (" + elem + ") in " + (new Date().getTime() - startTime ) + "ms</li>");
+			callback && callback( url );
+			
+			// Handle memory leak in IE
+			obj[ strOnLoad ] = obj[ strOnReadyStateChange ] = null;
+			
+			// This causes a spinny after window.load fires.
+//			function(){bodyElem.removeChild( obj );
+		}
+	};
+	
+	// Source must be set after the events 
+	// are attached for images to work.
+	obj.src = obj.data = url;
+
+	if ( !isImage ) {
+		obj.width = obj.height = 0;
+		bodyElem.appendChild( obj );
+	}
+}
+
+</script>
+<module name="beacon" version="2" options="{foo: 1, bar: 3}">
+<!--<link rel="stylesheet" href="css/style.css?v=2">-->
+</head>
+
+<body>
+<div id="container">
+	<header><h1>ArtzStudio Module Framework</h1></header>
+	<module name="main" options="{html: 'Initialized.'}" js="jquery, jquery.ui-core, jquery.sonar" css="main">
+		<div id="main" role="main"> Test. <module name="nested">Nested module test.</module></div>
+	</module>
+	<footer> </footer>
+</div>
+<script>
+
+bodyElem = document.body;
+
+function getObject( elem, url, callback ) {
+
+	var	isImage = elem == strImage,
+		obj = isImage ? new Image() : document.createElement( elem ),
+		
+		done = 0,
+		
+		strReadyState = "readyState",
+		strOnReadyStateChange = "onreadystatechange",
+		strOnLoad = "onload",
+		strOnError = "onerror",
+		strImage = "img",
+		strComplete = "complete",
+		strCache = "cache/js",
+		strGetAttribute = "getAttribute",
+		strDataSrc = "data-src",
+		
+		startTime = new Date().getTime();
+		
+	// Attach handlers for all browsers
+	obj[ strOnLoad ] = obj[ strOnError ] = obj[ strOnReadyStateChange ] = function(){
+
+		if ( !done && ( isImage || !obj[ strReadyState ] ||
+				obj[ strReadyState ] == "loaded" || obj[ strReadyState ] == strComplete) ) {
+
+			// Tell global scripts object this script has loaded.
+			// Set scriptDone to prevent this function from being called twice.
+			done = 1;
+ log( "<i>Downloaded " + url + " (" + elem + ") in " + (new Date().getTime() - startTime ) + "ms</li>");
+			callback && callback( url );
+			
+			// Handle memory leak in IE
+			obj[ strOnLoad ] = obj[ strOnReadyStateChange ] = null;
+			
+			// This causes a spinny after window.load fires.
+//			bodyElem.removeChild( obj );
+		}
+	};
+	
+	// Source must be set after the events 
+	// are attached for images to work.
+	obj.src = obj.data = url;
+
+	if ( !isImage ) {
+		obj.width = obj.height = 1;
+		bodyElem.appendChild( obj );
+	}
+}
+
+getObject( "img", "../cdn/beacon.js" );
+getObject( "img", "../cdn/jquery.js" );
+getObject( "img", "../cdn/jquery.ui-core.js" );
+getObject( "img", "../cdn/jquery.sonar.js" );
+getObject( "img", "../cdn/main.js" );
+getObject( "img", "../cdn/nested.js" );
+
+getObject( "script", "../cdn/beacon.js" );
+getObject( "script", "../cdn/jquery.js" );
+getObject( "script", "../cdn/jquery.ui-core.js" );
+getObject( "script", "../cdn/jquery.sonar.js" );
+getObject( "script", "../cdn/main.js" );
+getObject( "script", "../cdn/nested.js" );
+
+</script>
+</body>
+</html>

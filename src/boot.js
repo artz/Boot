@@ -919,7 +919,7 @@
 	// log("Boot library initialized.");
 
 /*
-	Function: Boot.sub
+	Function: Boot.on
 	
 	Subscribes to an event, fires a callback once it is emitted.
 	http://en.wikipedia.org/wiki/Publish/subscribe
@@ -930,7 +930,7 @@
 	callback
 */
 	var events = {};
-	function sub( event, callback ){
+	function on( event, callback ){
 		
 		var eventQueue = events[ event ] || ( events[ event ] = [] );
 		
@@ -939,10 +939,10 @@
 		return global;
 		
 	}
-	global.sub = sub;
+	global.on = on;
 
 /*
-	Function: Boot.pub
+	Function: Boot.emit
 	
 	Publishes an event, passing an optional object of data.
 	Triggers any events attached to the event.
@@ -957,7 +957,7 @@
 	Boot
 
 */
-	function pub( event, data ){
+	function emit( event, data ){
 		
 		var eventQueue = events[ event ];
 		
@@ -969,11 +969,12 @@
 		
 		return global;
 	}
-	global.pub = pub;
+	global.emit = emit;
 
 	/*
 		To Do?
-		
+		- Boot.once - Do a callback once only.
+		- Boot.removeEvent - Remove event.
 		- Screen detection? Maybe this is a plugin instead.
 		
 	*/
