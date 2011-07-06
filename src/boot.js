@@ -354,17 +354,21 @@
 	
 	Attribute value (getting) or Boot (setting)
 */
+	var styleNode = document.createElement("style"); // Alose used in Boot.inlineCSS.
+
 	function attr( elem, attribute, value ){
 		
 		var ret = global;
 		
 		if ( value !== undefined ) {
-			
+		
 			if ( value === null ) {
 				elem.removeAttribute( attribute );
+			} else if ( attribute === "style" && styleNode.styleSheet ) {
+				elem.cssText = css;
 			} else {
 				elem.setAttribute( attribute, value );
-			}
+			}	
 
 		} else {
 			ret = elem.getAttribute( attribute );
@@ -586,8 +590,9 @@
 	function cacheScript( src, delay ){
 		
 		// log( "Boot.getJS (cacheScript): Caching script (" + src + ")" );
-		var elem,
-			body = document.body;
+		var elem;
+		
+		body || (body = document.body);
 		
 		if ( delay ) {
 			// Convert delay to seconds.
@@ -971,12 +976,175 @@
 	}
 	global.emit = emit;
 
+/*
+	Boot.inlineCSS
+	
+	Thanks Stoyan!
+
+ if (attr == "style" && this.userAgent_.getName() == "MSIE") {
+          domElement.style.cssText = opt_attr[attr];
+        } else {
+          domElement.setAttribute(attr, opt_attr[attr]);
+        }
+
+*/
+	function inlineCSS( css ){
+
+		var style = styleNode.cloneNode(0),
+			styleSheet = style.styleSheet,
+			textNode;
+	
+//			attr( style, "type", "text/css" ); // Not needed in HTML5 :D
+		
+		// IE
+		if ( styleSheet ) { 
+			styleSheet.cssText = css;
+		// The World
+		} else { 
+			textNode = document.createTextNode( css );
+			style.appendChild( textNode );
+		}
+		
+		firstScriptParent.insertBefore( style, firstScript );
+	}
+	global.inlineCSS = inlineCSS;
+
+/*
+	Boot.createNode
+*/
+	function createNode( html ) {	
+		var div = document.createElement("div");
+		div.innerHTML = html;
+		return div.firstChild;
+	}
+	
+/*
+	Boot.poll
+	
+	Function useful for checking/polling something
+	and then executing a callback once it's done.
+*/
+	var timers = {},
+		timerId = 0;
+
+	function poll( check, callback, delay, timeout ){
+
+		var name = timerId++,
+			start = now(),
+			time,
+			isTimeout = false;
+		
+		timers[ name ] = setInterval(function(){
+			
+			time = now() - start;
+			
+			if ( check() || ( timeout && ( isTimeout = time > timeout )) ) {
+				callback.call( window, isTimeout, time );
+				clearInterval( timers[ name ] );
+			}
+			
+		}, delay );
+		 
+	}
+	global.poll = poll;
+	
+/*
+	Boot.getFont
+*/
+	var getFontOptions = {
+			path: "fonts/{f}/{f}-webfont",
+			fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
+		},
+		docElem = document.documentElement,
+		testDiv;
+	
+	function getFont( /* options, options, ... */ ) {
+		
+		if ( ! testDiv ) {
+			
+			testDiv = createNode("<div style=\"position:absolute;top:-999px;left:-999px;font-size:300px;width:auto;height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;font-family:serif\">BESs</div>" );
+			
+			docElem.appendChild( testDiv );
+			
+		}
+		
+		for ( var args = arguments,
+				options = getFontOptions,
+				fontTemplate = /{f}/g,
+				fontPathTemplate = /{p}/g,
+				fontDiv,
+//				testDiv = hiddenDiv.cloneNode(),
+				fontName,
+				fontPath,
+				fontFace,
+				pollDelay = 50, // Doesn't need to be too small.
+				pollTimeout = 10000, // Give up polling after this time.
+				fontfaceCSS = [],
+				i = 0, 
+				l = args.length; i < l; i++ ) {
+			
+			fontName = args[i].toLowerCase();
+			
+//			Boot.log( "Getting font: <b>" + fontName + "</b>" );
+			
+			fontPath = options.path.replace( fontTemplate, fontName );
+			
+//			Boot.log( "Setting font URL: <b>" + fontPath + "</b>" );
+			
+			fontFace = options.fontface.replace( fontTemplate, fontName ).replace( fontPathTemplate, fontPath );
+			
+//			Boot.log( "Generating @fontface: <b>" + fontFace + "</b>");
+			
+			fontfaceCSS.push( fontFace );
+			
+			fontDiv = testDiv.cloneNode(true);
+			
+			fontDiv.style.fontFamily = "'" + fontName + "',serif";
+						
+			docElem.appendChild( fontDiv );
+			
+			docElem.className += " " + fontName + "-loading";
+			
+			(function( fontDiv, fontName ) {
+				
+				poll( function( time ){
+//					Boot.log( "Test width: " + testDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
+					return testDiv.offsetWidth !== fontDiv.offsetWidth;
+				}, function( isTimeout, time){ 
+//					Boot.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout); 
+					if ( isTimeout ) {
+						docElem.className = docElem.className.replace( fontName + "-loading", fontName + "-inactive" );
+						emit( fontName + "-inactive" );
+//						emit( "get-font-inactive", { name: fontName } );
+						window.console && console.log( "Font timeout: " + fontName );
+					} else {
+						docElem.className = docElem.className.replace( fontName + "-loading", fontName + "-active" );
+						emit( fontName + "-active" );
+//						emit( "get-font-active", { name: fontName } );
+					}
+//					fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
+				}, pollDelay, pollTimeout );
+				
+			})( fontDiv, fontName );
+			
+		}
+		
+		inlineCSS( fontfaceCSS.join("") );
+		
+	}
+/*	
+	getFont.set = function( options ) {
+		
+	};
+*/	
+	global.getFont = getFont;
+
 	/*
 		To Do?
 		- Boot.once - Do a callback once only.
 		- Boot.removeEvent - Remove event.
 		- Screen detection? Maybe this is a plugin instead.
-		
+		- getFont()
 	*/
 	
 })("Boot", this);

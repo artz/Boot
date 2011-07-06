@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.attr</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+
+.chewy {
+	font-family: "chewy";
+}
+
+.specialelite {
+	font-family: "specialelite";
+}
+
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.getFont</h1>
+<div class="chewy">Chewy</div>
+<div class="specialelite">Special Elite</div>
+<pre id="log"></pre>
+<script>
+// Initialize logging.
+var logElem = document.getElementById("log");
+
+Boot.log.init({
+	elem: logElem
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+Boot.getFont("Chewy", "SpecialElite");
+// Boot.getFont("specialelite");
+
+Boot.on( "chewy-active", function(){
+	Boot.log( "boot.getjs.html: Chewy active!" );
+});
+
+Boot.on( "specialelite-active", function(){
+	Boot.log( "boot.getjs.html: SpecialElite active!" );
+});
+
+</script>
+<p>This paragraph of text should not be blocked.</p>
+<script type="text/javascript">
+document.write("<p>This was generated using a JavaScript document.write() and should not be blocked.");
+</script>
+</body>
+</html>
