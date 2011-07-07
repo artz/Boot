@@ -176,8 +176,7 @@
 	  /test/regex-vs-indexof.html
 	
 	* http://www.dustindiaz.com/smallest-domready-ever
-	  This was interesting but upon closer inspection, doesn't work
-	  and also will pile on expensive setTimeout loops.
+	  This was interesting but upon closer inspection, doesn't work.
 */
 	var isReady = 0,
 		isReadyBound = 0,
@@ -191,10 +190,11 @@
 			// This check looks for #2, the equivalent of DOM ready.
 			// Needs to be "interactive" or "loaded" (Safari) or "complete" (catch all)
 			// "e" fits the bill nicely.
-			// indexOf is much faster than regex in Safari and IE (see /test/regex-vs-indexof.html)
+			// indexOf is much faster than regex or doScroll hack in Safari and IE (see /test/regex-vs-indexof.html)
 			return contains( document.readyState, "e" );
 		},
-		
+/*
+	Replaced this with Boot.poll. So far so good!
 		pollReadyState = function(){
 			if ( checkReady() ) {
 				execReady();
@@ -202,7 +202,7 @@
 				SetTimeout( pollReadyState, 50 );
 			}
 		},
-		
+*/
 		execReady = function(){
 			isReady = 1;
 		//	console.log("READY, clearing callbacks.");
@@ -250,13 +250,13 @@
 							document.addEventListener( "DOMContentLoaded", execReady, false ); 
 						// IE.
 						} else {
-							pollReadyState();
+							poll( checkReady, execReady, 50 );
 						}
 					}
 				}
 			}
 			
-			return global;
+			
 		};
 	
 	// Public reference.
@@ -283,7 +283,7 @@
 		} else if (object.addEventListener) {
 			object.addEventListener(event, callback, false);
 		}
-		return global;
+		
 	}
 	global.bind = bind;
 
@@ -332,10 +332,9 @@
 		if ( contains( document.readyState, "m" ) ) {
 			loaded();
 		} else {
-			global.bind( window, strLoad, loaded );
+			bind( window, strLoad, loaded );
 		}
 		
-		return global;
 	}
 	global.load = load;
 	
@@ -358,23 +357,20 @@
 
 	function attr( elem, attribute, value ){
 		
-		var ret = global;
-		
 		if ( value !== undefined ) {
 		
 			if ( value === null ) {
 				elem.removeAttribute( attribute );
 			} else if ( attribute === "style" && styleNode.styleSheet ) {
-				elem.cssText = css;
+				elem.cssText = value;
 			} else {
 				elem.setAttribute( attribute, value );
 			}	
 
 		} else {
-			ret = elem.getAttribute( attribute );
+			return elem.getAttribute( attribute );
 		}
 		
-		return ret;
 	}
 	global.attr = attr;
 /*
@@ -397,7 +393,7 @@
 				callback.call( array[i], i, array[i] );
 			}
 		}
-		return global;
+		
 	}
 	global.each = each;
 
@@ -423,7 +419,7 @@
 			window[ "eval" ].call( window, data );
 		} )( data );
 		
-		return global;
+		
 	}
 	global.globalEval = globalEval;
 	
@@ -620,10 +616,11 @@
 				// hang perpetually, making users sad. :(
 				
 				body.appendChild( elem );
+				
 			}, delay || 0 );
 
 		}
-		return global;
+		
 	}
 	global.cacheScript = cacheScript;
 	
@@ -680,6 +677,7 @@
 		// We basically make it synchronously like in FF3.
 		// Not ideal, but we found <object> to be MUCH slower
 		// DOM nodes in Firefox.
+		// Check out /test/benchmarks/speed-test-* (need to update files)
 		script.async = options.async || false;
 		
 		// Attach handlers for all browsers
@@ -715,7 +713,7 @@
 			firstScriptParent.insertBefore( script, firstScript );
 		}, 0);
 		
-		return global;
+		
 	}
 	global.getScript = getScript;
 
@@ -747,7 +745,8 @@
 	
 		lastScript,
 		
-		isGecko = "MozAppearance" in document.documentElement.style,
+		docElem = document.documentElement,
+		isGecko = "MozAppearance" in docElem.style,
 		
 		// If the browser supports asynchronous executing scripts. (Firefox 3.6, Opera, Chrome 12)
 		isScriptAsync = isGecko || window.opera || document.createElement( strScript ).async === true,
@@ -941,8 +940,6 @@
 		
 		eventQueue.push( callback );
 		
-		return global;
-		
 	}
 	global.on = on;
 
@@ -972,7 +969,6 @@
 			});
 		}
 		
-		return global;
 	}
 	global.emit = emit;
 
@@ -994,7 +990,7 @@
 			styleSheet = style.styleSheet,
 			textNode;
 	
-//			attr( style, "type", "text/css" ); // Not needed in HTML5 :D
+//		attr( style, "type", "text/css" ); // Not needed in HTML5 :D
 		
 		// IE
 		if ( styleSheet ) { 
@@ -1017,7 +1013,7 @@
 		div.innerHTML = html;
 		return div.firstChild;
 	}
-	
+	// Valuable publicly as Boot.createNode? jQuery's territory?
 /*
 	Boot.poll
 	
@@ -1052,11 +1048,14 @@
 	Boot.getFont
 */
 	var getFontOptions = {
+			namespace: "wf-",
 			path: "fonts/{f}/{f}-webfont",
 			fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
 		},
-		docElem = document.documentElement,
-		testDiv;
+		testDiv, // Keep it empty until invoked the first time.
+		strLoading = "-loading",
+		strActive = "-active",
+		strInactive = "-inactive";
 	
 	function getFont( /* options, options, ... */ ) {
 		
@@ -1075,10 +1074,9 @@
 				fontDiv,
 //				testDiv = hiddenDiv.cloneNode(),
 				fontName,
+				namespacedFontName,
 				fontPath,
 				fontFace,
-				pollDelay = 50, // Doesn't need to be too small.
-				pollTimeout = 10000, // Give up polling after this time.
 				fontfaceCSS = [],
 				i = 0, 
 				l = args.length; i < l; i++ ) {
@@ -1097,15 +1095,19 @@
 			
 			fontfaceCSS.push( fontFace );
 			
-			fontDiv = testDiv.cloneNode(true);
+			fontDiv = testDiv.cloneNode( true );
 			
 			fontDiv.style.fontFamily = "'" + fontName + "',serif";
 						
 			docElem.appendChild( fontDiv );
 			
-			docElem.className += " " + fontName + "-loading";
+			docElem.className += " " + namespacedFontName + strLoading;
 			
-			(function( fontDiv, fontName ) {
+			emit( namespacedFontName + strLoading );
+			
+			namespacedFontName = options.namespace + fontName;
+			
+			(function( fontDiv, namespacedFontName ) {
 				
 				poll( function( time ){
 //					Boot.log( "Test width: " + testDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
@@ -1113,19 +1115,19 @@
 				}, function( isTimeout, time){ 
 //					Boot.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout); 
 					if ( isTimeout ) {
-						docElem.className = docElem.className.replace( fontName + "-loading", fontName + "-inactive" );
-						emit( fontName + "-inactive" );
+						docElem.className = docElem.className.replace( namespacedFontName + strLoading, namespacedFontName + strInactive );
+						emit( namespacedFontName + strInactive );
 //						emit( "get-font-inactive", { name: fontName } );
-						window.console && console.log( "Font timeout: " + fontName );
-					} else {
-						docElem.className = docElem.className.replace( fontName + "-loading", fontName + "-active" );
-						emit( fontName + "-active" );
+// 						window.console && console.log( "Font timeout: " + namespacedFontName );
+					} else {console.log( namespacedFontName );
+						docElem.className = docElem.className.replace( namespacedFontName + strLoading, namespacedFontName + strActive );
+						emit( namespacedFontName + strActive );
 //						emit( "get-font-active", { name: fontName } );
 					}
 //					fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
-				}, pollDelay, pollTimeout );
+				}, 25, 10000 );
 				
-			})( fontDiv, fontName );
+			})( fontDiv, namespacedFontName );
 			
 		}
 		
@@ -1133,6 +1135,7 @@
 		
 	}
 /*	
+	Allow customizable settings someday maybe.
 	getFont.set = function( options ) {
 		
 	};
@@ -1140,11 +1143,11 @@
 	global.getFont = getFont;
 
 	/*
-		To Do?
-		- Boot.once - Do a callback once only.
-		- Boot.removeEvent - Remove event.
-		- Screen detection? Maybe this is a plugin instead.
-		- getFont()
+		To Do
+		- Screen detection.
+		- Browser targeting for CSS (.ie, .ie6, .ie7, .ie8, .ie9, .ie10, .ff, .ff3, .ff4, .ff5, .ff3-5, .ff3-5-1, .sa, .sa4, .sa5 .ch ...)
+		? Boot.once - Do a callback once only.
+		? Boot.off / Boot.removeEvent - Remove custom event.
 	*/
 	
 })("Boot", this);

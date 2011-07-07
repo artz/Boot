@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Boot.attr</title>
+<title>Boot.getFont</title>
 <style>
 body {
 	font: 16px/1.5 verdana;	
@@ -41,17 +41,22 @@ var logElem = document.getElementById("log");
 Boot.log.init({
 	elem: logElem
 });
+
 Boot.log("boot.getjs.html: Starting tests.");
 
-Boot.getFont("Chewy", "SpecialElite");
+Boot.getFont("Chewy", "SpecialElite", "NotThere");
 // Boot.getFont("specialelite");
 
-Boot.on( "chewy-active", function(){
+Boot.on( "wf-chewy-active", function(){
 	Boot.log( "boot.getjs.html: Chewy active!" );
 });
 
-Boot.on( "specialelite-active", function(){
+Boot.on( "wf-specialelite-active", function(){
 	Boot.log( "boot.getjs.html: SpecialElite active!" );
+});
+
+Boot.on( "wf-notthere-inactive", function(){
+	Boot.log( "boot.getjs.html: NotThere is not there! (10 sec timeout)" );
 });
 
 </script>
