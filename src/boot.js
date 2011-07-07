@@ -1055,7 +1055,16 @@
 		testDiv, // Keep it empty until invoked the first time.
 		strLoading = "-loading",
 		strActive = "-active",
-		strInactive = "-inactive";
+		strInactive = "-inactive", 
+		
+		// Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
+		addClass = function( object, className ) {
+			object.className += " " + className;
+		},
+		removeClass = function ( object, className ) {
+			className = new RegExp( "\\b" + className + "\\b" );
+			object.className = object.className.replace( className, "" );
+    	};
 	
 	function getFont( /* options, options, ... */ ) {
 		
@@ -1100,12 +1109,12 @@
 			fontDiv.style.fontFamily = "'" + fontName + "',serif";
 						
 			docElem.appendChild( fontDiv );
-			
-			docElem.className += " " + namespacedFontName + strLoading;
+						
+			namespacedFontName = options.namespace + fontName;
 			
 			emit( namespacedFontName + strLoading );
-			
-			namespacedFontName = options.namespace + fontName;
+						
+			addClass( docElem, namespacedFontName + strLoading );
 			
 			(function( fontDiv, namespacedFontName ) {
 				
@@ -1115,12 +1124,18 @@
 				}, function( isTimeout, time){ 
 //					Boot.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout); 
 					if ( isTimeout ) {
-						docElem.className = docElem.className.replace( namespacedFontName + strLoading, namespacedFontName + strInactive );
+						
+						removeClass( docElem, namespacedFontName + strLoading );
+						addClass( docElem, namespacedFontName + strInactive );
+
 						emit( namespacedFontName + strInactive );
 //						emit( "get-font-inactive", { name: fontName } );
 // 						window.console && console.log( "Font timeout: " + namespacedFontName );
-					} else {console.log( namespacedFontName );
-						docElem.className = docElem.className.replace( namespacedFontName + strLoading, namespacedFontName + strActive );
+					} else {
+					
+						removeClass( docElem, namespacedFontName + strLoading );
+						addClass( docElem, namespacedFontName + strActive );
+						
 						emit( namespacedFontName + strActive );
 //						emit( "get-font-active", { name: fontName } );
 					}
@@ -1141,6 +1156,7 @@
 	};
 */	
 	global.getFont = getFont;
+
 
 	/*
 		To Do
