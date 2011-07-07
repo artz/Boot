@@ -1077,6 +1077,7 @@
 			
 		}
 		
+		// Boot.each might be a cleaner approach, revisit someday maybe.
 		for ( var args = arguments,
 				options = getFontOptions,
 				fontTemplate = /{f}/g,
@@ -1159,17 +1160,63 @@
 	global.getFont = getFont;
 
 /*
-	Screen Size Detection
+	Boot.browser
+	Browser Detection
 	Thanks Tero Piirainen! http://headjs.com
 */
-	var screens = [ 320, 480, 640, 768, 1024, 1280, 1440, 1680, 1920 ];
+// browser type & version
+
+    var ua = navigator.userAgent.toLowerCase(),
+		browser,
+		browserName,
+		browserVersion,
+		browserClasses = [];
+
+    ua = /(firefox)[ \/]([\w.]+)/.exec( ua ) ||
+		/(chrome)[ \/]([\w.]+)/.exec( ua ) ||
+		contains( ua, "safari" ) && /(version)[ \/]([\w.]+)/.exec( ua ) || 
+        /(opera)(?:.*version)?[ \/]([\w.]+)/.exec( ua ) ||
+        /(msie) ([\w.]+)/.exec( ua ) ||
+		/(webkit)[ \/]([\w.]+)/.exec( ua ) || [];
+
+	browserName = ua[1];
+	browserVersion = ua[2];
+
+    if ( browserName === "msie" ) {
+        browserName = "ie";
+        browserVersion = document.documentMode || browserVersion;
+    }
 	
+	if ( browserName === "version" ) {
+		browserName = "safari";	
+	}
+
+    browserClasses.push( browserName );
+	browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
+	browserClasses.push( browserName + browserVersion.replace(".", "-").replace(/\..*/, "" ) ); // Minor version
 	
+	// Add classes all at once for performance reasons.
+	addClass( docElem, browserClasses.join(" ") );
 	
+	// Open up Boot.browser
+    browser = { version: browserVersion };
+    browser[ browserName ] = true;
+	global.browser = browser;
+	
+/*
+	HTML 5 Support for IE
+	Research need for print protection: http://www.iecss.com/print-protector/
+*/
+	if ( browser.ie ) {
+        // HTML5 support for IE
+        each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split(" "), function(i, elem) {
+            document.createElement( elem );
+        });
+	}
+
 	/*
 		To Do
 		- Screen detection.
-		- Browser targeting for CSS (.ie, .ie6, .ie7, .ie8, .ie9, .ie10, .ff, .ff3, .ff4, .ff5, .ff3-5, .ff3-5-1, .sa, .sa4, .sa5 .ch ...)
 		? Boot.once - Do a callback once only.
 		? Boot.off / Boot.removeEvent - Remove custom event.
 	*/
