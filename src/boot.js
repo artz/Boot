@@ -204,13 +204,13 @@
 		},
 */
 		execReady = function(){
+			
 			isReady = 1;
-		//	console.log("READY, clearing callbacks.");
-			// Can use our each function here if we want.
-			for ( var i = 0, l = readyQueue.length; i < l; i++ ) {
-				// Execute in a setTimeout to optimize UI thread usage.
+			
+			each( readyQueue, function(i){
 				SetTimeout(readyQueue[i], 0);
-			}
+			});
+
 			// Clear the queue.
 			readyQueue = [];
 		},
@@ -388,11 +388,12 @@
 	Boot
 */
 	function each( array, callback ) {
-		if ( array && array.length ) {
+	// Anything break if I comment this out?  Dummy protection needed?
+	//	if ( array && array.length ) {  
 			for (var i = 0, l = array.length; i < l; i++ ) {
-				callback.call( array[i], i, array[i] );
+				callback.call( array, i, array[i] );
 			}
-		}
+	//	}
 		
 	}
 	global.each = each;
@@ -1157,7 +1158,14 @@
 */	
 	global.getFont = getFont;
 
-
+/*
+	Screen Size Detection
+	Thanks Tero Piirainen! http://headjs.com
+*/
+	var screens = [ 320, 480, 640, 768, 1024, 1280, 1440, 1680, 1920 ];
+	
+	
+	
 	/*
 		To Do
 		- Screen detection.
