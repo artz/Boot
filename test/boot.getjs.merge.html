@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.getJS</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.getJS</h1>
+<pre id="log"></pre>
+<script>
+// Initialize logging.
+Boot.log.init({
+	elem: document.getElementById("log")
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+Boot.ready(function(){
+	Boot.log("<b>DOM READY</b>");
+});
+
+Boot.load(function(){
+	Boot.log("<b>WINDOW LOADED</b>");
+});
+
+// Executing standard options.
+Boot.log("boot.getjs.html: Loading script #2.");
+Boot.getJS("javascript.php?num=1&sleep=2", "javascript.php?num=2&sleep=2", "javascript.php?num=3&sleep=2", { merge: true });
+
+</script>
+<p>This paragraph of text should not be blocked.</p>
+<script type="text/javascript">
+document.write("<p>This was generated using a JavaScript document.write() and should not be blocked.");
+</script>
+</body>
+</html>

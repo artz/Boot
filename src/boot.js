@@ -13,6 +13,7 @@
 		document = window.document,
 		JSON = window.JSON,
 		SetTimeout = setTimeout,
+		slice = Array.prototype.slice,
 		
 		// String compression optimizations for the library.
 		strLoad = "load",
@@ -27,6 +28,19 @@
 		strOnReadyStateChange = "onreadystatechange",
 		strOnLoad = "onload",
 		strComplete = "complete";
+
+/*
+	Simple add/remove classname functions.
+	Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
+*/
+function addClass( object, className ) {
+	object.className += " " + className;
+}
+
+function removeClass( object, className ) {
+	className = new RegExp( "\\b" + className + "\\b" );
+	object.className = object.className.replace( className, "" );
+}
 
 /*
 	Function: Boot.now
@@ -87,6 +101,7 @@
 	Boot.extend
 	
 	Merge the contents of two or more objects together into the first object.
+	* Update this to use native foreach if available (see underscore.js).
 	
 	Boot.extend( target, [object1], [objectN] )
 	
@@ -208,7 +223,7 @@
 			isReady = 1;
 			
 			each( readyQueue, function(i){
-				SetTimeout(readyQueue[i], 0);
+				defer( readyQueue[i] );
 			});
 
 			// Clear the queue.
@@ -222,7 +237,7 @@
 				
 				// Execute callback immediately in the next UI thread.	
 			//	console.log("Executing in the next cycle.");
-				SetTimeout( callback, 0 );	
+				defer( callback );	
 						
 			} else {
 	
@@ -319,7 +334,7 @@
 			
 			isLoaded = 1;
 			
-			SetTimeout( callback, 0 );
+			defer( callback );
 		}
 		
 		// Browsers go through 3 readyStates:
@@ -353,7 +368,7 @@
 	
 	Attribute value (getting) or Boot (setting)
 */
-	var styleNode = document.createElement("style"); // Alose used in Boot.inlineCSS.
+	var styleNode = document.createElement("style");
 
 	function attr( elem, attribute, value ){
 		
@@ -584,22 +599,22 @@
 	Consider making this a generic cacheResource function that can cache CSS too?
 	Or we can simply do cacheCSS = cacheScript (or cacheJS?)
 */
-	function cacheScript( src, delay ){
+	function cacheScript( src, cacheDelay ){
 		
 		// log( "Boot.getJS (cacheScript): Caching script (" + src + ")" );
 		var elem;
 		
 		body || (body = document.body);
 		
-		if ( delay ) {
-			// Convert delay to seconds.
-			delay = delay * 1000;
+		if ( cacheDelay ) {
+			// Convert cacheDelay to seconds.
+			cacheDelay = cacheDelay * 1000;
 		}
 		
 		// Body element is required for this to work.
 		if ( body ) {
 			
-			// Cache the script after the optional delay.
+			// Cache the script after the optional cacheDelay.
 			SetTimeout(function(){
 				// Gecko gets an object, everyone else gets an image.
 				// See /test/boot.cachescript.html
@@ -618,7 +633,7 @@
 				
 				body.appendChild( elem );
 				
-			}, delay || 0 );
+			}, cacheDelay || 0 );
 
 		}
 		
@@ -671,7 +686,9 @@
 		script.type = options.type || "";  // Using "" assumes text/javascript.
 		
 		// Sometimes nodes need to have text inside (rare).
-		options.text && ( script.innerHTML = options.text );
+		// Deleting, this doesn't work across browsers (cough, IE).
+		// Tried: script.innerHTML, script.text, document.createTextNode...
+		// options.text && (script.innerHTML = options.text);
 		
 		// This is for Firefox 4
 		// https://developer.mozilla.org/En/HTML/Element/Script
@@ -819,7 +836,7 @@
 		each( arguments, function( i, arg ) {
 
 			var options = {},
-				defer,
+				deferScript,
 				src,
 				callback;
 				
@@ -835,8 +852,8 @@
 				case strObject:
 					options = arg;
 					
-					// Remember defer setting.
-					defer = options.defer;
+					// Remember deferScript setting.
+					deferScript = options.defer;
 					
 					// Should we have a callback.
 					callback = options.callback;
@@ -846,7 +863,7 @@
 			}
 
 			// Defer these options until document is ready.
-			if ( defer === "ready" ) {
+			if ( deferScript === "ready" ) {
 				// Push options into queue for later processing.
 				readyScriptQueue.push( options );
 
@@ -857,7 +874,7 @@
 				});
 				
 			// Defer these options until document is complete.
-			} else if ( defer === strLoad ) {
+			} else if ( deferScript === strLoad ) {
 
 				// Push options into queue for later processing.
 				loadScriptQueue.push( options );
@@ -902,7 +919,7 @@
 				
 					// log( "Boot.getJS: Loading script: " + src);
 					// Look into letting getScript accept an options {}.
-					getScript( src, execScripts, { type: scriptType } );
+					getScript( src, execScripts, { type: scriptType /* , text: options.text*/ } ); // Removing text support, IE problems.
 					
 				}
 				
@@ -977,13 +994,6 @@
 	Boot.inlineCSS
 	
 	Thanks Stoyan!
-
- if (attr == "style" && this.userAgent_.getName() == "MSIE") {
-          domElement.style.cssText = opt_attr[attr];
-        } else {
-          domElement.setAttribute(attr, opt_attr[attr]);
-        }
-
 */
 	function inlineCSS( css ){
 
@@ -1007,24 +1017,25 @@
 	global.inlineCSS = inlineCSS;
 
 /*
-	Boot.createNode
+	Boot.create
 */
-	function createNode( html ) {	
+	function create( html ) {	
 		var div = document.createElement("div");
 		div.innerHTML = html;
 		return div.firstChild;
 	}
-	// Valuable publicly as Boot.createNode? jQuery's territory?
+	global.create = create;
+
 /*
 	Boot.poll
 	
 	Function useful for checking/polling something
-	and then executing a callback once it's done.
+	and then executing a callback once it's true.
 */
 	var timers = {},
 		timerId = 0;
 
-	function poll( check, callback, delay, timeout ){
+	function poll( check, callback, pollDelay, timeout ){
 
 		var name = timerId++,
 			start = now(),
@@ -1040,11 +1051,11 @@
 				clearInterval( timers[ name ] );
 			}
 			
-		}, delay );
+		}, pollDelay );
 		 
 	}
 	global.poll = poll;
-	
+
 /*
 	Boot.getFont
 */
@@ -1056,22 +1067,13 @@
 		testDiv, // Keep it empty until invoked the first time.
 		strLoading = "-loading",
 		strActive = "-active",
-		strInactive = "-inactive", 
-		
-		// Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
-		addClass = function( object, className ) {
-			object.className += " " + className;
-		},
-		removeClass = function ( object, className ) {
-			className = new RegExp( "\\b" + className + "\\b" );
-			object.className = object.className.replace( className, "" );
-    	};
+		strInactive = "-inactive";
 	
 	function getFont( /* options, options, ... */ ) {
 		
 		if ( ! testDiv ) {
 			
-			testDiv = createNode("<div style=\"position:absolute;top:-999px;left:-999px;font-size:300px;width:auto;height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;font-family:serif\">BESs</div>" );
+			testDiv = create("<div style=\"position:absolute;top:-999px;left:-999px;font-size:300px;width:auto;height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;font-family:serif\">BESs</div>" );
 			
 			docElem.appendChild( testDiv );
 			
@@ -1160,12 +1162,126 @@
 	global.getFont = getFont;
 
 /*
-	Boot.browser
-	Browser Detection
-	Thanks Tero Piirainen! http://headjs.com
+	UNDERSCORE UTILITIES
 */
-// browser type & version
 
+	// Delays a function for the given number of milliseconds, and then calls
+	// it with the arguments supplied.
+
+		function delay( func, wait ) {
+			var args = slice.call( arguments, 2 );
+			return setTimeout( function(){ return func.apply(func, args); }, wait );
+		}
+		
+		// Defers a function, scheduling it to run after the current call stack has
+		// cleared.
+		function defer( func ) {
+			return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
+		}
+		
+		// Internal function used to implement throttle() and debounce()
+		function limit( func, wait, debounce ) {
+			
+			var timeout;
+			
+			return function() {
+				
+				function throttler() {
+					timeout = undefined;
+					func.call( this );
+				}
+					
+				if ( debounce ) {
+					clearTimeout( timeout );
+				}
+				
+				if ( debounce || ! timeout ) {
+					timeout = SetTimeout( throttler, wait );
+				}
+			};
+		}
+		
+		// Returns a function, that, when invoked, will only be triggered at most once
+		// during a given window of time.
+		function throttle( func, wait ) {
+			return limit( func, wait, false );
+		}
+		
+		// Returns a function, that, as long as it continues to be invoked, will not
+		// be triggered. The function will be called after it stops being called for
+		// N milliseconds.
+		function debounce( func, wait ) {
+			return limit( func, wait, true );
+		}
+	
+	global.debounce = debounce;
+	global.throttle = throttle;
+
+/*
+	Screen Size Detection
+	Includes a throttler and size update check for better performance.
+	Interesting reads:
+		http://www.webpagemistakes.ca/most-common-screen-resolution/
+*/
+
+	var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
+		screensLength = screens.length,
+		screenWidth,
+		screenClasses;
+	
+    function screenSize() {
+		
+		// We did not use window.outerWidth to have the same property across browsers. 
+		// http://www.howtocreate.co.uk/tutorials/javascript/browserwindow
+        var currentWidth = docElem.clientWidth,
+			currentClasses = [],
+			width,
+			operator,
+			i;
+		
+		// Only update stuff if things actually change.
+		// This is needed for IE 6/7 support, where the 
+		// resize event is fired whenever any element 
+		// on the page resizes (retarded).
+		if ( currentWidth !== screenWidth ) {
+				
+			// Don't think we need this (headjs feature to set the width as a class).
+			//	currentClasses.push( "w-" + Math.floor( currentWidth / 50) * 50 );
+			for ( i = 0; i < screensLength; i++ ) {
+				width = screens[i];
+				currentClasses.push( (currentWidth <= width ? "lt-" : "gt-") + width ); 
+			}
+/*
+			each( screens, function(i, width) {
+				if ( currentWidth < width ) { 
+					currentClasses.push( "lt-" + width ); 
+				}
+			});
+*/
+			screenWidth = currentWidth;
+			
+			currentClasses = currentClasses.join(" ");
+			
+			if ( currentClasses != screenClasses ) {
+				removeClass( docElem, screenClasses );
+				addClass( docElem, currentClasses );
+				screenClasses = currentClasses;
+				emit("boot.screen-update", { screens: screenClasses, width: currentWidth });
+			}
+		}
+    }
+
+    screenSize();
+	
+	// Throttling seemed to be more desirable than debouncing.
+    bind( window, "resize", throttle( screenSize, 100 ) );
+
+/*
+	Boot.browser + CSS browser class targeting
+	Code based on head.js - http://headjs.com 
+	Thanks Tero Piirainen!
+	addressed IE bug where browserVersion was a number and needed to be a string (tell Tero).
+*/
     var ua = navigator.userAgent.toLowerCase(),
 		browser,
 		browserName,
@@ -1192,8 +1308,8 @@
 	}
 
     browserClasses.push( browserName );
-	browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
-	browserClasses.push( browserName + browserVersion.replace(".", "-").replace(/\..*/, "" ) ); // Minor version
+	browserClasses.push( browserName + parseInt( browserVersion ) ); // Major version
+	browserClasses.push( browserName + browserVersion.toString().replace(".", "-").replace(/\..*/, "" ) ); // Minor version
 	
 	// Add classes all at once for performance reasons.
 	addClass( docElem, browserClasses.join(" ") );
@@ -1201,6 +1317,7 @@
 	// Open up Boot.browser
     browser = { version: browserVersion };
     browser[ browserName ] = true;
+	
 	global.browser = browser;
 	
 /*
@@ -1216,7 +1333,7 @@
 
 	/*
 		To Do
-		- Screen detection.
+		? Generic feature detection / docElem class name adder?
 		? Boot.once - Do a callback once only.
 		? Boot.off / Boot.removeEvent - Remove custom event.
 	*/
