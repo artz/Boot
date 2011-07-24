@@ -846,7 +846,12 @@
 				// Tell global scripts object this script has loaded.
 				// Set scriptDone to prevent this function from being called twice.
 				done = 1;
-	
+				
+				// Emit an event indicating this script has just executed.
+			//	if ( ! script.type ) {
+			//		emit( eventNamespace + "js-done", { src: src } );
+			//	}
+				
 			//	if ( callback ) {
 			//	Boot.log( options.test );
 				callback( src ); 
@@ -898,6 +903,8 @@
 		execScriptQueue = [],
 		readyScriptQueue = [],
 		loadScriptQueue = [],
+		
+//		scriptDoneEvent = "js-done",
 	
 		lastScript,
 		lastTest,
@@ -910,10 +917,22 @@
 		
 		scriptType = isScriptAsync ? "" : "c";
 	
-	// log( "Boot.getJS: Script <b>is " + (isScriptAsync ? "" : "not") + "</b> asynchronous." );
-
+	// log( "Boot.getJS: Script <b>is " + (isScriptAsync ? "" : "not") + "</b> asynchronous." );	
+/*	
+	function emitScript( scriptObject ) {
+		if ( scriptObject.src ) {
+			if ( isScriptAsync ) {
+				emit( eventNamespace + scriptDoneEvent, scriptObject );
+			} else {
+				defer(function(){
+					emit( eventNamespace + scriptDoneEvent, scriptObject );
+				});
+			}
+		}
+	}
+*/
 	function shiftScripts() {
-//		log( "Shifting! " + execScriptQueue[0] + " to " + execScriptQueue[1] );
+//		emitScript(execScriptQueue[0]);
 		execScriptQueue.shift();
 		execScripts();
 	}
@@ -943,7 +962,9 @@
 						
 			isScriptExecuted[ nextScript ] = 1;
 			
-			emit( eventNamespace + "js-done", nextScriptObject );
+			// We are moving this to getScript, which emits immediately
+			// after execution.
+			// emit( eventNamespace + "js-done", { src: lastScript, test: lastTest } );
 			
 			// If browser supports asynch execution, continue.
 			if ( isScriptAsync ) {
@@ -1128,7 +1149,7 @@
 	Boot.create
 */
 	function create( html ) {	
-		var div = document.createElement("div");
+		var div = document.createElement("c");
 		div.innerHTML = html;
 		return div.firstChild;
 	}
@@ -1163,7 +1184,8 @@
 			l = args.length;
 	
 		if ( ! testDiv ) {
-			testDiv = create("<div style=\"position:absolute;top:-999px;left:-999px;font-size:300px;width:auto;height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;font-family:serif\">BESs</div>" );
+			// Shouldn't need these: height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
+			testDiv = create("<div style=\"position:absolute;top:-999px;left:-999px;width:auto;font-size:300px;font-family:serif\">BESs</div>" ); 
 			docElem.appendChild( testDiv );
 		}
 		
@@ -1179,8 +1201,7 @@
 					addClass( docElem, namespacedFontName + strInactive );
 
 					emit( eventNamespace + namespacedFontName + strInactive );
-//						emit( "get-font-inactive", { name: fontName } );
-//						window.console && console.log( "Font timeout: " + namespacedFontName );
+//					window.console && console.log( "Font timeout: " + namespacedFontName );
 				} else {
 				
 					removeClass( docElem, namespacedFontName + strLoading );
