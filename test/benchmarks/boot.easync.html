@@ -12,10 +12,14 @@
 
 <script>
 	// calculate difference between zero and window.onload
-	var now = new Date();
-	window.onload = function() {
-		document.getElementById("content").style.display = "block";	
-		document.getElementById("ms").innerHTML = (new Date()).getTime() - now.getTime(); 	
+	var now = new Date(),
+		finishedCount = 0;
+	
+	function finished(){
+		if ( ++finishedCount === 2 ) {
+			document.getElementById("content").style.display = "block";	
+			document.getElementById("ms").innerHTML = (new Date()).getTime() - now.getTime(); 	
+		}
 	}
 </script> 
 
@@ -29,6 +33,7 @@
 <script type="async/js" data-src="js/javascript.php?num=8"></script>
 <script type="async/js" data-src="js/javascript.php?num=9"></script>
 <script type="async/js">
+	finished();
 	Boot.log("First 9 scripts loaded.");
 </script> 
 
@@ -41,7 +46,7 @@
 	<style> 
 	html { background-color:#f9f9f9;	 }
 	body { color:#333; font:13px sans-serif; } 
-	#wrap { margin:50px auto;  width:800px;		 }
+	#wrap { margin:50px auto;  width:900px;		 }
 	#nav { padding-left:10px; overflow: hidden; }
 	#nav a { float:left; margin-right:20px; color:#666; text-decoration:none; font-weight:bold; padding: 5px 10px; }
 	#nav em { display:block; font-style:normal; font-weight:normal; color:#999; }
@@ -70,6 +75,7 @@
 			<a href="labjs.html">LABjs <em>in head</em></a> 
 			<a href="A.getjs.html">A.getJS <em>in head</em></a> 
 			<a href="headjs.html">head.js <em>in head</em></a> 
+			<a href="yepnope.html">yepnope.js<em>in head</em></a> 
 			<a href="bootjs.html">Boot.getJS <em>in head</em></a> 
 			<a href="boot.easync.html" class="selected">Boot.getJS <em>w/ Easync</em></a> 
 		</div>
@@ -118,6 +124,7 @@
 <script type="async/js" data-src="js/javascript.php?num=13"></script>
 <script type="async/js" data-src="js/javascript.php?num=14"></script>
 <script type="async/js">
+	finished();
 	Boot.log("Second 5 scripts loaded.");
 </script> 
 

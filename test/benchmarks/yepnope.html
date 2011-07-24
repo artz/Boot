@@ -5,9 +5,10 @@
 
 <head>
 
-<title>JS Loader Benchmarks - head.js</title> 
+<title>JS Loader Benchmarks - yepnope.js</title> 
 
 <script src="../../src/boot.js"></script>
+<script src="js/yepnope.js"></script>
 
 <script>
 	// calculate difference between zero and window.onload
@@ -24,27 +25,23 @@
 
 
 <script> 
-Boot.getJS("js/javascript.php?num=1",
-	"js/javascript.php?num=2",
-	"js/javascript.php?num=3",
-	"js/javascript.php?num=4",
-	"js/javascript.php?num=5",
-	"js/javascript.php?num=6",	
-	"js/javascript.php?num=7",
-	"js/javascript.php?num=8",
-	"js/javascript.php?num=9", function(){
-		finished();
-		Boot.log("First 9 scripts loaded.");
-	});	
+yepnope([
+	{ load: "js/javascript.php?num=1"},
+	{ load: "js/javascript.php?num=2"},
+	{ load: "js/javascript.php?num=3"},
+	{ load: "js/javascript.php?num=4"},
+	{ load: "js/javascript.php?num=5"},
+	{ load: "js/javascript.php?num=6"},
+	{ load: "js/javascript.php?num=7"},
+	{ load: "js/javascript.php?num=8"},
+	{ 
+		load: "js/javascript.php?num=9", 
+		callback: function(){
+			finished();
+			Boot.log("First 9 scripts loaded.");	
+	}}
+]);
 
-// Unique Boot.getJS feature: deferring scripts until window.load or document.ready.
-Boot.getJS({
-	src: "js/javascript.php?num=15",
-	defer: "load",
-	callback: function(){
-		Boot.log("Last script loaded on window.load after all other scripts.");
-	}
-});
 </script> 
  
  
@@ -81,8 +78,8 @@ Boot.getJS({
 			<a href="labjs.html">LABjs <em>in head</em></a> 
 			<a href="A.getjs.html">A.getJS <em>in head</em></a> 
 			<a href="headjs.html">head.js <em>in head</em></a> 
-			<a href="yepnope.html">yepnope.js<em>in head</em></a> 
-			<a href="bootjs.html" class="selected">Boot.getJS <em>in head</em></a> 
+			<a href="yepnope.html" class="selected">yepnope.js<em>in head</em></a> 
+			<a href="bootjs.html">Boot.getJS <em>in head</em></a> 
 			<a href="boot.easync.html">Boot.getJS <em>w/ Easync</em></a> 
 		</div>
 		
@@ -92,10 +89,7 @@ Boot.getJS({
 		<div id="content"> 
 			
 			<h1></h1> 
-		<script>
-		// Cool/unique feature, enables inline function calls while async loading.
-		Boot.getJS(function(){Boot.log("I am in the middle of the page.");})
-		</script>	
+
 			<div id="time"><span id="ms">...</span> ms</div> 
 			
 			<p> 
@@ -132,14 +126,18 @@ Boot.getJS avoids the Firefox render block like LABjs in Firefox. Uniquely, it a
 	</div> 
 	
 <script> 
-Boot.getJS("js/javascript.php?num=10",
-	"js/javascript.php?num=11",
-	"js/javascript.php?num=12",
-	"js/javascript.php?num=13",
-	"js/javascript.php?num=14", function(){
-		finished();
-		Boot.log("Second 5 scripts loaded.");
-	});	
+yepnope([
+	{ load: "js/javascript.php?num=10"},
+	{ load: "js/javascript.php?num=11"},
+	{ load: "js/javascript.php?num=12"},
+	{ load: "js/javascript.php?num=13"},
+	{ 
+		load: "js/javascript.php?num=14", 
+		callback: function(){
+			finished();
+			Boot.log("Second 5 scripts loaded.");	
+	}}
+]);
 </script>
 
 </body> 

@@ -13,7 +13,10 @@
 		document = window.document,
 		JSON = window.JSON,
 		SetTimeout = setTimeout,
-		slice = Array.prototype.slice,
+		
+		arrayProto = Array.prototype,
+		slice = arrayProto.slice,
+		forEach = arrayProto.forEach,
 		
 		// String compression optimizations for the library.
 		strLoad = "load",
@@ -33,14 +36,14 @@
 	Simple add/remove classname functions.
 	Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
 */
-function addClass( object, className ) {
-	object.className += " " + className;
-}
-
-function removeClass( object, className ) {
-	className = new RegExp( "\\b" + className + "\\b" );
-	object.className = object.className.replace( className, "" );
-}
+	function addClass( object, className ) {
+		object.className += " " + className;
+	}
+	
+	function removeClass( object, className ) {
+		className = new RegExp( "\\b" + className + "\\b" );
+		object.className = object.className.replace( className, "" );
+	}
 
 /*
 	Function: Boot.now
@@ -101,7 +104,6 @@ function removeClass( object, className ) {
 	Boot.extend
 	
 	Merge the contents of two or more objects together into the first object.
-	* Update this to use native foreach if available (see underscore.js).
 	
 	Boot.extend( target, [object1], [objectN] )
 	
@@ -392,6 +394,9 @@ function removeClass( object, className ) {
 	Function: Boot.each
 	
 	Simple function for iterating through an array.
+	
+	Not nearly as cool as Underscore's but does the job.
+	http://documentcloud.github.com/underscore/#each
 	
 	Parameters:
 	
@@ -767,7 +772,7 @@ function removeClass( object, className ) {
 		isGecko = "MozAppearance" in docElem.style,
 		
 		// If the browser supports asynchronous executing scripts. (Firefox 3.6, Opera, Chrome 12)
-		isScriptAsync = isGecko || window.opera || document.createElement( strScript ).async === true,
+		isScriptAsync = isGecko || window.opera || document.createElement( strScript ).async, /* === true */
 		
 		scriptType = isScriptAsync ? "" : "c";
 	
@@ -1120,6 +1125,8 @@ function removeClass( object, className ) {
 						
 			addClass( docElem, namespacedFontName + strLoading );
 			
+			// Had to use a closure inside the loob because of the callback.
+			// Consider switching to Boot.each() for brevity.
 			(function( fontDiv, namespacedFontName ) {
 				
 				poll( function( time ){
@@ -1168,54 +1175,54 @@ function removeClass( object, className ) {
 	// Delays a function for the given number of milliseconds, and then calls
 	// it with the arguments supplied.
 
-		function delay( func, wait ) {
-			var args = slice.call( arguments, 2 );
-			return setTimeout( function(){ return func.apply(func, args); }, wait );
-		}
-		
-		// Defers a function, scheduling it to run after the current call stack has
-		// cleared.
-		function defer( func ) {
-			return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
-		}
-		
-		// Internal function used to implement throttle() and debounce()
-		function limit( func, wait, debounce ) {
-			
-			var timeout;
-			
-			return function() {
-				
-				function throttler() {
-					timeout = undefined;
-					func.call( this );
-				}
-					
-				if ( debounce ) {
-					clearTimeout( timeout );
-				}
-				
-				if ( debounce || ! timeout ) {
-					timeout = SetTimeout( throttler, wait );
-				}
-			};
-		}
-		
-		// Returns a function, that, when invoked, will only be triggered at most once
-		// during a given window of time.
-		function throttle( func, wait ) {
-			return limit( func, wait, false );
-		}
-		
-		// Returns a function, that, as long as it continues to be invoked, will not
-		// be triggered. The function will be called after it stops being called for
-		// N milliseconds.
-		function debounce( func, wait ) {
-			return limit( func, wait, true );
-		}
+	function delay( func, wait ) {
+		var args = slice.call( arguments, 2 );
+		return SetTimeout( function(){ return func.apply(func, args); }, wait );
+	}
 	
-	global.debounce = debounce;
+	// Defers a function, scheduling it to run after the current call stack has
+	// cleared.
+	function defer( func ) {
+		return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
+	}
+	
+	// Internal function used to implement throttle() and debounce()
+	function limit( func, wait, debounce ) {
+		
+		var timeout;
+		
+		return function() {
+			
+			function throttler() {
+				timeout = undefined;
+				func.call( this );
+			}
+				
+			if ( debounce ) {
+				clearTimeout( timeout );
+			}
+			
+			if ( debounce || ! timeout ) {
+				timeout = SetTimeout( throttler, wait );
+			}
+		};
+	}
+	
+	// Returns a function, that, when invoked, will only be triggered at most once
+	// during a given window of time.
+	function throttle( func, wait ) {
+		return limit( func, wait, false );
+	}
 	global.throttle = throttle;
+	
+	// Returns a function, that, as long as it continues to be invoked, will not
+	// be triggered. The function will be called after it stops being called for
+	// N milliseconds.
+	function debounce( func, wait ) {
+		return limit( func, wait, true );
+	}
+	global.debounce = debounce;
+
 
 /*
 	Screen Size Detection
@@ -1282,32 +1289,32 @@ function removeClass( object, className ) {
 	Thanks Tero Piirainen!
 	addressed IE bug where browserVersion was a number and needed to be a string (tell Tero).
 */
-    var ua = navigator.userAgent.toLowerCase(),
+    var userAgent = navigator.userAgent.toLowerCase(),
 		browser,
 		browserName,
 		browserVersion,
 		browserClasses = [];
 
-    ua = /(firefox)[ \/]([\w.]+)/.exec( ua ) ||
-		/(chrome)[ \/]([\w.]+)/.exec( ua ) ||
-		contains( ua, "safari" ) && /(version)[ \/]([\w.]+)/.exec( ua ) || 
-        /(opera)(?:.*version)?[ \/]([\w.]+)/.exec( ua ) ||
-        /(msie) ([\w.]+)/.exec( ua ) ||
-		/(webkit)[ \/]([\w.]+)/.exec( ua ) || [];
-
-	browserName = ua[1];
-	browserVersion = ua[2];
-
-    if ( browserName === "msie" ) {
-        browserName = "ie";
-        browserVersion = document.documentMode || browserVersion;
-    }
+	userAgent = /(firefox)[ \/]([\w.]+)/.exec( userAgent ) ||
+		/(chrome)[ \/]([\w.]+)/.exec( userAgent ) ||
+		contains( userAgent, "safari" ) && /(version)[ \/]([\w.]+)/.exec( userAgent ) || 
+		/(opera)(?:.*version)?[ \/]([\w.]+)/.exec( userAgent ) ||
+		/(msie) ([\w.]+)/.exec( userAgent ) ||
+		/(webkit)[ \/]([\w.]+)/.exec( userAgent ) || [];
+	
+	browserName = userAgent[1];
+	browserVersion = userAgent[2];
+	
+	if ( browserName === "msie" ) {
+		browserName = "ie";
+		browserVersion = document.documentMode || browserVersion;
+	}
 	
 	if ( browserName === "version" ) {
 		browserName = "safari";	
 	}
-
-    browserClasses.push( browserName );
+	
+	browserClasses.push( browserName );
 	browserClasses.push( browserName + parseInt( browserVersion ) ); // Major version
 	browserClasses.push( browserName + browserVersion.toString().replace(".", "-").replace(/\..*/, "" ) ); // Minor version
 	
@@ -1315,20 +1322,21 @@ function removeClass( object, className ) {
 	addClass( docElem, browserClasses.join(" ") );
 	
 	// Open up Boot.browser
-    browser = { version: browserVersion };
-    browser[ browserName ] = true;
+	browser = { version: browserVersion };
+	browser[ browserName ] = true;
 	
 	global.browser = browser;
 	
 /*
 	HTML 5 Support for IE
+	http://html5doctor.com/how-to-get-html5-working-in-ie-and-firefox-2/
 	Research need for print protection: http://www.iecss.com/print-protector/
 */
 	if ( browser.ie ) {
-        // HTML5 support for IE
-        each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split(" "), function(i, elem) {
-            document.createElement( elem );
-        });
+		// HTML5 support for IE
+		each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split(" "), function(i, elem) {
+			document.createElement( elem );
+		});
 	}
 
 	/*
@@ -1336,6 +1344,7 @@ function removeClass( object, className ) {
 		? Generic feature detection / docElem class name adder?
 		? Boot.once - Do a callback once only.
 		? Boot.off / Boot.removeEvent - Remove custom event.
+		? What should Boot(); do? Extend Boot, or set default params, etc.
 	*/
 	
 })("Boot", this);

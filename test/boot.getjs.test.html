@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.getJS</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.getJS</h1>
+<pre id="log"></pre>
+<script>
+// Initialize logging.
+Boot.log.init({
+	elem: document.getElementById("log")
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+Boot.ready(function(){
+	Boot.log("<b>DOM READY</b>");
+});
+
+Boot.log("Setting up script #4 to run on DOM Ready.");
+Boot.getJS({
+	src: "javascript.php?num=4&sleep=2",
+	callback: function( src ){
+		Boot.log("boot.getjs.html: Executing <b>document.ready</b> script #4 callback (" + src + ").");
+	},
+	defer: "ready"
+});
+
+Boot.load(function(){
+	Boot.log("<b>WINDOW LOADED</b>");
+});
+
+Boot.log("Setting up script #5 to run on Window.load.");
+Boot.getJS({
+	src: "javascript.php?num=5",
+	callback: function( src ){
+		Boot.log("boot.getjs.html: Executing <b>window.load</b> script #5 callback (" + src + ").");
+	},
+	defer: "load"
+});
+
+// Standard script fetch with callback.
+Boot.log("boot.getjs.html: Loading script #1.");
+Boot.getJS("javascript.php?num=1&sleep=2", function( src ){
+	Boot.log("boot.getjs.html: Executing script #1 callback (" + src + ").");
+});
+
+// Executing a callback only.
+Boot.log("boot.getjs.html: Loading callback #1.");
+Boot.getJS(function(){
+	Boot.log("boot.getjs.html: Executing callback #1.");
+});
+
+// Executing standard options.
+Boot.log("boot.getjs.html: Loading script #2.");
+Boot.getJS({
+	src: "javascript.php?num=2",
+	callback: function( src ){
+		Boot.log("boot.getjs.html: Executing script #2 callback (" + src + ").");
+	}
+});
+
+// Cache a script but do not execute it.
+// Set a delay of 5 seconds after window.load.
+Boot.log("boot.getjs.html: Caching script #3.");
+Boot.getJS({
+	src: "javascript.php?num=3",
+	type: "cache/js",
+	defer: "load",
+	delay: 3
+});
+
+</script>
+<p>This paragraph of text should not be blocked.</p>
+<script type="text/javascript">
+document.write("<p>This was generated using a JavaScript document.write() and should not be blocked.");
+</script>
+</body>
+</html>
