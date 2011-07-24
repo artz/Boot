@@ -943,20 +943,14 @@
 		var nextScriptObject = execScriptQueue[0] || {},
 		
 			// Look if next script object is a script or callback.
-			nextScript = nextScriptObject.src || nextScriptObject;
+			nextScript = nextScriptObject.src || nextScriptObject,
+			
+			linkedScript,
+			linkedSrc,
+			linkedTest;
 		
 		// Remember the script we were passed is loaded.
 		isScriptDone[ src ] = 1;
-		
-		function setLast() {
-			lastScript = nextScript;
-			lastTest = !!nextScriptObject.test;	
-		}
-		
-		function resetLast() {
-			nextScript( lastScript, lastTest );
-			lastScript = lastTest = undefined;
-		}
 
 		if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
 						
@@ -968,26 +962,30 @@
 			
 			// If browser supports asynch execution, continue.
 			if ( isScriptAsync ) {
-				// Remember the last script we executed and the test result.
-				setLast();
 				shiftScripts();
 			// Otherwise fetch this script and shift it out when executed.
 			} else {
-				// Remember the last script we executed and the test result.
-				defer(setLast);
 				getScript( nextScript, shiftScripts );
 			}
 			 
 		} else if ( isFunction( nextScript ) ) {
+			
+			if ( linkedScript = nextScript.s ) {
+				linkedSrc = linkedScript.src;
+				linkedTest = linkedScript.test;
+			}
+			
 			// We handle things differently for async browsers, since
 			// we want to be sure to execute the callback immediately
 			// after the script downloads.
 			if ( isScriptAsync ) {
-				resetLast();
+				nextScript( linkedSrc, linkedTest );
 			} else {
 				// For other browsers, we continue to manage things
 				// manually using paced SetTimeouts.  IE likes it.
-				defer(resetLast);
+				defer(function(){
+					nextScript( linkedSrc, linkedTest );
+				});
 			}
 			shiftScripts();
 		}		
@@ -1107,7 +1105,12 @@
 				}
 				
 				// Push the callback into the queue if we had one.
-				if ( callback ) {			
+				if ( callback ) {
+					
+					// Remember the script object associated
+					// with this callback.
+					callback.s = options;
+					
 					// log( "Boot.getJS: Pushing callback function into queue.");
 					execScriptQueue.push( callback );
 				}
