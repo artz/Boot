@@ -928,24 +928,32 @@
 		
 		// Remember the script we were passed is loaded.
 		isScriptDone[ src ] = 1;
+		
+		function setLast() {
+			lastScript = nextScript;
+			lastTest = !!nextScriptObject.test;	
+		}
+		
+		function resetLast() {
+			nextScript( lastScript, lastTest );
+			lastScript = lastTest = undefined;
+		}
 
 		if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
-			
-			// Remember the last script we executed.
-			lastScript = nextScript;
-			
-			// Remember the last test we ran, used for yaynay.
-			lastTest = !!nextScriptObject.test;
-			
+						
 			isScriptExecuted[ nextScript ] = 1;
 			
 			emit( eventNamespace + "js-done", nextScriptObject );
 			
 			// If browser supports asynch execution, continue.
 			if ( isScriptAsync ) {
+				// Remember the last script we executed and the test result.
+				setLast();
 				shiftScripts();
 			// Otherwise fetch this script and shift it out when executed.
 			} else {
+				// Remember the last script we executed and the test result.
+				defer(setLast);
 				getScript( nextScript, shiftScripts );
 			}
 			 
@@ -954,15 +962,11 @@
 			// we want to be sure to execute the callback immediately
 			// after the script downloads.
 			if ( isScriptAsync ) {
-				nextScript( lastScript, lastTest );
-				lastScript = lastTest = undefined;
+				resetLast();
 			} else {
 				// For other browsers, we continue to manage things
 				// manually using paced SetTimeouts.  IE likes it.
-				defer(function(){
-					nextScript( lastScript, lastTest );
-					lastScript = lastTest = undefined;
-				});	
+				defer(resetLast);
 			}
 			shiftScripts();
 		}		
