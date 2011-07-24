@@ -716,7 +716,8 @@
 				done = 1;
 	
 			//	if ( callback ) {
-				callback( src );
+			//	Boot.log( options.test );
+				callback( src ); 
 			//	}
 				
 				// Handle memory leak in IE
@@ -732,9 +733,9 @@
 		
 		// This is the safest insertion point to assume.
 		// We use a setTimeout to ensure non-blocking behavior.
-		SetTimeout(function(){
+		defer(function(){
 			firstScriptParent.insertBefore( script, firstScript );
-		}, 0);
+		});
 		
 		
 	}
@@ -767,6 +768,7 @@
 		loadScriptQueue = [],
 	
 		lastScript,
+		lastTest,
 		
 		docElem = document.documentElement,
 		isGecko = "MozAppearance" in docElem.style,
@@ -800,6 +802,9 @@
 			// Remember the last script we executed.
 			lastScript = nextScript;
 			
+			// Remember the last test we ran, used for yaynay.
+			lastTest = !!nextScriptObject.test;
+			
 			isScriptExecuted[ nextScript ] = 1;
 			
 			// If browser supports asynch execution, continue.
@@ -815,13 +820,13 @@
 			// we want to be sure to execute the callback immediately
 			// after the script downloads.
 			if ( isScriptAsync ) {
-				nextScript( lastScript )
+				nextScript( lastScript, lastTest )
 			} else {
 				// For other browsers, we continue to manage things
 				// manually using paced SetTimeouts.  IE likes it.
-				SetTimeout(function(){
-					nextScript( lastScript )
-				}, 0);	
+				defer(function(){
+					nextScript( lastScript, lastTest )
+				});	
 			}
 			shiftScripts();
 		}		
@@ -895,6 +900,17 @@
 				
 				// Localize the source.
 				src = options.src;
+
+				// Simple yepnope-ish implementation.
+				// For the real deal look here: http://yepnopejs.com/
+				if ( ! src && options.nay ) {
+					if ( options.test ) {
+						src = options.yay;
+					} else {
+						src = options.nay;
+					}
+					options.src = src;
+				}
 
 				// Localize the callback.
 				callback = options.callback;
