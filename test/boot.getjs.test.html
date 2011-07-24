@@ -56,13 +56,23 @@ Boot.getJS({
 		Boot.log("boot.getjs.html: Executing script #1 callback (" + src + "). Test = " + test);
 	}}, {
 	test: Feature.B,
-	yay: "javascript.php?num=2&sleep=2", 
-	nay: "javascript.php?num=2&sleep=2&alternate",
+	yay: "javascript.php?num=2", 
+	nay: "javascript.php?num=2&alternate",
 	callback: function( src, test ){
 		Boot.log("boot.getjs.html: Executing script #2 callback (" + src + "). Test = " + test);
+		Feature.C = false;
+	}}, {
+	test: Feature.C,
+	defer: "ready",
+	nay: "javascript.php?num=3&alternate",
+	callback: function( src, test ){
+		Boot.log("boot.getjs.html: Executing script #3 callback (" + src + "). Test = " + test);
 	}
 });
 
+Boot.on( "boot.js-done", function( data ){
+	Boot.log( "boot.getjs.html: Done loading " + data.src );
+});
 
 
 </script>

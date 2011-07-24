@@ -47,15 +47,15 @@ Boot.log("boot.getjs.html: Starting tests.");
 Boot.getFont("Chewy", "SpecialElite", "NotThere");
 // Boot.getFont("specialelite");
 
-Boot.on( "wf-chewy-active", function(){
+Boot.on( "boot.wf-chewy-active", function(){
 	Boot.log( "boot.getjs.html: Chewy active!" );
 });
 
-Boot.on( "wf-specialelite-active", function(){
+Boot.on( "boot.wf-specialelite-active", function(){
 	Boot.log( "boot.getjs.html: SpecialElite active!" );
 });
 
-Boot.on( "wf-notthere-inactive", function(){
+Boot.on( "boot.wf-notthere-inactive", function(){
 	Boot.log( "boot.getjs.html: NotThere is not there! (10 sec timeout)" );
 });
 

@@ -798,7 +798,7 @@
 		
 		// Remember the script we were passed is loaded.
 		isScriptDone[ src ] = 1;
-	
+
 		if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
 			
 			// Remember the last script we executed.
@@ -824,12 +824,14 @@
 			// we want to be sure to execute the callback immediately
 			// after the script downloads.
 			if ( isScriptAsync ) {
-				nextScript( lastScript, lastTest )
+				nextScript( lastScript, lastTest );
+				lastScript = lastTest = undefined;
 			} else {
 				// For other browsers, we continue to manage things
 				// manually using paced SetTimeouts.  IE likes it.
 				defer(function(){
-					nextScript( lastScript, lastTest )
+					nextScript( lastScript, lastTest );
+					lastScript = lastTest = undefined;
 				});	
 			}
 			shiftScripts();
@@ -1367,6 +1369,7 @@
 	? Boot.unbind - Unbind function?
 	? Boot.off / Boot.removeEvent - Remove custom event.
 	? What should Boot(); do? Extend Boot, or set default params, etc.
+	? Add element/string specific event binds.
 */
 	
 })("Boot", this);
