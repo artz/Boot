@@ -30,7 +30,9 @@
 		strReadyState = "readyState",
 		strOnReadyStateChange = "onreadystatechange",
 		strOnLoad = "onload",
-		strComplete = "complete";
+		strComplete = "complete",
+		
+		eventNamespace = namespace.toLowerCase() + ".";
 
 /*
 	Simple add/remove classname functions.
@@ -807,6 +809,8 @@
 			
 			isScriptExecuted[ nextScript ] = 1;
 			
+			emit( eventNamespace + "js-done", nextScriptObject );
+			
 			// If browser supports asynch execution, continue.
 			if ( isScriptAsync ) {
 				shiftScripts();
@@ -1137,7 +1141,7 @@
 						
 			namespacedFontName = options.namespace + fontName;
 			
-			emit( namespacedFontName + strLoading );
+			emit( eventNamespace + namespacedFontName + strLoading );
 						
 			addClass( docElem, namespacedFontName + strLoading );
 			
@@ -1155,7 +1159,7 @@
 						removeClass( docElem, namespacedFontName + strLoading );
 						addClass( docElem, namespacedFontName + strInactive );
 
-						emit( namespacedFontName + strInactive );
+						emit( eventNamespace + namespacedFontName + strInactive );
 //						emit( "get-font-inactive", { name: fontName } );
 // 						window.console && console.log( "Font timeout: " + namespacedFontName );
 					} else {
@@ -1163,7 +1167,7 @@
 						removeClass( docElem, namespacedFontName + strLoading );
 						addClass( docElem, namespacedFontName + strActive );
 						
-						emit( namespacedFontName + strActive );
+						emit( eventNamespace + namespacedFontName + strActive );
 //						emit( "get-font-active", { name: fontName } );
 					}
 //					fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
@@ -1289,7 +1293,7 @@
 				removeClass( docElem, screenClasses );
 				addClass( docElem, currentClasses );
 				screenClasses = currentClasses;
-				emit("boot.screen-update", { screens: screenClasses, width: currentWidth });
+				emit( eventNamespace + "screen-update", { screens: screenClasses, width: currentWidth });
 			}
 		}
     }
@@ -1355,12 +1359,14 @@
 		});
 	}
 
-	/*
-		To Do
-		? Generic feature detection / docElem class name adder?
-		? Boot.once - Do a callback once only.
-		? Boot.off / Boot.removeEvent - Remove custom event.
-		? What should Boot(); do? Extend Boot, or set default params, etc.
-	*/
+/*
+	To Do
+	? getJS merge support
+	? Generic feature detection / docElem class name adder?
+	? Boot.once - Do a callback once only (immediately unbind event).
+	? Boot.unbind - Unbind function?
+	? Boot.off / Boot.removeEvent - Remove custom event.
+	? What should Boot(); do? Extend Boot, or set default params, etc.
+*/
 	
 })("Boot", this);
