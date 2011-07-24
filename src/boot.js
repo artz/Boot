@@ -14,10 +14,8 @@
 		JSON = window.JSON,
 		SetTimeout = setTimeout,
 		
-		arrayProto = Array.prototype,
-		slice = arrayProto.slice,
-		forEach = arrayProto.forEach,
-		
+		slice = Array.prototype.slice,
+	
 		// String compression optimizations for the library.
 		strLoad = "load",
 		strString = "string",
@@ -48,6 +46,162 @@
 	}
 
 /*
+	Function: Boot.contains
+	
+	Determines if the given string contains given text.
+	
+	Parameters:
+		
+		haystack - The string to search inside.
+		needle - The string to find.
+	 
+	Returns:
+	
+	Boolean
+	
+	Usage:
+	if ( contains( "a", "abcde" ) ) {
+		// true
+		Do something knowing this value contains it.
+	}
+*/
+	function contains( haystack, needle ){
+		return haystack && haystack.indexOf( needle ) !== -1;
+	}
+	global.contains = contains;
+
+/*
+	Function: Boot.isArray
+	
+	Determines if the given object is an array.
+	
+	Parameters:
+	
+		obj - The object to test.
+	 
+	Returns:
+	
+	Boolean
+*/
+	// String optimizations.
+	function is( str, type ) {
+		return typeof str === type;
+	}
+
+	function isArray( obj ) {
+		return obj && contains( obj.constructor.toString(), "rray" );
+	}
+	global.isArray = isArray;
+	
+	function isObject( obj ) {
+		return is( obj, strObject );
+	}
+	global.isObject = isObject;
+	
+	function isString( obj ) {
+		return is( obj, strString );
+	}
+	global.isString = isString;
+	
+	function isBoolean( obj ) {
+		return is( obj, strBoolean );
+	}
+	global.isBoolean = isBoolean;
+	
+	function isFunction( obj ) {
+		return is( obj, strFunction );
+	}
+	global.isFunction = isFunction;
+	
+	function isNumber( obj ) {
+		return is( obj, strNumber );
+	}
+	global.isNumber = isNumber;
+
+/*
+	Function: Boot.each
+	
+	Simple function for iterating through an array.
+	
+	Not nearly as cool as Underscore's but does the job.
+	http://documentcloud.github.com/underscore/#each
+	
+	Parameters:
+	
+		array - The array to iterate over.
+		callback - The callback to apply to each item in the array.
+	
+	Returns:
+	
+	Boot
+*/
+	function each( array, callback ) {
+	// Anything break if I comment this out?  Dummy protection needed?
+	//	if ( array && array.length ) {  
+		var i = 0, l = array.length;
+		for (; i < l; i++ ) {
+			callback.call( array, i, array[i] );
+		}
+	//	}
+		
+	}
+	global.each = each;
+
+/*
+	UNDERSCORE UTILITIES
+*/
+
+	// Delays a function for the given number of milliseconds, and then calls
+	// it with the arguments supplied.
+	function delay( func, wait ) {
+		var args = slice.call( arguments, 2 );
+		return SetTimeout( function(){ return func.apply(func, args); }, wait );
+	}
+	
+	// Defers a function, scheduling it to run after the current call stack has
+	// cleared.
+	function defer( func ) {
+		return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
+	}
+	
+	// Internal function used to implement throttle() and debounce()
+	function limit( func, wait, debounce ) {
+		
+		var timeout;
+		
+		return function() {
+			
+			function throttler() {
+				timeout = undefined;
+				func.call( this );
+			}
+				
+			if ( debounce ) {
+				clearTimeout( timeout );
+			}
+			
+			if ( debounce || ! timeout ) {
+				timeout = SetTimeout( throttler, wait );
+			}
+		};
+	}
+	
+	// Returns a function, that, when invoked, will only be triggered at most once
+	// during a given window of time.
+	function throttle( func, wait ) {
+		return limit( func, wait, false );
+	}
+	global.throttle = throttle;
+	
+	// Returns a function, that, as long as it continues to be invoked, will not
+	// be triggered. The function will be called after it stops being called for
+	// N milliseconds.
+	function debounce( func, wait ) {
+		return limit( func, wait, true );
+	}
+	global.debounce = debounce;
+
+/*
 	Function: Boot.now
 	
 	Gets a current timestamp.
@@ -60,7 +214,37 @@
 		return new Date().getTime();
 	}
 	global.now = now;
+
+/*
+	Boot.poll
 	
+	Function useful for checking/polling something
+	and then executing a callback once it's true.
+*/
+	var timers = {},
+		timerId = 0;
+
+	function poll( check, callback, pollDelay, timeout ){
+
+		var name = timerId++,
+			start = now(),
+			time,
+			isTimeout = false;
+		
+		timers[ name ] = setInterval(function(){
+			
+			time = now() - start;
+			
+			if ( check() || ( timeout && ( isTimeout = time > timeout )) ) {
+				callback.call( window, isTimeout, time );
+				clearInterval( timers[ name ] );
+			}
+			
+		}, pollDelay );
+		 
+	}
+	global.poll = poll;
+
 /*
 	Function: Boot.log
 	
@@ -93,7 +277,7 @@
 				logList.innerHTML = ["<ul><li>", logItems.join("</li><li>"), "</li></ul>"].join('');
 			}
 		}
-	};
+	}
 	
 	log.init = function( options ) {
 		logEnabled = 1;
@@ -313,6 +497,8 @@
 	Includes a convenient check for if 
 	the window has already loaded and 
 	executes the function immediately if it is.
+	Also ensures any events bound to ready fire 
+	first, which can be a problem in normal event bindings.
 	
 	Parameters:
 	
@@ -361,6 +547,7 @@
 	Function: Boot.attr
 	
 	Shorthand for setting and retrieving an attribute from an element.
+	Note this is not currently used by Boot, but used by Easync and ModuleT
 	
 	Parameters:
 	
@@ -392,33 +579,6 @@
 		
 	}
 	global.attr = attr;
-/*
-	Function: Boot.each
-	
-	Simple function for iterating through an array.
-	
-	Not nearly as cool as Underscore's but does the job.
-	http://documentcloud.github.com/underscore/#each
-	
-	Parameters:
-	
-		array - The array to iterate over.
-		callback - The callback to apply to each item in the array.
-	
-	Returns:
-	
-	Boot
-*/
-	function each( array, callback ) {
-	// Anything break if I comment this out?  Dummy protection needed?
-	//	if ( array && array.length ) {  
-			for (var i = 0, l = array.length; i < l; i++ ) {
-				callback.call( array, i, array[i] );
-			}
-	//	}
-		
-	}
-	global.each = each;
 
 /*
 	Function: Boot.globalEval
@@ -437,63 +597,12 @@
 	http://web// logs.java.net/b// log/driscoll/archive/2009/09/08/eval-javascript-global-context
 */
 	function globalEval( data ) {
-
 		( window.execScript || function( data ) {
 			window[ "eval" ].call( window, data );
 		} )( data );
-		
-		
 	}
 	global.globalEval = globalEval;
 	
-/*
-	Function: Boot.isArray
-	
-	Determines if the given object is an array.
-	
-	Parameters:
-	
-		obj - The object to test.
-	 
-	Returns:
-	
-	Boolean
-*/
-	// String optimizations.
-	function is( str, type ) {
-		return typeof str === type;
-	}
-
-	function isArray( obj ) {
-		return obj && contains( obj.constructor.toString(), "rray" );
-	}
-	global.isArray = isArray;
-	
-	function isObject( obj ) {
-		return is( obj, strObject );
-	}
-	global.isObject = isObject;
-	
-	function isString( obj ) {
-		return is( obj, strString );
-	}
-	global.isString = isString;
-	
-	function isBoolean( obj ) {
-		return is( obj, strBoolean );
-	}
-	global.isBoolean = isBoolean;
-	
-	function isFunction( obj ) {
-		return is( obj, strFunction );
-	}
-	global.isFunction = isFunction;
-	
-	function isNumber( obj ) {
-		return is( obj, strNumber );
-	}
-	global.isNumber = isNumber;
-
 /*
 	Function: Boot.trim
 	
@@ -508,7 +617,7 @@
 	String - The trimmed string.
 */
 	function trim( str ) {
-		return str.replace(/^\s\s*/, "").replace(/\s\s*$/, "");
+		return str.replace(/^\s+/, "").replace(/\s+$/, "");
 	}
 	global.trim = trim;
 	
@@ -560,33 +669,55 @@
 				console.log( "Bad JSON: " + data );
 			}
 		}
-	};
+	}
 	global.parseJSON = parseJSON;
-	
+
+
 /*
-	Function: Boot.contains
+	Function: Boot.on
 	
-	Determines if the given string contains given text.
+	Subscribes to an event, fires a callback once it is emitted.
+	http://en.wikipedia.org/wiki/Publish/subscribe
 	
 	Parameters:
+	
+	event
+	callback
+*/
+	var events = {};
+	function on( event, callback ){
+		var eventQueue = events[ event ] || ( events[ event ] = [] );
+		eventQueue.push( callback );
+	}
+	global.on = on;
+
+/*
+	Function: Boot.emit
+	
+	Publishes an event, passing an optional object of data.
+	Triggers any events attached to the event.
+	http://en.wikipedia.org/wiki/Publish/subscribe
+	
+	Parameters:
+		- event
+		- data
 		
-		haystack - The string to search inside.
-		needle - The string to find.
-	 
 	Returns:
 	
-	Boolean
-	
-	Usage:
-	if ( contains( "a", "abcde" ) ) {
-		// true
-		Do something knowing this value contains it.
-	}
+	Boot
+
 */
-	function contains( haystack, needle ){
-		return haystack && haystack.indexOf( needle ) !== -1;
+	function emit( event, data ){
+		
+		var eventQueue = events[ event ];
+		
+		if ( eventQueue ) {
+			each( eventQueue, function(i){
+				eventQueue[i].call( data, data );
+			});
+		}
 	}
-	global.contains = contains;
+	global.emit = emit;
 
 /*
 	Function: Boot.cacheScript
@@ -637,7 +768,6 @@
 	
 				// Using setTimeout here will cause Firefox to 
 				// hang perpetually, making users sad. :(
-				
 				body.appendChild( elem );
 				
 			}, cacheDelay || 0 );
@@ -787,7 +917,7 @@
 		execScriptQueue.shift();
 		execScripts();
 	}
-	
+
 	function execScripts( src ){
 
 			// Get the first script object in the queue.
@@ -837,7 +967,7 @@
 			shiftScripts();
 		}		
 	}
-
+	
 	function dispatchScriptQueue( queue ) {
 		
 		// Call getJS on each item in the queue.
@@ -876,6 +1006,7 @@
 					
 					// Reset it so it loads normally next time.
 					options.defer = undefined; 
+					break;
 			}
 
 			// Defer these options until document is ready.
@@ -965,58 +1096,6 @@
 	}
 	global.getJS = getJS;
 
-	// log("Boot library initialized.");
-
-/*
-	Function: Boot.on
-	
-	Subscribes to an event, fires a callback once it is emitted.
-	http://en.wikipedia.org/wiki/Publish/subscribe
-	
-	Parameters:
-	
-	event
-	callback
-*/
-	var events = {};
-	function on( event, callback ){
-		
-		var eventQueue = events[ event ] || ( events[ event ] = [] );
-		
-		eventQueue.push( callback );
-		
-	}
-	global.on = on;
-
-/*
-	Function: Boot.emit
-	
-	Publishes an event, passing an optional object of data.
-	Triggers any events attached to the event.
-	http://en.wikipedia.org/wiki/Publish/subscribe
-	
-	Parameters:
-		- event
-		- data
-		
-	Returns:
-	
-	Boot
-
-*/
-	function emit( event, data ){
-		
-		var eventQueue = events[ event ];
-		
-		if ( eventQueue ) {
-			each( eventQueue, function(i){
-				eventQueue[i].call( data, data );
-			});
-		}
-		
-	}
-	global.emit = emit;
-
 /*
 	Boot.inlineCSS
 	
@@ -1027,9 +1106,7 @@
 		var style = styleNode.cloneNode(0),
 			styleSheet = style.styleSheet,
 			textNode;
-	
-//		attr( style, "type", "text/css" ); // Not needed in HTML5 :D
-		
+
 		// IE
 		if ( styleSheet ) { 
 			styleSheet.cssText = css;
@@ -1054,36 +1131,6 @@
 	global.create = create;
 
 /*
-	Boot.poll
-	
-	Function useful for checking/polling something
-	and then executing a callback once it's true.
-*/
-	var timers = {},
-		timerId = 0;
-
-	function poll( check, callback, pollDelay, timeout ){
-
-		var name = timerId++,
-			start = now(),
-			time,
-			isTimeout = false;
-		
-		timers[ name ] = setInterval(function(){
-			
-			time = now() - start;
-			
-			if ( check() || ( timeout && ( isTimeout = time > timeout )) ) {
-				callback.call( window, isTimeout, time );
-				clearInterval( timers[ name ] );
-			}
-			
-		}, pollDelay );
-		 
-	}
-	global.poll = poll;
-
-/*
 	Boot.getFont
 */
 	var getFontOptions = {
@@ -1098,28 +1145,52 @@
 	
 	function getFont( /* options, options, ... */ ) {
 		
+		var args = arguments,
+			options = getFontOptions,
+			fontTemplate = /\{f\}/g,
+			fontPathTemplate = /\{p\}/g,
+			fontDiv,
+			fontName,
+			namespacedFontName,
+			fontPath,
+			fontFace,
+			fontfaceCSS = [],
+			i = 0, 
+			l = args.length;
+	
 		if ( ! testDiv ) {
-			
 			testDiv = create("<div style=\"position:absolute;top:-999px;left:-999px;font-size:300px;width:auto;height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;font-family:serif\">BESs</div>" );
-			
 			docElem.appendChild( testDiv );
-			
+		}
+		
+		function pollFontDiv( fontDiv, namespacedFontName ) {
+			poll( function( time ){
+//					Boot.log( "Test width: " + testDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
+				return testDiv.offsetWidth !== fontDiv.offsetWidth;
+			}, function( isTimeout, time){ 
+//					Boot.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout); 
+				if ( isTimeout ) {
+					
+					removeClass( docElem, namespacedFontName + strLoading );
+					addClass( docElem, namespacedFontName + strInactive );
+
+					emit( eventNamespace + namespacedFontName + strInactive );
+//						emit( "get-font-inactive", { name: fontName } );
+//						window.console && console.log( "Font timeout: " + namespacedFontName );
+				} else {
+				
+					removeClass( docElem, namespacedFontName + strLoading );
+					addClass( docElem, namespacedFontName + strActive );
+					
+					emit( eventNamespace + namespacedFontName + strActive );
+//						emit( "get-font-active", { name: fontName } );
+				}
+//					fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
+			}, 25, 10000 );
 		}
 		
 		// Boot.each might be a cleaner approach, revisit someday maybe.
-		for ( var args = arguments,
-				options = getFontOptions,
-				fontTemplate = /{f}/g,
-				fontPathTemplate = /{p}/g,
-				fontDiv,
-//				testDiv = hiddenDiv.cloneNode(),
-				fontName,
-				namespacedFontName,
-				fontPath,
-				fontFace,
-				fontfaceCSS = [],
-				i = 0, 
-				l = args.length; i < l; i++ ) {
+		for (; i < l; i++ ) {
 			
 			fontName = args[i].toLowerCase();
 			
@@ -1149,33 +1220,7 @@
 			
 			// Had to use a closure inside the loob because of the callback.
 			// Consider switching to Boot.each() for brevity.
-			(function( fontDiv, namespacedFontName ) {
-				
-				poll( function( time ){
-//					Boot.log( "Test width: " + testDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
-					return testDiv.offsetWidth !== fontDiv.offsetWidth;
-				}, function( isTimeout, time){ 
-//					Boot.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout); 
-					if ( isTimeout ) {
-						
-						removeClass( docElem, namespacedFontName + strLoading );
-						addClass( docElem, namespacedFontName + strInactive );
-
-						emit( eventNamespace + namespacedFontName + strInactive );
-//						emit( "get-font-inactive", { name: fontName } );
-// 						window.console && console.log( "Font timeout: " + namespacedFontName );
-					} else {
-					
-						removeClass( docElem, namespacedFontName + strLoading );
-						addClass( docElem, namespacedFontName + strActive );
-						
-						emit( eventNamespace + namespacedFontName + strActive );
-//						emit( "get-font-active", { name: fontName } );
-					}
-//					fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
-				}, 25, 10000 );
-				
-			})( fontDiv, namespacedFontName );
+			pollFontDiv( fontDiv, namespacedFontName );
 			
 		}
 		
@@ -1189,62 +1234,6 @@
 	};
 */	
 	global.getFont = getFont;
-
-/*
-	UNDERSCORE UTILITIES
-*/
-
-	// Delays a function for the given number of milliseconds, and then calls
-	// it with the arguments supplied.
-
-	function delay( func, wait ) {
-		var args = slice.call( arguments, 2 );
-		return SetTimeout( function(){ return func.apply(func, args); }, wait );
-	}
-	
-	// Defers a function, scheduling it to run after the current call stack has
-	// cleared.
-	function defer( func ) {
-		return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
-	}
-	
-	// Internal function used to implement throttle() and debounce()
-	function limit( func, wait, debounce ) {
-		
-		var timeout;
-		
-		return function() {
-			
-			function throttler() {
-				timeout = undefined;
-				func.call( this );
-			}
-				
-			if ( debounce ) {
-				clearTimeout( timeout );
-			}
-			
-			if ( debounce || ! timeout ) {
-				timeout = SetTimeout( throttler, wait );
-			}
-		};
-	}
-	
-	// Returns a function, that, when invoked, will only be triggered at most once
-	// during a given window of time.
-	function throttle( func, wait ) {
-		return limit( func, wait, false );
-	}
-	global.throttle = throttle;
-	
-	// Returns a function, that, as long as it continues to be invoked, will not
-	// be triggered. The function will be called after it stops being called for
-	// N milliseconds.
-	function debounce( func, wait ) {
-		return limit( func, wait, true );
-	}
-	global.debounce = debounce;
-
 
 /*
 	Screen Size Detection
@@ -1265,7 +1254,6 @@
         var currentWidth = docElem.clientWidth,
 			currentClasses = [],
 			width,
-			operator,
 			i;
 		
 		// Only update stuff if things actually change.
@@ -1291,7 +1279,7 @@
 			
 			currentClasses = currentClasses.join(" ");
 			
-			if ( currentClasses != screenClasses ) {
+			if ( currentClasses !== screenClasses ) {
 				removeClass( docElem, screenClasses );
 				addClass( docElem, currentClasses );
 				screenClasses = currentClasses;
@@ -1319,7 +1307,7 @@
 
 	userAgent = /(firefox)[ \/]([\w.]+)/.exec( userAgent ) ||
 		/(chrome)[ \/]([\w.]+)/.exec( userAgent ) ||
-		contains( userAgent, "safari" ) && /(version)[ \/]([\w.]+)/.exec( userAgent ) || 
+		(contains( userAgent, "safari" ) && /(version)[ \/]([\w.]+)/.exec( userAgent )) || 
 		/(opera)(?:.*version)?[ \/]([\w.]+)/.exec( userAgent ) ||
 		/(msie) ([\w.]+)/.exec( userAgent ) ||
 		/(webkit)[ \/]([\w.]+)/.exec( userAgent ) || [];
