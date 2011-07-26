@@ -39,7 +39,7 @@ Boot.load(function(){
 });
 
 Feature = {
-	A: true,
+	A: false,
 	B: false,
 	C: true
 };
@@ -51,22 +51,30 @@ Boot.log("Feature B: " + Feature.B);
 Boot.getJS({
 	test: Feature.A,
 	yay: "javascript.php?num=1", 
-	nay: "javascript.php?num=1&alternate",
+	nay: ["javascript.php?num=1&alternate", "javascript.php?num=2&alternate", {
+		test: Feature.B,
+		yay: "javascript.php?num=3", 
+		nay: "javascript.php?num=3&alternate",
+		callback: function( src, test ){
+			Boot.log("boot.getjs.html: Executing script #3 callback (" + src + "). Test = " + test);
+			Feature.C = false;
+		}}
+		],
 	callback: function( src, test ){
-		Boot.log("boot.getjs.html: Executing script #1 callback (" + src + "). Test = " + test);
+		Boot.log("boot.getjs.html: Executing script #1, #2 and #3 callback (" + src + "). Test = " + test);
 	}}, {
 	test: Feature.B,
-	yay: "javascript.php?num=2", 
-	nay: "javascript.php?num=2&alternate",
+	yay: "javascript.php?num=4", 
+	nay: "javascript.php?num=4&alternate",
 	callback: function( src, test ){
-		Boot.log("boot.getjs.html: Executing script #2 callback (" + src + "). Test = " + test);
+		Boot.log("boot.getjs.html: Executing script #4 callback (" + src + "). Test = " + test);
 		Feature.C = false;
 	}}, {
 	test: Feature.C,
 	defer: "ready",
-	nay: "javascript.php?num=3&alternate",
+	nay: "javascript.php?num=5&alternate",
 	callback: function( src, test ){
-		Boot.log("boot.getjs.html: Executing script #3 callback (" + src + "). Test = " + test);
+		Boot.log("boot.getjs.html: Executing script #5 callback (" + src + "). Test = " + test);
 	}
 });
 

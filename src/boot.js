@@ -1002,13 +1002,19 @@
 	
 	function getJS ( /* url, callback, or options */ ) {
 		
-		each( arguments, function( i, arg ) {
+		var args = arguments;
+		
+		if ( isArray( args[0] ) ) {
+			args = args[0];
+		}
+		
+		each( args, function( i, arg ) {
 
 			var options = {},
 				deferScript,
 				src,
 				callback;
-				
+			
 			// Convert the string or function
 			// into the object.
 			switch ( typeof arg ) {
@@ -1064,12 +1070,18 @@
 				// Simple yepnope-ish implementation.
 				// For the real deal look here: http://yepnopejs.com/
 				if ( ! src && options.nay ) {
+					
 					if ( options.test ) {
 						src = options.yay;
 					} else {
 						src = options.nay;
 					}
-					options.src = src;
+					// options.src = src;
+
+					// Grab the alternates if they exist,
+					// and reset the source.
+					getJS( src );
+					src = undefined;
 				}
 
 				// Localize the callback.
@@ -1080,6 +1092,7 @@
 				options.callback = undefined;
 				
 				// If the type is set to cache, do so immediately.
+				// Artz: Why isn't this inside our src check (next)?
 				if ( contains( options.type, "cache" ) ) {
 					
 					// If this is a script and it hasn't been 
@@ -1110,7 +1123,7 @@
 					// Remember the script object associated
 					// with this callback.
 					callback.s = options;
-					
+
 					// log( "Boot.getJS: Pushing callback function into queue.");
 					execScriptQueue.push( callback );
 				}
