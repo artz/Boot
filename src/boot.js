@@ -1381,6 +1381,38 @@
 	}
 
 /*
+	Boot.feature
+	Based on API by head.js
+*/
+	var features = {};
+	function feature( key, test ) {
+		
+		var result = false;
+		
+		if ( isFunction( test ) ) {
+			if ( test() ) {
+				result = true;
+				addClass( docElem, key );
+			} else {
+				result = false;
+				addClass( docElem, "no-" + key );
+			}
+			features[ key ] = result;
+		} else if ( isObject( key ) ) {
+			for ( name in key ) {
+				if ( key.hasOwnProperty( name ) ) {
+					feature( name, key[ name ] );
+				}
+			}
+		} else {
+			result = features[ key ];	
+		}
+
+		return result;
+	}
+	global.feature = feature;
+
+/*
 	To Do
 	? getJS merge support
 	? Generic feature detection / docElem class name adder?
@@ -1389,6 +1421,7 @@
 	? Boot.off / Boot.removeEvent - Remove custom event.
 	? What should Boot(); do? Extend Boot, or set default params, etc.
 	? Add element/string specific event binds.
+	? Add event triggers when scripts load, possibly labels? i.e. label: jquery, or autonlabel like "jquery-1-6-2"
 */
 	
 })("Boot", this);

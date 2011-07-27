@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.attr</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.feature</h1>
+<pre id="log"></pre>
+<script>
+// Initialize logging.
+var logElem = document.getElementById("log");
+
+Boot.log.init({
+	elem: logElem
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+loggedIn = false;
+Boot.feature("auth", function(){
+	// Adds "auth" 
+	return loggedIn;
+});
+
+Boot.log("Key: auth, Value: " + Boot.feature( "auth" ) );
+		
+Boot.feature({
+	"transforms": function(){
+		return true;	
+	},
+	"money": function(){
+		return false;
+	}
+});
+
+Boot.log("Key: transforms, Value: " + Boot.feature( "transforms" ) );
+Boot.log("Key: money, Value: " + Boot.feature( "money" ) );
+	
+</script>
+<p>This paragraph of text should not be blocked.</p>
+<script type="text/javascript">
+document.write("<p>This was generated using a JavaScript document.write() and should not be blocked.");
+</script>
+</body>
+</html>
