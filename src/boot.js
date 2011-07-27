@@ -904,19 +904,18 @@
 		readyScriptQueue = [],
 		loadScriptQueue = [],
 		
+		nextScriptIndex = 0,
+
 //		scriptDoneEvent = "js-done",
-	
-		lastScript,
-		lastTest,
-		
+
 		docElem = document.documentElement,
 		isGecko = "MozAppearance" in docElem.style,
-		
+
 		// If the browser supports asynchronous executing scripts. (Firefox 3.6, Opera, Chrome 12)
 		isScriptAsync = isGecko || window.opera || document.createElement( strScript ).async, /* === true */
 		
 		scriptType = isScriptAsync ? "" : "c";
-	
+
 	// log( "Boot.getJS: Script <b>is " + (isScriptAsync ? "" : "not") + "</b> asynchronous." );	
 /*	
 	function emitScript( scriptObject ) {
@@ -933,22 +932,18 @@
 */
 	function shiftScripts() {
 //		emitScript(execScriptQueue[0]);
-		execScriptQueue.shift();
+		nextScriptIndex++;
 		execScripts();
 	}
 
 	function execScripts( src ){
 
 			// Get the first script object in the queue.
-		var nextScriptObject = execScriptQueue[0] || {},
-		
-			// Look if next script object is a script or callback.
-			nextScript = nextScriptObject.src || nextScriptObject,
+		var nextScriptObject = execScriptQueue[ nextScriptIndex ] || {},
 			
-			linkedScript,
-			linkedSrc,
-			linkedTest;
-		
+			// Look if next script object is a script or callback.
+			nextScript = nextScriptObject.src || nextScriptObject;
+
 		// Remember the script we were passed is loaded.
 		isScriptDone[ src ] = 1;
 
@@ -970,21 +965,16 @@
 			 
 		} else if ( isFunction( nextScript ) ) {
 			
-			if ( linkedScript = nextScript.s ) {
-				linkedSrc = linkedScript.src;
-				linkedTest = linkedScript.test;
-			}
-			
 			// We handle things differently for async browsers, since
 			// we want to be sure to execute the callback immediately
 			// after the script downloads.
 			if ( isScriptAsync ) {
-				nextScript( linkedSrc, linkedTest );
+				nextScript( nextScript.t );
 			} else {
 				// For other browsers, we continue to manage things
 				// manually using paced SetTimeouts.  IE likes it.
 				defer(function(){
-					nextScript( linkedSrc, linkedTest );
+					nextScript( nextScript.t );
 				});
 			}
 			shiftScripts();
@@ -1122,7 +1112,7 @@
 					
 					// Remember the script object associated
 					// with this callback.
-					callback.s = options;
+					callback.t = options.test;
 
 					// log( "Boot.getJS: Pushing callback function into queue.");
 					execScriptQueue.push( callback );
