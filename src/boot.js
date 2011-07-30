@@ -123,8 +123,7 @@
 	
 	Simple function for iterating through an array.
 	
-	Not nearly as cool as Underscore's but does the job.
-	http://documentcloud.github.com/underscore/#each
+	One day do this?: https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/array/foreach
 	
 	Parameters:
 	
@@ -140,7 +139,7 @@
 	//	if ( array && array.length ) {  
 		var i = 0, l = array.length;
 		for (; i < l; i++ ) {
-			callback.call( array, i, array[i] );
+			callback( array[i], i, array );
 		}
 	//	}
 		
@@ -410,8 +409,8 @@
 			
 			isReady = 1;
 			
-			each( readyQueue, function(i){
-				defer( readyQueue[i] );
+			each( readyQueue, function( callback ){
+				defer( callback );
 			});
 
 			// Clear the queue.
@@ -712,8 +711,8 @@
 		var eventQueue = events[ event ];
 		
 		if ( eventQueue ) {
-			each( eventQueue, function(i){
-				eventQueue[i].call( data, data );
+			each( eventQueue, function( callback ){
+				callback.call( data, data );
 			});
 		}
 	}
@@ -998,7 +997,7 @@
 			args = args[0];
 		}
 		
-		each( args, function( i, arg ) {
+		each( args, function( arg ) {
 
 			var options = {},
 				deferScript,
@@ -1088,6 +1087,10 @@
 					// If this is a script and it hasn't been 
 					// loaded yet, fetch it now.
 					if ( src && ! isScriptLoading[ src ] ) {
+						
+						// Remember we already loaded this script.
+						isScriptLoading[ src ] = 1;
+						
 					//	log( "Boot.getJS: Caching script: " + src);
 						cacheScript( src, options.delay );
 					}
@@ -1095,6 +1098,9 @@
 				// Otherwise proceed through our queue system.	
 				} else if ( src && ! isScriptLoading[ src ] ) {
 
+					// Remember we already loaded this script.
+					isScriptLoading[ src ] = 1;
+					
 					// Push the script options into our execution queue.
 					execScriptQueue.push( options );
 					
@@ -1375,7 +1381,7 @@
 */
 	if ( browser.ie ) {
 		// HTML5 support for IE
-		each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split(" "), function(i, elem) {
+		each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split(" "), function( elem ) {
 			document.createElement( elem );
 		});
 	}
@@ -1389,8 +1395,8 @@
 		
 		var result = false;
 		
-		if ( isFunction( test ) ) {
-			if ( test() ) {
+		if ( isFunction( test ) || isBoolean( test ) ) {
+			if ( test === true || test() ) {
 				result = true;
 				addClass( docElem, key );
 			} else {
@@ -1411,6 +1417,76 @@
 		return result;
 	}
 	global.feature = feature;
+
+/*
+	Boot.options
+*/
+	var bootOptions = {};
+		
+	function options( customOptions, value ) {
+		if ( isString( customOptions ) ) {
+			extend( bootOptions[ customOptions ], value );
+		} else {
+			extend( bootOptions, customOptions );
+		}
+	}
+	global.options = options;
+	
+/*
+	Boot.resolve
+	Utility for resolving URL addresses.
+*/
+	bootOptions.resolve = {};
+	function resolve( customOptions, module ) {
+		
+		var options = extend( {}, bootOptions.resolve, customOptions || {} );
+
+		return options.basePath + module.toLowerCase() + ".min.js";
+		
+	}
+
+/*
+	getObject
+	Resolves a string into an object and returns it.
+*/
+	function getObject( moduleName ) {
+		// i.e. "jQuery.alpha"
+		var obj = window;
+		each( moduleName.split("."), function( name ) {
+			obj = obj[ name ];
+		});
+		return obj;
+	}
+
+/*
+	Boot.use
+	Based on YUI's use() function and RequireJS.
+*/	
+	bootOptions.use = {};
+	function use( customOptions, modules, callback ){
+		
+		if ( isArray( customOptions ) || isString( customOptions ) ) {
+			callback = modules;
+			modules = customOptions;
+		}
+		
+		var options = extend( {}, bootOptions.use, customOptions || {} ),
+			callbackArgs = [];
+
+		each( modules, function(module) {
+			getJS( resolve( options, module), function(){
+				callbackArgs.push( getObject( module ) );
+			});
+		});
+		
+		if ( callback ) {
+			getJS(function(){
+				callback.apply( global, callbackArgs );
+			});
+		}
+		
+	}
+	global.use = use;
 
 /*
 	To Do

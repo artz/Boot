@@ -16,3 +16,4 @@ sleep($sleep);
 ?>
 window.console && console.log("Executed Script #" + <?=$_GET['num']?>);
 window.Boot && Boot.log("Executed Script #" + <?=$_GET['num']?>);
+window.Module<?=$_GET['num']?> = {};
