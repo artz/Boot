@@ -76,6 +76,19 @@ Boot.use(["jQuery", "jQuery.alpha", "jQuery.gamma"], function( jQuery ){
 	jQuery("<div />").gamma().appendTo(document.body);	
 });
 
+Boot.use("mylib/foo", function( fooObject ){
+	Boot.log("The foo object returned: " + fooObject.foo );
+});
+
+Boot.use("mylib/bar", function( barObject ){
+	Boot.log("The bar function returned: " + barObject.bar );
+});
+
+// This needs to work next.
+Boot.use("mylib/foo", function( fooObject ){
+	Boot.log("The foo object returned: " + fooObject.foo );
+});
+
 </script>
 <p>This paragraph of text should not be blocked.</p>
 <script type="text/javascript">

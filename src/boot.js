@@ -1393,7 +1393,8 @@
 	var features = {};
 	function feature( key, test ) {
 		
-		var result = false;
+		var result = false,
+			i;
 		
 		if ( isFunction( test ) || isBoolean( test ) ) {
 			if ( test === true || test() ) {
@@ -1405,9 +1406,9 @@
 			}
 			features[ key ] = result;
 		} else if ( isObject( key ) ) {
-			for ( name in key ) {
-				if ( key.hasOwnProperty( name ) ) {
-					feature( name, key[ name ] );
+			for ( i in key ) {
+				if ( key.hasOwnProperty( i ) ) {
+					feature( i, key[ i ] );
 				}
 			}
 		} else {
@@ -1462,6 +1463,10 @@
 	Boot.use
 	Based on YUI's use() function and RequireJS.
 */	
+	var moduleDefinitions = {},
+		definedModules = [],
+		defineCount = 0;
+
 	bootOptions.use = {};
 	function use( customOptions, modules, callback ){
 		
@@ -1470,12 +1475,22 @@
 			modules = customOptions;
 		}
 		
+		modules = isString( modules ) ? [ modules ] : modules;
+		
 		var options = extend( {}, bootOptions.use, customOptions || {} ),
 			callbackArgs = [];
 
 		each( modules, function(module) {
 			getJS( resolve( options, module), function(){
-				callbackArgs.push( getObject( module ) );
+				// If a module was defined after our download...
+				if ( defineCount !== ( defineCount = definedModules.length ) ) {
+					// We will put this into a loop to handle multiple definitions.
+					module = moduleDefinitions[ module ] = definedModules[ defineCount - 1 ];
+					callbackArgs.push( module );
+				} else {
+					callbackArgs.push( getObject( module ) );
+				}
+				
 			});
 		});
 		
@@ -1487,11 +1502,25 @@
 		
 	}
 	global.use = use;
+	
+/*
+	Boot.define
+	Define a module, based on RequireJS
+*/
+	
+	function define( moduleDefinition ) {
+		if ( isFunction( moduleDefinition ) ) {
+			definedModules.push( moduleDefinition( use ) );
+		} else if ( isObject( moduleDefinition ) ) {
+			definedModules.push( moduleDefinition );
+		}
+	}
+	global.define = define;
+	
 
 /*
 	To Do
 	? getJS merge support
-	? Generic feature detection / docElem class name adder?
 	? Boot.once - Do a callback once only (immediately unbind event).
 	? Boot.unbind - Unbind function?
 	? Boot.off / Boot.removeEvent - Remove custom event.
@@ -1500,4 +1529,4 @@
 	? Add event triggers when scripts load, possibly labels? i.e. label: jquery, or autonlabel like "jquery-1-6-2"
 */
 	
-})("Boot", this);
+}("Boot", this));
