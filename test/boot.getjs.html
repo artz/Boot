@@ -77,6 +77,11 @@ Boot.getJS({
 	}
 });
 
+// 2nd script requested again should not execute, but callback should.
+Boot.getJS("javascript.php?num=2", function( src ) {
+	Boot.log("boot.getjs.html: Executing 2nd script #2 callback (" + src + ")")
+})
+
 // Cache a script but do not execute it.
 // Set a delay of 5 seconds after window.load.
 Boot.log("boot.getjs.html: Caching script #3.");

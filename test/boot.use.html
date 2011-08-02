@@ -76,17 +76,17 @@ Boot.use(["jQuery", "jQuery.alpha", "jQuery.gamma"], function( jQuery ){
 	jQuery("<div />").gamma().appendTo(document.body);	
 });
 
-Boot.use("mylib/foo", function( fooObject ){
-	Boot.log("The foo object returned: " + fooObject.foo );
+Boot.use("mylib/foo", function( fooModule ){
+	Boot.log("The foo property of fooModule exists: " + fooModule.foo );
 });
 
-Boot.use("mylib/bar", function( barObject ){
-	Boot.log("The bar function returned: " + barObject.bar );
+Boot.use("mylib/bar", function( barModule ){
+	Boot.log("The bar function of barModule exists: " + barModule.bar() );
 });
 
-// This needs to work next.
-Boot.use("mylib/foo", function( fooObject ){
-	Boot.log("The foo object returned: " + fooObject.foo );
+// Reusing modules works too, and doesn't request the JS again.
+Boot.use("mylib/foo", function( fooModule ){
+	Boot.log("The foo property of fooModule exists: " + fooModule.foo );
 });
 
 </script>

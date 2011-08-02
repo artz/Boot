@@ -1362,7 +1362,7 @@
 	}
 	
 	browserClasses.push( browserName );
-	browserClasses.push( browserName + parseInt( browserVersion ) ); // Major version
+	browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
 	browserClasses.push( browserName + browserVersion.toString().replace(".", "-").replace(/\..*/, "" ) ); // Minor version
 	
 	// Add classes all at once for performance reasons.
@@ -1436,6 +1436,9 @@
 /*
 	Boot.resolve
 	Utility for resolving URL addresses.
+	TBD on how we want this API to work if 
+	we expose it externally and further internally.
+	possibly make resolveJS, resolveCSS, resolveFont?
 */
 	bootOptions.resolve = {};
 	function resolve( customOptions, module ) {
@@ -1447,25 +1450,23 @@
 	}
 
 /*
-	getObject
-	Resolves a string into an object and returns it.
-*/
-	function getObject( moduleName ) {
-		// i.e. "jQuery.alpha"
-		var obj = window;
-		each( moduleName.split("."), function( name ) {
-			obj = obj[ name ];
-		});
-		return obj;
-	}
-
-/*
 	Boot.use
 	Based on YUI's use() function and RequireJS.
 */	
 	var moduleDefinitions = {},
 		definedModules = [],
 		defineCount = 0;
+
+	function getLibrary( moduleName ) {
+		// i.e. "jQuery.alpha", "MyLib.foo.bar"
+		var obj = window;
+				
+		each( moduleName.split("."), function( name ) {
+			obj = obj[ name ];
+		});
+	
+		return obj;
+	}
 
 	bootOptions.use = {};
 	function use( customOptions, modules, callback ){
@@ -1478,19 +1479,26 @@
 		modules = isString( modules ) ? [ modules ] : modules;
 		
 		var options = extend( {}, bootOptions.use, customOptions || {} ),
-			callbackArgs = [];
+			callbackArgs = [],
+			module;
 
-		each( modules, function(module) {
-			getJS( resolve( options, module), function(){
+		each( modules, function( moduleName ) {
+			
+			// getJS will not fetch JS a second time and will
+			// proceed right to the callback.
+			getJS( resolve( options, moduleName ), function(){
 				// If a module was defined after our download...
-				if ( defineCount !== ( defineCount = definedModules.length ) ) {
-					// We will put this into a loop to handle multiple definitions.
-					module = moduleDefinitions[ module ] = definedModules[ defineCount - 1 ];
-					callbackArgs.push( module );
-				} else {
-					callbackArgs.push( getObject( module ) );
+				// When we implement multiple definitions (i.e. merged urls)
+				// We won't want to assume the last item.
+				if ( ! ( module = moduleDefinitions[ moduleName ] ) ) {
+					if ( defineCount !== ( defineCount = definedModules.length ) ) {
+						module = definedModules[ defineCount - 1 ];
+					} else {
+						module = getLibrary( moduleName );
+					}
+					moduleDefinitions[ moduleName ] = module;
 				}
-				
+				callbackArgs.push( module );
 			});
 		});
 		
