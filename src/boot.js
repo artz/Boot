@@ -1222,10 +1222,10 @@
 					addClass( docElem, namespacedFontName + strActive );
 					
 					emit( eventNamespace + namespacedFontName + strActive );
-//						emit( "get-font-active", { name: fontName } );
+
 				}
 //					fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
-			}, 25, 10000 );
+			}, 25, 10000 ); // Make this configurable via Boot.options.
 		}
 		
 		// Boot.each might be a cleaner approach, revisit someday maybe.

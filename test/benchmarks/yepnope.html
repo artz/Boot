@@ -111,7 +111,7 @@ yepnope([
 			</p> 
 			
 			<p class="details">
-Boot.getJS avoids the Firefox render block like LABjs in Firefox. Uniquely, it also maintains the execution order of all scripts called through it, making race conditions easy to avoid by ensuring scripts are called in the correct order. Boot.getJS also has extra features for deferring scripts to DOM ready, <code>window.load</code>, and caching scripts.
+YepNope is designed to conditionally load scripts based on environment variables. As such it appears to wait until all scripts queued up by YepNope have downloaded before starting execution, resulting in slower performance. It is the only other script (like Boot.getJS) to preserve execution order for all scripts loaded, avoiding race conditions associated with async script loading.
 			</p> 
 			
 			<h3>Test Log</h3>
