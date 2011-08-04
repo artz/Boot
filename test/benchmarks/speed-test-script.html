@@ -235,28 +235,25 @@ A.getCSS = function( href ){
 
 })( document );
 
-
-
 </script>
-<module name="beacon" version="2" options="{foo: 1, bar: 3}">
-<!--<link rel="stylesheet" href="css/style.css?v=2">-->
 </head>
 
 <body>
-<div id="container">
-	<header><h1>ArtzStudio Module Framework</h1></header>
-	<module name="main" options="{html: 'Initialized.'}" js="jquery, jquery.ui-core, jquery.sonar" css="main">
-		<div id="main" role="main"> Test. <module name="nested">Nested module test.</module></div>
-	</module>
-	<footer> </footer>
-</div>
+	
+<h1>Script Cache Benchmarks</h1>
+<ul>
+	<li><a href="speed-test-img.html">Using Image</a></li>
+	<li><a href="speed-test-object.html">Using Object</a></li>
+	<li><a href="speed-test-script.html">Using Faux Script</a></li>		
+</ul>
+
 <script>
-A.getJS("../cdn/beacon.js")
- .getJS("../cdn/jquery.js")
- .getJS("../cdn/jquery.ui-core.js")
- .getJS("../cdn/jquery.sonar.js")
- .getJS("../cdn/main.js")
- .getJS("../cdn/nested.js");
+A.getJS("../javascript.php?num=1")
+ .getJS("../javascript.php?num=2")
+ .getJS("../javascript.php?num=3")
+ .getJS("../javascript.php?num=4")
+ .getJS("../javascript.php?num=5")
+ .getJS("../javascript.php?num=6");
 </script>
 </body>
 </html>

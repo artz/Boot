@@ -712,6 +712,8 @@
 		
 		if ( eventQueue ) {
 			each( eventQueue, function( callback ){
+				// Perhaps move to apply and accept an  
+				// unlimited number of passed arguments.
 				callback.call( data, data );
 			});
 		}
@@ -1274,9 +1276,11 @@
 
 /*
 	Screen Size Detection
-	Includes a throttler and size update check for better performance.
+	Includes a throttler and size update check for better performance (doesn't crash IE).
 	Interesting reads:
 		http://www.webpagemistakes.ca/most-common-screen-resolution/
+	
+	Consider ditching this, ef IE and yay media queries?
 */
 
 	var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
@@ -1335,6 +1339,8 @@
 	Code based on head.js - http://headjs.com 
 	Thanks Tero Piirainen!
 	addressed IE bug where browserVersion was a number and needed to be a string (tell Tero).
+	
+	Code too bloaty for what you get?  Do we really want to advocate pixel-perfect targeting?
 */
     var userAgent = navigator.userAgent.toLowerCase(),
 		browser,
@@ -1513,7 +1519,8 @@
 	
 /*
 	Boot.define
-	Define a module, based on RequireJS
+	Define a module, based on the Asynchronous Module Definition (AMD)
+	http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition
 */
 	
 	function define( moduleDefinition ) {
