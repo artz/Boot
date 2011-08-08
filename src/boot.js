@@ -684,9 +684,18 @@
 	callback
 */
 	var events = {};
-	function on( event, callback ){
+	function on( object, event, callback ){
+	
+		if ( isString( object ) ) {
+			callback = event;
+			event = object;
+			object = undefined;
+		}
+		
 		var eventQueue = events[ event ] || ( events[ event ] = [] );
-		eventQueue.push( callback );
+
+		eventQueue.push( [ object, callback ] );
+		
 	}
 	global.on = on;
 
@@ -706,16 +715,40 @@
 	Boot
 
 */
-	function emit( event, data ){
+	function emit( object, event, data ){
+		
+		// Support for associating events with DOM nodes.
+		if ( isString( object ) ) {
+			data = event;			
+			event = object;
+			object = undefined;
+		}
 		
 		var eventQueue = events[ event ];
 		
 		if ( eventQueue ) {
-			each( eventQueue, function( callback ){
-				// Perhaps move to apply and accept an  
-				// unlimited number of passed arguments.
-				callback.call( data, data );
-			});
+			
+			var on = eventQueue[i],
+				onObject = on[0],
+				onCallback = on[1];
+
+			if ( object ) {
+
+				// Only execute the callback if this is
+				// the object emitting the event.
+				if ( object === onObject || onObject === undefined ) {
+					
+					onCallback.call( object, data );
+					
+					// Break the each loop, no sense wasting cycles.
+					// Worried this could have adverse effects.
+					// Commenting out for now.
+					// return false;
+				} 
+			} else {
+				onCallback.call( data, data );
+			}
+			
 		}
 	}
 	global.emit = emit;
