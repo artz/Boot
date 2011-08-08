@@ -1,0 +1,84 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.use</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.use</h1>
+<pre id="log"></pre>
+<script>
+function getScript ( src, callback ) {
+
+	var	strScript = "script",
+		strReadyState = "readyState",
+		strOnReadyStateChange = "onreadystatechange",
+		strOnLoad = "onload",
+		strComplete = "complete",
+		
+		done = 0,
+		script = document.createElement( strScript );
+	
+	// Set the source of the script.
+	script.src = src;
+	script.async = false;
+	
+	// Attach handlers for all browsers
+	script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
+
+		if ( !done && (!script[ strReadyState ] ||
+				script[ strReadyState ] === "loaded" || script[ strReadyState ] === strComplete) ) {
+			
+			done = 1;
+			
+			callback( src );
+
+			// Handle memory leak in IE
+			script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
+		}
+	};
+	
+	// This is the safest insertion point to assume.
+	// We use a setTimeout to ensure non-blocking behavior.
+	document.getElementsByTagName("head")[0].appendChild( script );
+}
+// Initialize logging.
+var logElem = document.getElementById("log");
+
+Boot.log.init({
+	elem: logElem
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+// Queue up first file.
+getScript("javascript.php?num=1");
+
+// Load second file, which loads 2 more scripts.
+getScript("cdn/synchronicity.script.js");
+
+// Load final script, which should execute last.
+getScript("javascript.php?num=4");
+
+</script>
+<p>This paragraph of text should not be blocked.</p>
+<script type="text/javascript">
+document.write("<p>This was generated using a JavaScript document.write() and should not be blocked.");
+</script>
+</body>
+</html>

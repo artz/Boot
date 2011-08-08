@@ -851,6 +851,7 @@
 				// Emit an event indicating this script has just executed.
 			//	if ( ! script.type ) {
 			//		emit( eventNamespace + "js-done", { src: src } );
+				//	console.log( "Script executed: " + src );
 			//	}
 				
 			//	if ( callback ) {
@@ -931,11 +932,19 @@
 		}
 	}
 */
-	function shiftScripts() {
+/*
+ * We are eliminating this function due to a 
+  recursive loop issue with nested getJS calls.
+ 	function shiftScripts() {
 //		emitScript(execScriptQueue[0]);
 		nextScriptIndex++;
+	//	console.log( "Shifting to index: " + nextScriptIndex );
 		execScripts();
+		
 	}
+*/
+
+	global.exec = execScriptQueue;
 
 	function execScripts( src ){
 
@@ -947,10 +956,15 @@
 
 		// Remember the script we were passed is loaded.
 		isScriptDone[ src ] = 1;
-
 		if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
+			
+// console.log( "emitting: " + nextScript );
+// emit( nextScript );
 						
 			isScriptExecuted[ nextScript ] = 1;
+			
+			// Advance the pointer to the next script index.
+			nextScriptIndex++;
 			
 			// We are moving this to getScript, which emits immediately
 			// after execution.
@@ -958,27 +972,33 @@
 			
 			// If browser supports asynch execution, continue.
 			if ( isScriptAsync ) {
-				shiftScripts();
+				execScripts();
 			// Otherwise fetch this script and shift it out when executed.
 			} else {
-				getScript( nextScript, shiftScripts );
+				getScript( nextScript, execScripts );
 			}
 			 
 		} else if ( isFunction( nextScript ) ) {
+			
+			// Advance to the next script now, otherwise if there are
+			// nested getJS calls this goes into a recursive nightmare.
+			nextScriptIndex++;
 			
 			// We handle things differently for async browsers, since
 			// we want to be sure to execute the callback immediately
 			// after the script downloads.
 			if ( isScriptAsync ) {
 				nextScript( nextScript.t );
+				execScripts();
 			} else {
 				// For other browsers, we continue to manage things
 				// manually using paced SetTimeouts.  IE likes it.
 				defer(function(){
 					nextScript( nextScript.t );
+					execScripts();
 				});
 			}
-			shiftScripts();
+			
 		}		
 	}
 	
@@ -1486,13 +1506,20 @@
 		
 		var options = extend( {}, bootOptions.use, customOptions || {} ),
 			callbackArgs = [],
+			moduleCount = 0,
 			module;
 
-		each( modules, function( moduleName ) {
-			
+		each( modules, function( moduleName, i ) {
 			// getJS will not fetch JS a second time and will
 			// proceed right to the callback.
+//			console.log("Loading " + resolve( options, moduleName )); 
 			getJS( resolve( options, moduleName ), function(){
+				console.log("Grabbed " + moduleName);
+				
+				on( moduleName, function(){
+					console.log( moduleName + " ready!");
+				});
+				
 				// If a module was defined after our download...
 				// When we implement multiple definitions (i.e. merged urls)
 				// We won't want to assume the last item.
@@ -1504,15 +1531,21 @@
 					}
 					moduleDefinitions[ moduleName ] = module;
 				}
-				callbackArgs.push( module );
+				callbackArgs[i] = module;
+				//callbackArgs.push( module );
 			});
 		});
 		
-		if ( callback ) {
-			getJS(function(){
-				callback.apply( global, callbackArgs );
-			});
-		}
+		console.log( arguments );
+		// We need to do this after all scripts have downloaded,
+		// including ones that are loaded in via dependencies.
+	//	if ( callback ) {
+	//		getJS(function(){
+	//			console.log( "Applying callback...");
+	//			console.log( callback.toString() );
+	//			callback.apply( global, callbackArgs );
+	//		});
+	//	}
 		
 	}
 	global.use = use;
@@ -1523,12 +1556,36 @@
 	http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition
 */
 	
-	function define( moduleDefinition ) {
-		if ( isFunction( moduleDefinition ) ) {
-			definedModules.push( moduleDefinition( use ) );
-		} else if ( isObject( moduleDefinition ) ) {
-			definedModules.push( moduleDefinition );
+	function define( moduleName, moduleDependencies, moduleDefinition ) {
+		
+		if ( ! isString( moduleName ) ) {
+			moduleDefinition = moduleDependencies;
+			moduleDependencies = moduleName;
+			moduleName = undefined;				
 		}
+		
+		if ( ! isArray( moduleDependencies ) ) {
+			moduleDefinition = moduleDependencies;
+			moduleDependencies = undefined;
+		}
+		 
+		// Load in any dependencies, and pass them into the use callback.
+		if ( moduleDependencies ) {
+			
+			console.log("Loading module dependencies: " + moduleDependencies.join(", "));
+			use( moduleDependencies, function(){
+				console.log("Calling back.");
+				console.log( arguments );
+			});
+			
+		} else {
+			if ( isFunction( moduleDefinition ) ) {
+				definedModules.push( moduleDefinition( use ) );
+			} else if ( isObject( moduleDefinition ) ) {
+				definedModules.push( moduleDefinition );
+			}
+		}
+			
 	}
 	global.define = define;
 	

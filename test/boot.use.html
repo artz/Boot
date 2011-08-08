@@ -66,7 +66,7 @@ require({
 */
 
 Boot.options("use", { basePath: "../test/cdn/" });
-
+/*
 Boot.use(["jQuery", "jQuery.alpha", "jQuery.beta"], function( jQuery ){
 	jQuery("<div />").alpha().appendTo(document.body);
 	jQuery("<div />").beta().appendTo(document.body);	
@@ -77,16 +77,23 @@ Boot.use(["jQuery", "jQuery.alpha", "jQuery.gamma"], function( jQuery ){
 });
 
 Boot.use("mylib/foo", function( fooModule ){
-	Boot.log("The foo property of fooModule exists: " + fooModule.foo );
+	Boot.log("The foo property of MyLib.fooModule exists: " + fooModule.foo );
 });
 
 Boot.use("mylib/bar", function( barModule ){
-	Boot.log("The bar function of barModule exists: " + barModule.bar() );
+	Boot.log("The bar function of MyLib.barModule exists: " + barModule.bar() );
 });
 
 // Reusing modules works too, and doesn't request the JS again.
 Boot.use("mylib/foo", function( fooModule ){
-	Boot.log("The foo property of fooModule exists: " + fooModule.foo );
+	Boot.log("The foo property of MyLib.fooModule exists: " + fooModule.foo );
+});
+*/
+// YourLib.foo has a dependency (YourLib.bar) that also needs loading.
+Boot.use("yourlib/foo", function( fooModule ) {
+	console.log( arguments );
+	Boot.log("The foo property of YourLib.fooModule exists: " + fooModule.foo );
+	Boot.log("Checking that bar and baz were passed through: fooModule.bar === " + fooModule.bar + ", fooModule.baz === " + fooModule.baz );
 });
 
 </script>
