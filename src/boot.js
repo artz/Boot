@@ -1482,7 +1482,6 @@
 	Boot.options
 */
 	var bootOptions = {};
-		
 	function options( customOptions, value ) {
 		if ( isString( customOptions ) ) {
 			extend( bootOptions[ customOptions ], value );
@@ -1620,9 +1619,33 @@
 		}
 			
 	}
+	
 	global.define = define;
 	
+/*
+	Boot.getJSONP
+	Simple function for returning JSONP data.
+*/	
+	var jsonpId = 0;
+	function getJSONP( url, callback ) {
+		
+		var callbackId = "JSONP_" + jsonpId++;
+		
+		url += "&callback=" + namespace + "." + callbackId;
 
+		getScript( url, { async: true } );
+
+		global[ callbackId ] = function( data ) {
+
+			// Pass data to the callback.
+			callback && callback.call( window, data );
+			
+			// Cleanup function reference.
+			delete global[ callbackId ];
+		};
+			
+	}
+	global.getJSONP = getJSONP;
 /*
 	To Do
 	? getJS merge support
