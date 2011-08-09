@@ -1513,7 +1513,9 @@
 */	
 	var moduleDefinitions = {},
 		definedModules = [],
-		defineCount = 0;
+		moduleCallback = [],
+		defineCount = 0,
+		lastModuleName;
 
 	function getLibrary( moduleName ) {
 		// i.e. "jQuery.alpha", "MyLib.foo.bar"
@@ -1544,18 +1546,20 @@
 		each( modules, function( moduleName, i ) {
 			// getJS will not fetch JS a second time and will
 			// proceed right to the callback.
-//			console.log("Loading " + resolve( options, moduleName )); 
+//			console.log("Loading " + resolve( options, moduleName ));
+			Boot.log( "Loading " + moduleName );
+			 
+			lastModuleName = moduleName;
+			
 			getJS( resolve( options, moduleName ), function(){
-				console.log("Grabbed " + moduleName);
 				
-				on( moduleName, function(){
-					console.log( moduleName + " ready!");
-				});
-				
+				Boot.log("Done loading " + moduleName);
+
 				// If a module was defined after our download...
 				// When we implement multiple definitions (i.e. merged urls)
 				// We won't want to assume the last item.
 				if ( ! ( module = moduleDefinitions[ moduleName ] ) ) {
+					
 					if ( defineCount !== ( defineCount = definedModules.length ) ) {
 						module = definedModules[ defineCount - 1 ];
 					} else {
@@ -1568,11 +1572,10 @@
 			});
 		});
 		
-		console.log( arguments );
 		// We need to do this after all scripts have downloaded,
 		// including ones that are loaded in via dependencies.
 	//	if ( callback ) {
-	//		getJS(function(){
+	//		moduleCallback[ moduleName ] = function(){
 	//			console.log( "Applying callback...");
 	//			console.log( callback.toString() );
 	//			callback.apply( global, callbackArgs );
@@ -1604,17 +1607,20 @@
 		// Load in any dependencies, and pass them into the use callback.
 		if ( moduleDependencies ) {
 			
-			console.log("Loading module dependencies: " + moduleDependencies.join(", "));
+			Boot.log("Loading module dependencies for <b>" + lastModuleName + "</b>: " + moduleDependencies.join(", "));
+
 			use( moduleDependencies, function(){
-				console.log("Calling back.");
-				console.log( arguments );
+				
+				Boot.log("Now we can define " + lastModuleName);
 			});
 			
+			
 		} else {
+			Boot.log("Defining module <b>" + lastModuleName + "</b>...");
 			if ( isFunction( moduleDefinition ) ) {
-				definedModules.push( moduleDefinition( use ) );
+				moduleDefinitions[ lastModuleName ] = moduleDefinition( /* require, exports, beta */ ); // http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition
 			} else if ( isObject( moduleDefinition ) ) {
-				definedModules.push( moduleDefinition );
+				moduleDefinitions[ lastModuleName ] = moduleDefinition;
 			}
 		}
 			

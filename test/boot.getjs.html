@@ -73,7 +73,10 @@ Boot.log("boot.getjs.html: Loading script #2.");
 Boot.getJS({
 	src: "javascript.php?num=2",
 	callback: function( src ){
-		Boot.log("boot.getjs.html: Executing script #2 callback (" + src + ").");
+		Boot.log("boot.getjs.html: Executing script #2 callback (" + src + "). <b>Loading script #6 inside callback!</b>");
+		Boot.getJS("javascript.php?num=6", function(){ 
+			Boot.log("boot.getjs.html: Executing script #6 callback (" + src + ").");
+		});
 	}
 });
 

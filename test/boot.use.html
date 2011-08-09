@@ -92,8 +92,14 @@ Boot.use("mylib/foo", function( fooModule ){
 // YourLib.foo has a dependency (YourLib.bar) that also needs loading.
 Boot.use("yourlib/foo", function( fooModule ) {
 	console.log( arguments );
-	Boot.log("The foo property of YourLib.fooModule exists: " + fooModule.foo );
-	Boot.log("Checking that bar and baz were passed through: fooModule.bar === " + fooModule.bar + ", fooModule.baz === " + fooModule.baz );
+	if ( fooModule ) { 
+		Boot.log("The foo property of YourLib.fooModule exists: " + fooModule.foo );
+		Boot.log("Checking that bar and baz were passed through: fooModule.bar === " + fooModule.bar + ", fooModule.baz === " + fooModule.baz );
+	}
+});
+
+Boot.use("mylib/foo", function( fooModule ){
+	Boot.log("Mylib foo loaded.");
 });
 
 </script>
