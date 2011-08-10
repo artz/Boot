@@ -148,8 +148,19 @@
 
 /*
 	UNDERSCORE UTILITIES
+	Helper utilities based on Underscore Library.
+	http://documentcloud.github.com/underscore/underscore.js
 */
-
+  // Return the results of applying the iterator to each element.
+  // Delegates to **ECMAScript 5**'s native `map` if available.
+	function map( obj, iterator, context ) {
+		var results = [];
+		each( obj, function( value, index, list ) {
+      		results[ results.length ] = iterator.call( context, value, index, list );
+    	});
+    	return results;
+	}
+  
 	// Delays a function for the given number of milliseconds, and then calls
 	// it with the arguments supplied.
 	function delay( func, wait ) {
@@ -728,27 +739,30 @@
 		
 		if ( eventQueue ) {
 			
-			var on = eventQueue[i],
-				onObject = on[0],
-				onCallback = on[1];
-
-			if ( object ) {
-
-				// Only execute the callback if this is
-				// the object emitting the event.
-				if ( object === onObject || onObject === undefined ) {
-					
-					onCallback.call( object, data );
-					
-					// Break the each loop, no sense wasting cycles.
-					// Worried this could have adverse effects.
-					// Commenting out for now.
-					// return false;
-				} 
-			} else {
-				onCallback.call( data, data );
-			}
-			
+			each( eventQueue, function( on, i ){
+				
+				var onObject = on[0],
+					onCallback = on[1];
+	
+				if ( object ) {
+	
+					// Only execute the callback if this is
+					// the object emitting the event or 
+					// the handler doesn't require an object.
+					if ( object === onObject || onObject === undefined ) {
+						
+						onCallback.call( object, data );
+						
+						// Break the each loop, no sense wasting cycles.
+						// Worried this could have adverse effects.
+						// Commenting out for now.
+						// return false;
+					} 
+				} else {
+					onCallback.call( data, data );
+				}
+				
+			});
 		}
 	}
 	global.emit = emit;
@@ -1506,90 +1520,16 @@
 		return options.basePath + module.toLowerCase() + ".min.js";
 		
 	}
-
-/*
-	Boot.use
-	Based on YUI's use() function and RequireJS.
-*/	
-	var moduleDefinitions = {},
-		definedModules = [],
-		moduleCallback = [],
-		defineCount = 0,
-		lastModuleName;
-
-	function getLibrary( moduleName ) {
-		// i.e. "jQuery.alpha", "MyLib.foo.bar"
-		var obj = window;
-				
-		each( moduleName.split("."), function( name ) {
-			obj = obj[ name ];
-		});
-	
-		return obj;
-	}
-
-	bootOptions.use = {};
-	function use( customOptions, modules, callback ){
-		
-		if ( isArray( customOptions ) || isString( customOptions ) ) {
-			callback = modules;
-			modules = customOptions;
-		}
-		
-		modules = isString( modules ) ? [ modules ] : modules;
-		
-		var options = extend( {}, bootOptions.use, customOptions || {} ),
-			callbackArgs = [],
-			moduleCount = 0,
-			module;
-
-		each( modules, function( moduleName, i ) {
-			// getJS will not fetch JS a second time and will
-			// proceed right to the callback.
-//			console.log("Loading " + resolve( options, moduleName ));
-			Boot.log( "Loading " + moduleName );
-			 
-			lastModuleName = moduleName;
-			
-			getJS( resolve( options, moduleName ), function(){
-				
-				Boot.log("Done loading " + moduleName);
-
-				// If a module was defined after our download...
-				// When we implement multiple definitions (i.e. merged urls)
-				// We won't want to assume the last item.
-				if ( ! ( module = moduleDefinitions[ moduleName ] ) ) {
-					
-					if ( defineCount !== ( defineCount = definedModules.length ) ) {
-						module = definedModules[ defineCount - 1 ];
-					} else {
-						module = getLibrary( moduleName );
-					}
-					moduleDefinitions[ moduleName ] = module;
-				}
-				callbackArgs[i] = module;
-				//callbackArgs.push( module );
-			});
-		});
-		
-		// We need to do this after all scripts have downloaded,
-		// including ones that are loaded in via dependencies.
-	//	if ( callback ) {
-	//		moduleCallback[ moduleName ] = function(){
-	//			console.log( "Applying callback...");
-	//			console.log( callback.toString() );
-	//			callback.apply( global, callbackArgs );
-	//		});
-	//	}
-		
-	}
-	global.use = use;
 	
 /*
 	Boot.define
 	Define a module, based on the Asynchronous Module Definition (AMD)
 	http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition
 */
+	var modules = {},
+		moduleDefinitions = {},
+		definedModuleDependencies = [],
+		definedModules = [];
 	
 	function define( moduleName, moduleDependencies, moduleDefinition ) {
 		
@@ -1607,27 +1547,151 @@
 		// Load in any dependencies, and pass them into the use callback.
 		if ( moduleDependencies ) {
 			
-			Boot.log("Loading module dependencies for <b>" + lastModuleName + "</b>: " + moduleDependencies.join(", "));
-
+//			Boot.log("Loading module dependencies for <b>" + "?" + "</b>: " + moduleDependencies.join(", "));
+			
+			// moduleDependency[ moduleName ] = moduleDependencies[ moduleDependencies.length - 1 ];
+			
+			// Remember that this guy has a dependency, and which one it is.
+			moduleDefinition.d = moduleDependencies;
+			
+			// Clean this up later, don't think we need the callback.			
 			use( moduleDependencies, function(){
 				
-				Boot.log("Now we can define " + lastModuleName);
+//				Boot.log("Sheah right!");
+				
 			});
 			
 			
-		} else {
-			Boot.log("Defining module <b>" + lastModuleName + "</b>...");
-			if ( isFunction( moduleDefinition ) ) {
-				moduleDefinitions[ lastModuleName ] = moduleDefinition( /* require, exports, beta */ ); // http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition
-			} else if ( isObject( moduleDefinition ) ) {
-				moduleDefinitions[ lastModuleName ] = moduleDefinition;
-			}
 		}
-			
+		
+		if ( moduleName ) {
+			moduleDefinitions[ moduleName ] = moduleDefinition;
+		} else {
+			definedModules.push( moduleDefinition );
+//			console.log( moduleDefinition );	
+		}	
 	}
 	
 	global.define = define;
+
+
+/*
+	Boot.use
+	Based on YUI's use() function and RequireJS.
+*/	
+
+	function getLibrary( moduleName ) {
+		// i.e. "jQuery.alpha", "MyLib.foo.bar"
+		var obj = window;
+				
+		each( moduleName.split("."), function( name ) {
+			obj = obj[ name ];
+		});
 	
+		return obj;
+	}
+
+	bootOptions.use = {};
+	function use( customOptions, moduleNames, callback ){
+		
+		if ( isArray( customOptions ) || isString( customOptions ) ) {
+			callback = moduleNames;
+			moduleNames = customOptions;
+		}
+		
+		moduleNames = isString( moduleNames ) ? [ moduleNames ] : moduleNames;
+		
+		var options = extend( {}, bootOptions.use, customOptions || {} ),
+			callbackArgs = [];
+			
+		on( moduleNames[ moduleNames.length - 1 ], function(){
+//			Boot.log("All clear! Time to fire callback.");
+			callback.apply( callbackArgs, callbackArgs );
+		});
+		
+		each( moduleNames, function( moduleName, i ) {
+			
+			var module,
+				moduleDependencies,
+				moduleDefinition;
+			
+//			console.log("Loading " + resolve( options, moduleName ));
+//			Boot.log( "Loading " + moduleName );
+			
+			// If this module has already been defined, use it.
+			if ( module = modules[ moduleName ]) {
+				
+				callbackArgs[i] = module;
+			
+			// Otherwise we'll need to load and define on the fly,
+			// all the whilest managing dependencies.	
+			} else {
+				
+				getJS( resolve( options, moduleName ), function() {
+				
+//					Boot.log("Done loading script for <b>" + moduleName + "</b>.");
+					
+					// If a module was defined after our download.
+					if ( definedModules.length ) {
+						
+						// Snag the first one and remember it.
+						moduleDefinition = moduleDefinitions[ moduleName ] = definedModules[0];
+						
+						// Reset defined modules.
+						definedModules = [];
+						
+						if ( moduleDependencies = moduleDefinition.d ) {
+							
+//							Boot.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d );
+							on( moduleDependencies[ moduleDependencies.length - 1 ], function() {
+								
+								var moduleArgs = map( moduleDependencies, function( moduleName ){ return modules[ moduleName ]; } );
+																
+//								Boot.log( "Dependencies loaded (" + moduleDefinition.d + "). <b>" + moduleName + "</b> is ready." );
+								module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, moduleArgs ) : moduleDefinition;
+								
+								callbackArgs[i] = modules[ moduleName ] = module;
+								emit( moduleName );
+							});
+							
+						} else {
+							
+							module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
+							callbackArgs[i] = modules[ moduleName ] = module;
+							
+//							Boot.log("<b>" + moduleName + "</b> loaded! " + !!module);
+							
+							emit( moduleName );
+						}
+					
+					// Otherwise see if we can snag the module by name (old skool).	
+					} else if (	module = getLibrary( moduleName ) ) {
+						
+						// Remember we got it.
+						callbackArgs[i] = modules[ moduleName ] = module;
+						emit( moduleName );
+						
+					}
+				
+				});
+			}
+			
+			
+		});
+		
+		// We need to do this after all scripts have downloaded,
+		// including ones that are loaded in via dependencies.
+	//	if ( callback ) {
+	//		moduleCallback[ moduleName ] = function(){
+	//			console.log( "Applying callback...");
+	//			console.log( callback.toString() );
+	//			callback.apply( global, callbackArgs );
+	//		});
+	//	}
+		
+	}
+	global.use = use;
+
 /*
 	Boot.getJSONP
 	Simple function for returning JSONP data.
