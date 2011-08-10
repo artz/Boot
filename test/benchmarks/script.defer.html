@@ -5,11 +5,11 @@
 
 <head>
 
-<title>JS Loader Benchmarks - head.js</title> 
+<title>JS Loader Benchmarks - &lt;script&gt; Tag</title> 
 
 <!-- Include Boot.js for logging purposes. -->
 <script src="../../src/boot.js"></script>
-<script src="js/LAB.min.js"></script> 
+
 <script>
 	// calculate difference between zero and window.onload
 	var now = new Date(),
@@ -23,21 +23,20 @@
 	}
 </script> 
 
-<script> 
-$LAB.script("js/javascript.php?num=1").wait()
-	.script("js/javascript.php?num=2").wait()
-	.script("js/javascript.php?num=3").wait()
-	.script("js/javascript.php?num=4").wait()
-	.script("js/javascript.php?num=5").wait()
-	.script("js/javascript.php?num=6").wait()
-	.script("js/javascript.php?num=7").wait()
-	.script("js/javascript.php?num=8").wait()
-	.script("js/javascript.php?num=9")
-	.wait(function(){
-		finished();
-		Boot.log("First 9 scripts loaded.");
-	});	
+<script src="js/javascript.php?num=1" defer></script>
+<script src="js/javascript.php?num=2" defer></script>
+<script src="js/javascript.php?num=3" defer></script>
+<script src="js/javascript.php?num=4" defer></script>
+<script src="js/javascript.php?num=5" defer></script>
+<script src="js/javascript.php?num=6" defer></script>
+<script src="js/javascript.php?num=7" defer></script>
+<script src="js/javascript.php?num=8" defer></script>
+<script src="js/javascript.php?num=9" defer></script>
+<script>
+	finished();
+	Boot.log("First 9 scripts loaded.");
 </script> 
+ 
  
 	<!-- inline style so that we can focus on script loading only --> 
 	<style> 
@@ -69,13 +68,13 @@ $LAB.script("js/javascript.php?num=1").wait()
 		
 		<div id="nav"> 
 			<a href="script.html">&lt;script&gt; tag <em>in head</em></a> 
-			<a href="script.defer.html">&lt;script defer&gt; tag <em>in head</em></a> 
+			<a href="script.defer.html" class="selected">&lt;script defer&gt; tag <em>in head</em></a> 
 			<a href="jquery.getscript.html">jQuery.getScript() <em>in head</em></a> 
-			<a href="labjs.html" class="selected">LABjs <em>in head</em></a> 
+			<a href="labjs.html">LABjs <em>in head</em></a> 
 			<a href="A.getjs.html">A.getJS <em>in head</em></a> 
 			<a href="headjs.html">head.js <em>in head</em></a> 
 			<a href="yepnope.html">yepnope.js<em>in head</em></a> 
-			<a href="bootjs.html">Boot.getJS <em>in head</em></a>
+			<a href="bootjs.html">Boot.getJS <em>in head</em></a> 
 			<a href="boot.easync.html">Boot.getJS <em>w/ Easync</em></a> 
 			<a href="require.html">RequireJS<em>in head</em></a>
 		</div>
@@ -101,13 +100,8 @@ $LAB.script("js/javascript.php?num=1").wait()
 				Time is calculated when <code>window.onload</code> fires.
 			</p> 
 			
-			<p> 
-				Try with different browsers. The time difference varies a lot.
-			</p> 
-			
 			<p class="details">
-LABjs loads all the scripts asynchronously, and allows the page to render despite inline JS.
- Its syntax is a little verbose, but provides developers flexibility in loading scripts.  The script's footprint is a bit large (4.7KB) due to a lot of extra code for loading on the same domain using AJAX.  It successfully avoids the render block in Firefox, unlike head.js and A.getJS.
+				The defer attribute defers execution of the script, similar to setTimeout. As such, this destroys any potential for inline script or callback functions to fire after scripts download.  Not an ideal solution for stuff that is inline, like page/template specific configuration and initialization.
 			</p> 
 			
 			<h3>Test Log</h3>
@@ -122,18 +116,17 @@ LABjs loads all the scripts asynchronously, and allows the page to render despit
 		</div> 
 		
 	</div> 
-	
-<script> 
-$LAB.script("js/javascript.php?num=10").wait()
-	.script("js/javascript.php?num=11").wait()
-	.script("js/javascript.php?num=12").wait()
-	.script("js/javascript.php?num=13").wait()
-	.script("js/javascript.php?num=14")
-	.wait(function(){
-		finished();
-		Boot.log("Second 5 scripts loaded.");
-	});	
-</script>
+
+<script src="js/javascript.php?num=10" defer></script>
+<script src="js/javascript.php?num=11" defer></script>
+<script src="js/javascript.php?num=12" defer></script>
+<script src="js/javascript.php?num=13" defer></script>
+<script src="js/javascript.php?num=14" defer></script>
+<script>
+	finished();
+	Boot.log("Second 5 scripts loaded.");
+</script> 
+
+		
 </body> 
-	
-	
+</html>
