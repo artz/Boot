@@ -1528,47 +1528,35 @@
 */
 	var modules = {},
 		moduleDefinitions = {},
-		definedModuleDependencies = [],
 		definedModules = [];
 	
 	function define( moduleName, moduleDependencies, moduleDefinition ) {
-		
+
 		if ( ! isString( moduleName ) ) {
 			moduleDefinition = moduleDependencies;
 			moduleDependencies = moduleName;
 			moduleName = undefined;				
 		}
-		
+
 		if ( ! isArray( moduleDependencies ) ) {
 			moduleDefinition = moduleDependencies;
 			moduleDependencies = undefined;
 		}
-		 
+
 		// Load in any dependencies, and pass them into the use callback.
 		if ( moduleDependencies ) {
-			
+
 //			Boot.log("Loading module dependencies for <b>" + "?" + "</b>: " + moduleDependencies.join(", "));
-			
-			// moduleDependency[ moduleName ] = moduleDependencies[ moduleDependencies.length - 1 ];
-			
+
 			// Remember that this guy has a dependency, and which one it is.
 			moduleDefinition.d = moduleDependencies;
-			
-			// Clean this up later, don't think we need the callback.			
-			use( moduleDependencies, function(){
-				
-//				Boot.log("Sheah right!");
-				
-			});
-			
-			
+
 		}
 		
 		if ( moduleName ) {
 			moduleDefinitions[ moduleName ] = moduleDefinition;
 		} else {
 			definedModules.push( moduleDefinition );
-//			console.log( moduleDefinition );	
 		}	
 	}
 	
@@ -1594,38 +1582,65 @@
 	bootOptions.use = {};
 	function use( customOptions, moduleNames, callback ){
 		
+		// Normalize parameters.
 		if ( isArray( customOptions ) || isString( customOptions ) ) {
 			callback = moduleNames;
 			moduleNames = customOptions;
 		}
 		
+		// Make moduleNames an array.
 		moduleNames = isString( moduleNames ) ? [ moduleNames ] : moduleNames;
 		
 		var options = extend( {}, bootOptions.use, customOptions || {} ),
-			callbackArgs = [];
+			callbackArgs = [],
+			moduleCount = 0;
 			
-		on( moduleNames[ moduleNames.length - 1 ], function(){
-//			Boot.log("All clear! Time to fire callback.");
-			callback.apply( callbackArgs, callbackArgs );
-		});
-		
+		function moduleReady( i, moduleName, module ) {
+			
+			if ( module ) {
+				modules[ moduleName ] = module;
+				emit( moduleName );
+			}
+			
+			callbackArgs[i] = modules[ moduleName ];
+			
+//			Boot.log("<b>" + moduleName + "</b> ready! " + ( i + 1 ) + " of " + moduleNames.length);
+			if ( ++moduleCount === moduleNames.length ) {
+
+//				Boot.log("All clear! Time to fire callback.");
+				callback.apply( callbackArgs, callbackArgs );
+			}
+		}
+
 		each( moduleNames, function( moduleName, i ) {
 			
 			var module,
 				moduleDependencies,
 				moduleDefinition;
-			
-//			console.log("Loading " + resolve( options, moduleName ));
+
 //			Boot.log( "Loading " + moduleName );
-			
+
 			// If this module has already been defined, use it.
-			if ( module = modules[ moduleName ]) {
+			if ( moduleName in modules ) {
 				
-				callbackArgs[i] = module;
-			
+				if ( module ){
+//					Boot.log("Module <b>" + moduleName + "</b> is already defined.");
+					moduleReady( i, moduleName ); // callbackArgs[i] = module;
+				} else {
+//					Boot.log("Module <b>" + moduleName + "</b> is in the process of being defined. Queue time!");
+					on( moduleName, function(){
+//						Boot.log("Module <b>" + moduleName + "</b> is now defined! Assigning to callback argument.");
+						moduleReady( i, moduleName );
+					});
+				}
+				
 			// Otherwise we'll need to load and define on the fly,
 			// all the whilest managing dependencies.	
 			} else {
+				
+				// Temporarily give this guy something so incoming 
+				// module requests wait until the event is emmitted.
+				modules[ moduleName ] = undefined;
 				
 				getJS( resolve( options, moduleName ), function() {
 				
@@ -1641,53 +1656,34 @@
 						definedModules = [];
 						
 						if ( moduleDependencies = moduleDefinition.d ) {
-							
+
 //							Boot.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d );
-							on( moduleDependencies[ moduleDependencies.length - 1 ], function() {
-								
-								var moduleArgs = map( moduleDependencies, function( moduleName ){ return modules[ moduleName ]; } );
-																
+
+							use( moduleDependencies, function(){
 //								Boot.log( "Dependencies loaded (" + moduleDefinition.d + "). <b>" + moduleName + "</b> is ready." );
-								module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, moduleArgs ) : moduleDefinition;
-								
-								callbackArgs[i] = modules[ moduleName ] = module;
-								emit( moduleName );
+								module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
+								moduleReady( i, moduleName, module );
 							});
-							
+
 						} else {
 							
 							module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
-							callbackArgs[i] = modules[ moduleName ] = module;
-							
+							moduleReady( i, moduleName, module );
+
 //							Boot.log("<b>" + moduleName + "</b> loaded! " + !!module);
-							
-							emit( moduleName );
 						}
-					
+
 					// Otherwise see if we can snag the module by name (old skool).	
 					} else if (	module = getLibrary( moduleName ) ) {
-						
-						// Remember we got it.
-						callbackArgs[i] = modules[ moduleName ] = module;
-						emit( moduleName );
-						
+
+						moduleReady( i, moduleName, module );
+
 					}
-				
+
 				});
 			}
 			
-			
 		});
-		
-		// We need to do this after all scripts have downloaded,
-		// including ones that are loaded in via dependencies.
-	//	if ( callback ) {
-	//		moduleCallback[ moduleName ] = function(){
-	//			console.log( "Applying callback...");
-	//			console.log( callback.toString() );
-	//			callback.apply( global, callbackArgs );
-	//		});
-	//	}
 		
 	}
 	global.use = use;
