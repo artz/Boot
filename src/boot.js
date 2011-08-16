@@ -572,7 +572,7 @@
 	var styleNode = document.createElement("style");
 
 	function attr( elem, attribute, value ){
-		
+
 		if ( value !== undefined ) {
 		
 			if ( value === null ) {
@@ -1512,12 +1512,15 @@
 	we expose it externally and further internally.
 	possibly make resolveJS, resolveCSS, resolveFont?
 */
-	bootOptions.resolve = {};
+	bootOptions.resolve = {
+		basePath: "",
+		filename: function(str){ return str.toLowerCase(); },
+		suffix: ".min.js"
+	};
+	
 	function resolve( customOptions, module ) {
-		
 		var options = extend( {}, bootOptions.resolve, customOptions || {} );
-
-		return options.basePath + module.toLowerCase() + ".min.js";
+		return options.basePath + options.filename( module ) + options.suffix;
 		
 	}
 	
