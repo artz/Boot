@@ -766,6 +766,19 @@
 		}
 	}
 	global.emit = emit;
+	
+/*
+	Function: Boot.getCSS
+	
+	Fetches a CSS file and appends it to the DOM.
+*/
+	function getCSS( src ) {
+		var styleSheet = document.createElement("link");
+		styleSheet.rel = "stylesheet";
+		styleSheet.href = src;
+		firstScriptParent.insertBefore( styleSheet, firstScript );
+	}
+	global.getCSS = getCSS;
 
 /*
 	Function: Boot.cacheScript
