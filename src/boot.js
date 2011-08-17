@@ -311,7 +311,7 @@
 		object1 - An object containing additional properties to merge in.
 		objectN - Additional objects containing properties to merge in.
 
-*/
+*/	
 	function extend() {
 
 		var args = arguments,
@@ -337,7 +337,8 @@
 			source = args[i];
 			for ( name in source ) {
 				if ( source.hasOwnProperty(name) ) {
-					if ( isObject( source[name] ) ) {
+					// If an object or array and NOT a DOM node, we need to deep copy.
+					if ( isObject( source[name] ) && ! source[name].nodeType ) {
 						target[name] = isArray( source[name] ) ? [] : {};
 						extend( target[name], source[name] );
 					} else {
@@ -572,9 +573,8 @@
 	var styleNode = document.createElement("style");
 
 	function attr( elem, attribute, value ){
-
-		if ( value !== undefined ) {
 		
+		if ( value !== undefined ) {
 			if ( value === null ) {
 				elem.removeAttribute( attribute );
 			} else if ( attribute === "style" && styleNode.styleSheet ) {
@@ -1521,7 +1521,6 @@
 	function resolve( customOptions, module ) {
 		var options = extend( {}, bootOptions.resolve, customOptions || {} );
 		return options.basePath + options.filename( module ) + options.suffix;
-		
 	}
 	
 /*
