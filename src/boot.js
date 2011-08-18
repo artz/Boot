@@ -339,15 +339,13 @@
 				if ( source.hasOwnProperty(name) ) {
 					// If an object or array and NOT a DOM node, we need to deep copy.
 					if ( isObject( source[name] ) && ! source[name].nodeType ) {
-						target[name] = isArray( source[name] ) ? [] : {};
-						extend( target[name], source[name] );
+						target[name] = extend( isArray( source[name] ) ? [] : {}, target[name], source[name] );
 					} else {
 						target[name] = source[name];
 					}
 				}
 			}
 		}
-
 		return target;
 	}
 	global.extend = extend;
@@ -589,6 +587,42 @@
 		
 	}
 	global.attr = attr;
+
+/*
+	Boot.data
+	
+	Function for extracting data attributes and storing 
+	arbitrary data on elements.
+*/
+	function data( elem, key, value ) {
+		// Return an object of all data attributes.
+		var strData = "data-",
+		
+			attribute,
+			attributeName,
+			attributes = elem.attributes,
+			attributesLength = attributes.length,
+			attributesObject = {},
+			
+			ret;
+			
+		if ( value !== undefined ) {
+			attr( elem, strData + key, value );
+		} else if ( key !== undefined ) {
+			ret = attr( strData + key );
+		} else {
+			while( attributesLength-- ) {
+				attribute = attributes[ attributesLength ];
+				attributeName = attribute.nodeName;
+				if ( contains( attributeName, strData ) ) {
+					attributesObject[ attributeName.replace( strData, "" ) ] = attribute.nodeValue;
+				}
+			}
+			ret = attributesObject;
+		}
+		return ret;
+	}
+	global.data = data;
 
 /*
 	Function: Boot.globalEval

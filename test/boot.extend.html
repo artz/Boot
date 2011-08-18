@@ -35,7 +35,12 @@ Boot.log("boot.getjs.html: Starting tests.");
 var firstObject = {
 		"foo": "foo",
 		"bar": "bar",
-		"array": ["a", "b", "c"]
+		"array": ["a", "b", "c"],
+		"object": {
+			"nested": {
+				"monkey": false
+			}
+		}
 	},
 	secondObject = {
 		"foo": "food",
@@ -53,7 +58,7 @@ Boot.log("Second object: " + secondObject.foo + " : " + secondObject.baz + " : "
 
 mergedObject = Boot.extend( {}, firstObject, secondObject );
 
-Boot.log("Merged object: " + mergedObject.foo + " : " + mergedObject.bar + " : " + mergedObject.baz + " : " + mergedObject.array[0] + " : " + mergedObject.object.nested.deep );
+Boot.log("Merged object: " + mergedObject.foo + " : " + mergedObject.bar + " : " + mergedObject.baz + " : " + mergedObject.array[0] + " : " + mergedObject.object.nested.deep + " : " + mergedObject.object.nested.monkey );
 
 Boot.log("First object: " + firstObject.foo + " : " + firstObject.bar );
 Boot.log("Second object: " + secondObject.foo + " : " + secondObject.baz );
