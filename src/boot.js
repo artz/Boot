@@ -39,11 +39,13 @@
 	function addClass( object, className ) {
 		object.className += " " + className;
 	}
+	global.addClass = addClass;
 	
 	function removeClass( object, className ) {
 		className = new RegExp( "\\b" + className + "\\b" );
 		object.className = object.className.replace( className, "" );
 	}
+	global.removeClass = removeClass;
 
 /*
 	Function: Boot.contains
@@ -571,13 +573,15 @@
 	var styleNode = document.createElement("style");
 
 	function attr( elem, attribute, value ){
-		
+
 		if ( value !== undefined ) {
 			if ( value === null ) {
 				elem.removeAttribute( attribute );
-			} else if ( attribute === "style" && styleNode.styleSheet ) {
-				elem.cssText = value;
 			} else {
+				if ( attribute === "style" ) {
+					// For IE.
+					elem.style.cssText = value;
+				}
 				elem.setAttribute( attribute, value );
 			}	
 
@@ -1616,13 +1620,15 @@
 	Boot.use
 	Based on YUI's use() function and RequireJS.
 */	
-
+	// Resolves an object.
 	function getLibrary( moduleName ) {
 		// i.e. "jQuery.alpha", "MyLib.foo.bar"
 		var obj = window;
 				
 		each( moduleName.split("."), function( name ) {
-			obj = obj[ name ];
+			if ( obj && obj.hasOwnProperty( name ) ) {
+				obj = obj[ name ];
+			}
 		});
 	
 		return obj;
@@ -1727,6 +1733,8 @@
 
 						moduleReady( i, moduleName, module );
 
+					} else {
+						alert(" Failed to register module." );
 					}
 
 				});
