@@ -175,6 +175,7 @@
 	function defer( func ) {
 		return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
 	}
+	global.defer = defer;
 	
 	// Internal function used to implement throttle() and debounce()
 	function limit( func, wait, debounce ) {
@@ -810,11 +811,15 @@
 	
 	Fetches a CSS file and appends it to the DOM.
 */
+	var cssLoading = {};
 	function getCSS( src ) {
-		var styleSheet = document.createElement("link");
-		styleSheet.rel = "stylesheet";
-		styleSheet.href = src;
-		firstScriptParent.insertBefore( styleSheet, firstScript );
+		if ( ! cssLoading[ src ] ) {
+			cssLoading[ src ] = 1;
+			var styleSheet = document.createElement("link");
+			styleSheet.rel = "stylesheet";
+			styleSheet.href = src;
+			firstScriptParent.insertBefore( styleSheet, firstScript );
+		}
 	}
 	global.getCSS = getCSS;
 
@@ -1054,9 +1059,10 @@
 
 		// Remember the script we were passed is loaded.
 		isScriptDone[ src ] = 1;
+		// Boot.log("execScripts(" + src + ")");
 		if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
 			
-// console.log( "emitting: " + nextScript );
+// Boot.log( "Executing Scripts: [" + nextScriptIndex + "] " + nextScript );
 // emit( nextScript );
 						
 			isScriptExecuted[ nextScript ] = 1;
@@ -1077,7 +1083,7 @@
 			}
 			 
 		} else if ( isFunction( nextScript ) ) {
-			
+// Boot.log( "Executing Function: " + nextScript );
 			// Advance to the next script now, otherwise if there are
 			// nested getJS calls this goes into a recursive nightmare.
 			nextScriptIndex++;
@@ -1091,13 +1097,17 @@
 			} else {
 				// For other browsers, we continue to manage things
 				// manually using paced SetTimeouts.  IE likes it.
+				// Boot.log("Deferring callback. [" + nextScriptIndex + "]");
 				defer(function(){
+					// Boot.log("Executing callback. [" + nextScriptIndex + "]");
 					nextScript( nextScript.t );
 					execScripts();
 				});
 			}
 			
-		}		
+		}// else {
+			// Boot.log( "Doing nothing for now. " + nextScript );	
+	//	}
 	}
 	
 	function dispatchScriptQueue( queue ) {
@@ -1116,7 +1126,7 @@
 		if ( isArray( args[0] ) ) {
 			args = args[0];
 		}
-		
+		// Boot.log("getJS(" + args[0] + ");");
 		each( args, function( arg ) {
 
 			var options = {},
@@ -1172,7 +1182,7 @@
 			
 			// Proceed as normal.
 			} else {
-				
+
 				// Localize the source.
 				src = options.src;
 
@@ -1217,13 +1227,12 @@
 					
 				// Otherwise proceed through our queue system.	
 				} else if ( src && ! isScriptLoading[ src ] ) {
-
+				//	Boot.log("getJS( " + src + " );");
 					// Remember we already loaded this script.
 					isScriptLoading[ src ] = 1;
-					
 					// Push the script options into our execution queue.
 					execScriptQueue.push( options );
-					
+// Boot.log("Pushing script. [" + (execScriptQueue.length - 1) + "] " + src );					
 					// If this is a script, and it hasn't 
 					// been loaded yet, fetch it now.
 				
@@ -1239,9 +1248,10 @@
 					// Remember the script object associated
 					// with this callback.
 					callback.t = options.test;
-
+				//	Boot.log("getJS( function(){} );");
 					// log( "Boot.getJS: Pushing callback function into queue.");
 					execScriptQueue.push( callback );
+// Boot.log("Pushing callback. [" + (execScriptQueue.length - 1) + "]");					
 				}
 			}
 			
@@ -1279,6 +1289,8 @@
 
 /*
 	Boot.create
+	
+	Research: http://domscripting.com/blog/display/99
 */
 	function create( html ) {	
 		var div = document.createElement("c");
@@ -1624,7 +1636,7 @@
 	function getLibrary( moduleName ) {
 		// i.e. "jQuery.alpha", "MyLib.foo.bar"
 		var obj = window;
-				
+
 		each( moduleName.split("."), function( name ) {
 			if ( obj && obj.hasOwnProperty( name ) ) {
 				obj = obj[ name ];
@@ -1636,7 +1648,7 @@
 
 	bootOptions.use = {};
 	function use( customOptions, moduleNames, callback ){
-		
+
 		// Normalize parameters.
 		if ( isArray( customOptions ) || isString( customOptions ) ) {
 			callback = moduleNames;
@@ -1654,7 +1666,6 @@
 			
 			if ( module ) {
 				modules[ moduleName ] = module;
-				emit( moduleName );
 			}
 			
 			callbackArgs[i] = modules[ moduleName ];
@@ -1665,15 +1676,19 @@
 //				Boot.log("All clear! Time to fire callback.");
 				callback.apply( callbackArgs, callbackArgs );
 			}
+			
+			if ( module ) {
+				emit( moduleName );
+			}
 		}
 
 		each( moduleNames, function( moduleName, i ) {
-			
+
 			var module,
 				moduleDependencies,
 				moduleDefinition;
 
-//			Boot.log( "Loading " + moduleName );
+//			Boot.log( "Inside use, using " + moduleName );
 
 			// If this module has already been defined, use it.
 			if ( moduleName in modules ) {
@@ -1696,16 +1711,16 @@
 				// Temporarily give this guy something so incoming 
 				// module requests wait until the event is emmitted.
 				modules[ moduleName ] = undefined;
-				
+				// Boot.log("Calling getJS...");
 				getJS( resolve( options, moduleName ), function() {
-				
+
 //					Boot.log("Done loading script for <b>" + moduleName + "</b>.");
-					
+					// Boot.log( "Defined modules: " + definedModules.length );
 					// If a module was defined after our download.
 					if ( definedModules.length ) {
 						
 						// Snag the first one and remember it.
-						moduleDefinition = moduleDefinitions[ moduleName ] = definedModules[0];
+						moduleDefinition = moduleDefinitions[ moduleName ] = definedModules.shift();
 						
 						// Reset defined modules.
 						definedModules = [];
@@ -1734,7 +1749,7 @@
 						moduleReady( i, moduleName, module );
 
 					} else {
-						alert(" Failed to register module." );
+						alert("Failed to register module." );
 					}
 
 				});
