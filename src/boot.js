@@ -492,13 +492,24 @@
 	
 	Boot
 */
+	// Patch function to normalize IE events to standard.
+	function patchIEEvent( event ) {
+		
+		event.preventDefault = function(){
+			event.returnValue = false;
+		};
+		event.target = event.srcElement;
+		
+		return event;
+	}
+	
 	function bind( object, event, callback ) {
+		
 		if (object.attachEvent) {
-			object.attachEvent("on" + event, callback);
+			object.attachEvent("on" + event, function(){ callback( patchIEEvent( window.event ) ); } );
 		} else if (object.addEventListener) {
 			object.addEventListener(event, callback, false);
 		}
-		
 	}
 	global.bind = bind;
 
