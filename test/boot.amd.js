@@ -18,6 +18,7 @@
 		strOnReadyStateChange = "onreadystatechange",
 		strOnLoad = "onload",
 		strComplete = "complete";
+
 /*
 	Function: Boot.now
 	
@@ -106,7 +107,36 @@
 		return is( obj, strNumber );
 	}
 	global.isNumber = isNumber;
+
+
+/*
+	Function: Boot.each
 	
+	Simple function for iterating through an array.
+	
+	One day do this?: https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/array/foreach
+	
+	Parameters:
+	
+		array - The array to iterate over.
+		callback - The callback to apply to each item in the array.
+	
+	Returns:
+	
+	Boot
+*/
+	function each( array, callback ) {
+	// Anything break if I comment this out?  Dummy protection needed?
+	//	if ( array && array.length ) {  
+		var i = 0, l = array.length;
+		for (; i < l; i++ ) {
+			callback( array[i], i, array );
+		}
+	//	}
+		
+	}
+	global.each = each;
+
 /*
 	Boot.extend
 	
@@ -257,8 +287,9 @@
 				
 				// Emit an event indicating this script has finished.
 			//	emit( src );
-			
+			//	setTimeout(function(){
 				callback && callback( src ); 
+			//	}, 0 );
 				
 				// Handle memory leak in IE
 				script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
@@ -272,8 +303,9 @@
 		
 		// This is the safest insertion point to assume.
 		// We use a setTimeout to ensure non-blocking behavior.
+
 		firstScriptParent.insertBefore( script, firstScript );
-	
+
 	}
 	global.getScript = getScript;
 	
@@ -362,6 +394,88 @@
 		}
 	}
 	global.emit = emit;
+
+/*
+	Boot.resolve
+	Utility for resolving URL addresses.
+	TBD on how we want this API to work if 
+	we expose it externally and further internally.
+	possibly make resolveJS, resolveCSS, resolveFont?
+*/
+	bootOptions.resolve = {
+		basePath: "",
+		filename: function(str){ return str.toLowerCase(); },
+		suffix: ".min.js"
+	};
+	
+	function resolve( customOptions, module ) {
+		var options = extend( {}, bootOptions.resolve, customOptions || {} );
+		return options.basePath + options.filename( module ) + options.suffix;
+	}
+
+/*
+	Boot.define
+	Define a module, based on the Asynchronous Module Definition (AMD)
+	http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition
+*/
+	var modules = {},
+		moduleDefinitions = {},
+		definedModules = [];
+	
+	function define( moduleName, moduleDependencies, moduleDefinition ) {
+		
+//		Boot.log("Defining a module!");
+		if ( ! isString( moduleName ) ) {
+			moduleDefinition = moduleDependencies;
+			moduleDependencies = moduleName;
+			moduleName = undefined;				
+		}
+
+		if ( ! isArray( moduleDependencies ) ) {
+			moduleDefinition = moduleDependencies;
+			moduleDependencies = undefined;
+		}
+
+		// Load in any dependencies, and pass them into the use callback.
+		if ( moduleDependencies ) {
+
+//			Boot.log("Loading module dependencies for <b>" + "?" + "</b>: " + moduleDependencies.join(", "));
+
+			// Remember that this guy has a dependency, and which one it is.
+			moduleDefinition.d = moduleDependencies;
+
+		}
+		
+		if ( moduleName ) {
+			moduleDefinitions[ moduleName ] = moduleDefinition;
+		} else {
+			definedModules.push( moduleDefinition );
+		}	
+	}
+	
+	// We conform to the AMD spec.
+	// https://github.com/amdjs/amdjs-api/wiki/AMD
+	define.amd = {};
+	
+	global.define = define;
+
+/*
+	Boot.use
+	Based on YUI's use() function and RequireJS.
+*/	
+	// Resolves an object.
+	function getLibrary( moduleName ) {
+		// i.e. "jQuery.alpha", "MyLib.foo.bar"
+		var obj = window;
+
+		each( moduleName.split("."), function( name ) {
+			if ( obj.hasOwnProperty( name ) ) {
+				obj = obj[ name ];
+			}
+		});
+	
+		return obj;
+	}
 	
 	bootOptions.use = {};
 	function use( customOptions, moduleNames, callback ) {
@@ -430,26 +544,27 @@
 				// Temporarily give this guy something so incoming 
 				// module requests wait until the event is emmitted.
 				modules[ moduleName ] = undefined;
-				// Boot.log("Calling getJS...");
-				getJS( resolve( options, moduleName ), function() {
+//				Boot.log("Calling getScript: " + moduleName );
+				getScript( resolve( options, moduleName ), function( src ) {
 
 //					Boot.log("Done loading script for <b>" + moduleName + "</b>.");
 					// Boot.log( "Defined modules: " + definedModules.length );
 					// If a module was defined after our download.
-					if ( definedModules.length ) {
-						
-						// Snag the first one and remember it.
-						moduleDefinition = moduleDefinitions[ moduleName ] = definedModules[0];
-						
-						// Reset defined modules.
-						definedModules = [];
-						
+//					Boot.log( "Finished: " + src );
+
+					var module,
+						moduleDependencies,
+						moduleDefinition;
+					
+					// If a module was defined after our download.
+					if ( moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift() ) {
+					
 						if ( moduleDependencies = moduleDefinition.d ) {
 
-//							Boot.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d );
+//							Boot.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d.join(", ") );
 
 							use( moduleDependencies, function(){
-//								Boot.log( "Dependencies loaded (" + moduleDefinition.d + "). <b>" + moduleName + "</b> is ready." );
+//								Boot.log( "Dependencies loaded (" + moduleDefinition.d.join(", ") + "). <b>" + moduleName + "</b> is ready." );
 								module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
 								moduleReady( i, moduleName, module );
 							});
@@ -463,14 +578,10 @@
 						}
 
 					// Otherwise see if we can snag the module by name (old skool).	
-					} else if (	module = getLibrary( moduleName ) ) {
-
-						moduleReady( i, moduleName, module );
-
 					} else {
-						alert("Failed to register module." );
+						moduleReady( i, moduleName, getLibrary( moduleName )  );
 					}
-
+					
 				});
 			}
 			

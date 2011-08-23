@@ -91,7 +91,7 @@ Boot.use("mylib/foo", function( fooModule ){
 */
 // YourLib.foo has a dependency (YourLib.bar) that also needs loading.
 Boot.use("yourlib/foo", function( fooModule ) {
-	Boot.log("We made it this far! yourlib/foo callback. " + fooModule );
+	Boot.log("<b>We made it this far! yourlib/foo callback. </b>" + fooModule );
 	if ( fooModule ) { 
 		Boot.log("The 1st foo property of YourLib.fooModule exists: " + fooModule.foo );
 		Boot.log("Checking that bar and baz were passed through: fooModule.bar() === " + fooModule.bar() + ", fooModule.baz === " + fooModule.baz );
@@ -99,7 +99,7 @@ Boot.use("yourlib/foo", function( fooModule ) {
 });
 
 Boot.use("mylib/foo", function( fooModule ){
-	Boot.log("Callback! Mylib foo loaded.");
+	Boot.log("<b>Callback! Mylib foo loaded.</b>");
 });
 
 Boot.use(["yourlib/foo", "mylib/foo"], function( yourFooModule, myFooModule ) {

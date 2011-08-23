@@ -1695,10 +1695,6 @@
 
 		each( moduleNames, function( moduleName, i ) {
 
-			var module,
-				moduleDependencies,
-				moduleDefinition;
-
 //			Boot.log( "Inside use, using " + moduleName );
 
 			// If this module has already been defined, use it.
@@ -1730,13 +1726,13 @@
 //					Boot.log("Done loading script for <b>" + moduleName + "</b>.");
 					// Boot.log( "Defined modules: " + definedModules.length );
 					// If a module was defined after our download.
-					if ( definedModules.length ) {
-						
-						// Snag the first one and remember it.
-						moduleDefinition = moduleDefinitions[ moduleName ] = definedModules[0];
-						
-						// Reset defined modules.
-						definedModules = [];
+				
+					var module,
+						moduleDependencies,
+						moduleDefinition;
+					
+					// If a module was defined after our download.
+					if ( moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift() ) {
 						
 						if ( moduleDependencies = moduleDefinition.d ) {
 
