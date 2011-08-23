@@ -1704,9 +1704,11 @@
 			// If this module has already been defined, use it.
 			if ( moduleName in modules ) {
 				
-				if ( module ){
+				// Check for the object.
+				if ( modules[ moduleName ] ){
 //					Boot.log("Module <b>" + moduleName + "</b> is already defined.");
 					moduleReady( i, moduleName ); // callbackArgs[i] = module;
+				// It's undefined, so wait a little bit.
 				} else {
 //					Boot.log("Module <b>" + moduleName + "</b> is in the process of being defined. Queue time!");
 					on( moduleName, function(){

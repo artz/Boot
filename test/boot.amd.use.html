@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.use</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="boot.amd.js"></script>
+</head>
+<body>
+<h1>Boot.use</h1>
+<pre id="log"></pre>
+<script>
+// Initialize logging.
+var logElem = document.getElementById("log");
+
+Boot.log.init({
+	elem: logElem
+});
+Boot.log("boot.getjs.html: Starting tests.");
+/*
+// http://requirejs.org/docs/api.html#config
+var require = {
+        deps: ["some/module1", "my/module2", "a.js", "b.js"],
+        callback: function(module1, module2) {
+            //This function will be called when all the dependencies
+            //listed above in deps are loaded. Note that this
+            //function could be called before the page is loaded.
+            //This callback is optional.
+        },
+        ready: function() {
+            //This function is called once the DOM is ready.
+        }
+    };
+	
+require({
+	  baseUrl: "/another/path",
+	  paths: {
+		  "some": "some/v1.0"
+	  },
+	  waitSeconds: 15,
+	  locale: "fr-fr",
+	  context: "foo"
+  },
+  ["some/module", "my/module", "a.js", "b.js"],
+  function(someModule, myModule) {
+	  //This function will be called when all the dependencies
+	  //listed above are loaded. Note that this function could
+	  //be called before the page is loaded.
+	  //This callback is optional.
+  }
+);
+*/
+
+Boot.options("use", { basePath: "../test/cdn/" });
+/*
+Boot.use(["jQuery", "jQuery.alpha", "jQuery.beta"], function( jQuery ){
+	jQuery("<div />").alpha().appendTo(document.body);
+	jQuery("<div />").beta().appendTo(document.body);	
+});
+
+Boot.use(["jQuery", "jQuery.alpha", "jQuery.gamma"], function( jQuery ){
+	jQuery("<div />").gamma().appendTo(document.body);	
+});
+
+Boot.use("mylib/foo", function( fooModule ){
+	Boot.log("The foo property of MyLib.fooModule exists: " + fooModule.foo );
+});
+
+Boot.use("mylib/bar", function( barModule ){
+	Boot.log("The bar function of MyLib.barModule exists: " + barModule.bar() );
+});
+
+// Reusing modules works too, and doesn't request the JS again.
+Boot.use("mylib/foo", function( fooModule ){
+	Boot.log("The foo property of MyLib.fooModule exists: " + fooModule.foo );
+});
+*/
+// YourLib.foo has a dependency (YourLib.bar) that also needs loading.
+Boot.use("yourlib/foo", function( fooModule ) {
+	Boot.log("We made it this far! yourlib/foo callback. " + fooModule );
+	if ( fooModule ) { 
+		Boot.log("The 1st foo property of YourLib.fooModule exists: " + fooModule.foo );
+		Boot.log("Checking that bar and baz were passed through: fooModule.bar() === " + fooModule.bar() + ", fooModule.baz === " + fooModule.baz );
+	}
+});
+
+Boot.use("mylib/foo", function( fooModule ){
+	Boot.log("Callback! Mylib foo loaded.");
+});
+
+Boot.use(["yourlib/foo", "mylib/foo"], function( yourFooModule, myFooModule ) {
+	Boot.log("Here we go again! <b>mylib/foo</b> + <b>yourlib/foo</b> callback. ");
+	if ( myFooModule && yourFooModule ) { 
+		Boot.log("The 2nd foo property of YourLib.fooModule exists: " + yourFooModule.foo );
+		Boot.log("Checking that bar and baz were passed through: yourFooModule.bar() === " + yourFooModule.bar() + ", yourFooModule.baz === " + yourFooModule.baz +", myFooModule.foo === " + myFooModule.foo );
+	}
+});
+
+
+</script>
+<p>This paragraph of text should not be blocked.</p>
+<script type="text/javascript">
+//document.write("<p>This was generated using a JavaScript document.write() and should not be blocked.");
+</script>
+</body>
+</html>
