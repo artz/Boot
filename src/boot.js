@@ -1733,7 +1733,7 @@
 					if ( definedModules.length ) {
 						
 						// Snag the first one and remember it.
-						moduleDefinition = moduleDefinitions[ moduleName ] = definedModules.shift();
+						moduleDefinition = moduleDefinitions[ moduleName ] = definedModules[0];
 						
 						// Reset defined modules.
 						definedModules = [];
