@@ -37,13 +37,38 @@
 	Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
 */
 	function addClass( object, className ) {
-		object.className += " " + className;
+        var space;
+
+        // If the class is already present, we do not need to add it again
+        if ( object.className.indexOf( className ) === -1 ) {
+            space = ( object.className.length ) ? " " : ""; 
+            object.className += space + className;
+        }
 	}
 	global.addClass = addClass;
 	
 	function removeClass( object, className ) {
-		className = new RegExp( "\\b" + className + "\\b" );
-		object.className = object.className.replace( className, "" );
+        var i,
+            className = className || '',
+            classes = className.split( ' ' ),
+            length = classes.length,
+            edgeSpaces = new RegExp( "^\\s|\\s$" ),
+            multipleSpaces = new RegExp( "(\\s)+" );
+        
+        i = length;
+
+        while ( i-- ) {
+            // Match classname that is the beginning and ending of its word
+            // (prevent matches in the interior of other classnames)
+            // along with optional whitespace to either side
+            // className = new RegExp( "(\\s)?\\b" + classes[i] + "\\b(\\s)?" );
+            className = new RegExp( "\\b" + classes[i] + "\\b" );
+            object.className = object.className.replace( className, "" );
+            object.className = object.className.replace( edgeSpaces, "" );
+            object.className = object.className.replace( multipleSpaces, " " );
+
+
+        }
 	}
 	global.removeClass = removeClass;
 
