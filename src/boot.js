@@ -73,6 +73,93 @@
 	global.removeClass = removeClass;
 
 /*
+    Function: Boot.getStyle
+
+    Cross-browser method for getting the computed styles of elements
+
+    Parameters:
+
+        element - The element to find the computed style for.
+        property - The property we're asking for.
+
+    Returns:
+
+        The computed style value
+
+    Usage:
+    
+        var height = Boot.getStyle( myDiv, "height" );
+
+*/
+    // Largely taken from the example at
+    // http://robertnyman.com/2006/04/24/get-the-rendered-style-of-an-element/
+    function getStyle( element, property ) {
+        var value;
+
+        if ( document.defaultView && document.defaultView.getComputedStyle ) {
+            // The lovely way of retrieving computed style
+            value = document.defaultView.getComputedStyle( element, "" ).getPropertyValue( property );
+        } else {
+            // The... other (read: Microsoft) way
+            property = property.replace(/\-(\w)/g, function( match, prop ) {
+                return prop.toUpperCase();
+            });
+
+            value = element.currentStyle[property];
+        }
+
+        return value;
+    }
+
+    global.getStyle = getStyle;
+
+/*
+    Function: Boot.disableTextSelect
+
+    Cross-browser method for disabling text selection - particularly an issue on ui elements that
+    may be clicked quickly enough to trigger the default action of selecting text.
+
+    Parameters:
+    
+        element - The element to disable text selection on.
+
+    Returns:
+        
+        The element
+
+    Usage:
+
+        Boot.disableTextSelect( myElement );
+*/
+
+    // The actual cross-browserness of this has NOT been tested
+    // This is an initial pass based on a stackoverflow example
+    // http://stackoverflow.com/questions/826782/css-rule-to-disable-text-selection-highlighting
+    function disableTextSelect( element ) {
+        if ( getStyle( element, "-khtml-user-select" ) ) {
+            // Set style for older webkit
+            element.style["-khtml-user-select"] = "none";
+        } else if ( getStyle( element, "-webkit-user-select" ) ) {
+            // Set style for webkit
+            element.style["-webkit-user-select"] = "none";
+        } else if ( getStyle( element, "-moz-user-select" ) ) {
+            // Set style for mozilla
+            element.style["-moz-user-select"] = "-moz-none";
+        } else if ( getStyle( element, "user-select" ) ) {
+            // Set style for mozilla
+            element.style["user-select"] = "none";
+        } else {
+            // Set property for IE & Opera
+            element.unselectable = true;
+        }
+
+        return element;
+    }
+
+    global.disableTextSelect = disableTextSelect;
+
+
+/*
 	Function: Boot.contains
 	
 	Determines if the given string contains given text.
