@@ -46,7 +46,13 @@
         }
 	}
 	global.addClass = addClass;
-	
+
+/*
+	function removeClass( object, className ) {
+       var reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");
+	   object.className = object.className.replace(reg, strSpace );
+	}
+*/	
 	function removeClass( object, className ) {
         var i,
             className = className || '',
@@ -1749,6 +1755,9 @@
 	}
 	
 	global.define = define;
+	
+	// Expose modules externally.
+	global.modules = modules;
 
 
 /*
