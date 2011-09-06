@@ -29,54 +29,59 @@
 		strOnReadyStateChange = "onreadystatechange",
 		strOnLoad = "onload",
 		strComplete = "complete",
+		strSpace = " ",
 		
 		eventNamespace = namespace.toLowerCase() + ".";
+
 
 /*
 	Simple add/remove classname functions.
 	Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
+	Supports multiple class additions.
 */
-	function addClass( object, className ) {
-        var space;
-
-        // If the class is already present, we do not need to add it again
-        if ( object.className.indexOf( className ) === -1 ) {
-            space = ( object.className.length ) ? " " : ""; 
-            object.className += space + className;
-        }
+	function addClass( elem, classNames ) {
+		// Adding the class name greedily won't 
+		// hurt and keeps things small. 
+		classNames = classNames.split( strSpace );
+		
+		var elemClassName = elem.className,
+			className,
+			l = classNames.length,
+			reg;
+			
+		while ( l-- ) {
+			className = classNames[l];
+			reg = new RegExp("(\\s|^)" + className + "(\\s|$)");	
+			if ( ! reg.test( elem.className ) ) {
+				elemClassName += strSpace + className;
+			}	
+		}
+		
+		elem.className = elemClassName;
+		
 	}
 	global.addClass = addClass;
 
-/*
-	function removeClass( object, className ) {
-       var reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");
-	   object.className = object.className.replace(reg, strSpace );
-	}
-*/	
-	function removeClass( object, className ) {
-        var i,
-            className = className || '',
-            classes = className.split( ' ' ),
-            length = classes.length,
-            edgeSpaces = new RegExp( "^\\s|\\s$" ),
-            multipleSpaces = new RegExp( "(\\s)+" );
-        
-        i = length;
+	// Supports multiple class removals.
+	function removeClass( elem, classNames ) {
 
-        while ( i-- ) {
-            // Match classname that is the beginning and ending of its word
-            // (prevent matches in the interior of other classnames)
-            // along with optional whitespace to either side
-            // className = new RegExp( "(\\s)?\\b" + classes[i] + "\\b(\\s)?" );
-            className = new RegExp( "\\b" + classes[i] + "\\b" );
-            object.className = object.className.replace( className, "" );
-            object.className = object.className.replace( edgeSpaces, "" );
-            object.className = object.className.replace( multipleSpaces, " " );
-
-
-        }
+		classNames = classNames.split( strSpace );
+		
+		var elemClassName = elem.className,
+			className,
+			l = classNames.length,
+			reg;
+			
+		while ( l-- ) {
+			className = classNames[l];
+			reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");	
+			elemClassName = elemClassName.replace( reg, strSpace );
+		}
+		
+		elem.className = trim( elemClassName );
 	}
 	global.removeClass = removeClass;
+
 
 /*
     Function: Boot.getStyle
@@ -1071,8 +1076,7 @@
 		// Attach handlers for all browsers
 		script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
 	
-			if ( !done && (!script[ strReadyState ] ||
-					script[ strReadyState ] === "loaded" || script[ strReadyState ] === strComplete) ) {
+			if ( ! done && ( ! script[ strReadyState ] || contains( script[ strReadyState ], "m" ) ) ) {
 						
 				// log( "Boot.getJS (getScript): Done loading <b>" + src + "</b>." );	
 				
@@ -1545,7 +1549,7 @@
 	var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
 		screensLength = screens.length,
 		screenWidth,
-		screenClasses;
+		screenClasses = "";
 	
     function screenSize() {
 		

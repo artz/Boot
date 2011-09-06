@@ -458,6 +458,9 @@
 	define.amd = {};
 	
 	global.define = define;
+	
+	// Expose modules externally.
+	global.modules = modules;
 
 /*
 	Boot.use

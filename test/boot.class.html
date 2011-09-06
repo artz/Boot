@@ -40,9 +40,9 @@ Boot.log( "Should be 'class1': " + testDiv.className );
 Boot.addClass(testDiv, "class2");
 Boot.log( "Should be 'class1 class2': " + testDiv.className );
 Boot.addClass(testDiv, "class2 class3 class4");
-Boot.log( "Should be 'class1 class2 class2 class3 class4': " + testDiv.className );
+Boot.log( "Should be 'class1 class2 class4 class3': " + testDiv.className );
 Boot.removeClass(testDiv, "class2");
-Boot.log( "Should be 'class1 class3 class4': " + testDiv.className );
+Boot.log( "Should be 'class1 class4 class3': " + testDiv.className );
 Boot.removeClass(testDiv, "class3 class4");
 Boot.log( "Should be 'class1': " + testDiv.className );
 
