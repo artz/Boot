@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Boot.use</title>
+<title>Boot.require</title>
 <style>
 body {
 	font: 16px/1.5 verdana;	
@@ -21,7 +21,7 @@ pre ul {
 <script src="../src/boot.js"></script>
 </head>
 <body>
-<h1>Boot.use</h1>
+<h1>Boot.require</h1>
 <pre id="log"></pre>
 <script>
 // Initialize logging.
@@ -65,32 +65,32 @@ require({
 );
 */
 
-Boot.options("use", { basePath: "../test/cdn/" });
+Boot.options("require", { basePath: "../test/cdn/" });
 /*
-Boot.use(["jQuery", "jQuery.alpha", "jQuery.beta"], function( jQuery ){
+Boot.require(["jQuery", "jQuery.alpha", "jQuery.beta"], function( jQuery ){
 	jQuery("<div />").alpha().appendTo(document.body);
 	jQuery("<div />").beta().appendTo(document.body);	
 });
 
-Boot.use(["jQuery", "jQuery.alpha", "jQuery.gamma"], function( jQuery ){
+Boot.require(["jQuery", "jQuery.alpha", "jQuery.gamma"], function( jQuery ){
 	jQuery("<div />").gamma().appendTo(document.body);	
 });
 
-Boot.use("mylib/foo", function( fooModule ){
+Boot.require("mylib/foo", function( fooModule ){
 	Boot.log("The foo property of MyLib.fooModule exists: " + fooModule.foo );
 });
 
-Boot.use("mylib/bar", function( barModule ){
+Boot.require("mylib/bar", function( barModule ){
 	Boot.log("The bar function of MyLib.barModule exists: " + barModule.bar() );
 });
 
 // Reusing modules works too, and doesn't request the JS again.
-Boot.use("mylib/foo", function( fooModule ){
+Boot.require("mylib/foo", function( fooModule ){
 	Boot.log("The foo property of MyLib.fooModule exists: " + fooModule.foo );
 });
 */
 // YourLib.foo has a dependency (YourLib.bar) that also needs loading.
-Boot.use("yourlib/foo", function( fooModule ) {
+Boot.require("yourlib/foo", function( fooModule ) {
 	Boot.log("We made it this far! yourlib/foo callback. " + fooModule );
 	if ( fooModule ) { 
 		Boot.log("The 1st foo property of YourLib.fooModule exists: " + fooModule.foo );
@@ -98,11 +98,11 @@ Boot.use("yourlib/foo", function( fooModule ) {
 	}
 });
 
-Boot.use("mylib/foo", function( fooModule ){
+Boot.require("mylib/foo", function( fooModule ){
 	Boot.log("Callback! Mylib foo loaded.");
 });
 
-Boot.use(["yourlib/foo", "mylib/foo"], function( yourFooModule, myFooModule ) {
+Boot.require(["yourlib/foo", "mylib/foo"], function( yourFooModule, myFooModule ) {
 	Boot.log("Here we go again! <b>mylib/foo</b> + <b>yourlib/foo</b> callback. ");
 	if ( myFooModule && yourFooModule ) { 
 		Boot.log("The 2nd foo property of YourLib.fooModule exists: " + yourFooModule.foo );

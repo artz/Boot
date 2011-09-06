@@ -36,15 +36,15 @@ Boot.log("boot.getjs.html: Starting tests.");
 var testDiv = document.getElementById("test");
 
 Boot.addClass(testDiv, "class1");
-Boot.log( "Should be 'class1': " + testDiv.className );
+Boot.log( "Added 'class1', should be 'class1': " + testDiv.className );
 Boot.addClass(testDiv, "class2");
-Boot.log( "Should be 'class1 class2': " + testDiv.className );
+Boot.log( "Added 'class2', should be 'class1 class2': " + testDiv.className );
 Boot.addClass(testDiv, "class2 class3 class4");
 Boot.log( "Should be 'class1 class2 class4 class3': " + testDiv.className );
 Boot.removeClass(testDiv, "class2");
 Boot.log( "Should be 'class1 class4 class3': " + testDiv.className );
 Boot.removeClass(testDiv, "class3 class4");
-Boot.log( "Should be 'class1': " + testDiv.className );
+Boot.log( "Removed 'class3 class4' Should be 'class1': " + testDiv.className );
 
 </script>
 <p>This paragraph of text should not be blocked.</p>

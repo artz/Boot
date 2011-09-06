@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Boot.create</title>
+<title>Boot.createHTML</title>
 <style>
 body {
 	font: 16px/1.5 verdana;	
@@ -24,7 +24,7 @@ pre ul {
 <script src="../src/boot.js"></script>
 </head>
 <body>
-<h1>Boot.create</h1>
+<h1>Boot.createHTML</h1>
 <pre id="log"></pre>
 <script>
 // Initialize logging.
@@ -33,11 +33,11 @@ Boot.log.init({
 });
 Boot.log("boot.getjs.html: Starting tests.");
 
-document.body.appendChild( Boot.create('<div class="red">My box.</div>') );
-document.body.appendChild( Boot.create('<table><tr><td class="green">My cell.</td><td class="red">My other cell.</td></tr></table>') );
-// document.body.appendChild( Boot.create('<style>.green { background-color: green; }</style>') );
-// document.body.appendChild( Boot.create("<script src=\"javascript.php\"></scr"+"ipt>" ));
-document.body.appendChild( Boot.create('<h4>Heading</h4><h5>Subheading</h5>') );
+document.body.appendChild( Boot.createHTML('<div class="red">My box.</div>') );
+document.body.appendChild( Boot.createHTML('<table><tr><td class="green">My cell.</td><td class="red">My other cell.</td></tr></table>') );
+// document.body.appendChild( Boot.createHTML('<style>.green { background-color: green; }</style>') );
+// document.body.appendChild( Boot.createHTML("<script src=\"javascript.php\"></scr"+"ipt>" ));
+document.body.appendChild( Boot.createHTML('<h4>Heading</h4><h5>Subheading</h5>') );
 
 </script>
 <p>This paragraph of text should not be blocked.</p>

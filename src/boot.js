@@ -1,12 +1,19 @@
 /*
 	BOOT UTILITY LIBRARY
-	Version 0.1
+	Version 0.2
 */
 (function( namespace, window, undefined ){
+	
+
+	// Return if global is already defined. (Optional behavior) 
+//	if ( window[ namespace ] ) {
+//		return;
+//	}
 	
 		// Initialize the library's namespace.
 		// This is controlled via arguments injected
 		// into the closure at the bottom of this script.
+//		global = window[ namespace ] = {},
 	var global = window[ namespace ] || ( window[ namespace ] = {} ),
 		
 		// Localize global objects and functions for better compression.
@@ -29,6 +36,8 @@
 		strOnReadyStateChange = "onreadystatechange",
 		strOnLoad = "onload",
 		strComplete = "complete",
+		strSpace = " ",
+		
 		strSpace = " ",
 		
 		eventNamespace = namespace.toLowerCase() + ".";
@@ -84,91 +93,60 @@
 
 
 /*
-    Function: Boot.getStyle
-
-    Cross-browser method for getting the computed styles of elements
-
-    Parameters:
-
-        element - The element to find the computed style for.
-        property - The property we're asking for.
-
-    Returns:
-
-        The computed style value
-
-    Usage:
-    
-        var height = Boot.getStyle( myDiv, "height" );
-
+	Function: Boot.now
+	
+	Gets a current timestamp.
+	
+	Returns:
+	
+	Timestamp
 */
-    // Largely taken from the example at
-    // http://robertnyman.com/2006/04/24/get-the-rendered-style-of-an-element/
-    function getStyle( element, property ) {
-        var value;
+	function now() {
+		return new Date().getTime();
+	}
+	global.now = now;
 
-        if ( document.defaultView && document.defaultView.getComputedStyle ) {
-            // The lovely way of retrieving computed style
-            value = document.defaultView.getComputedStyle( element, "" ).getPropertyValue( property );
-        } else {
-            // The... other (read: Microsoft) way
-            property = property.replace(/\-(\w)/g, function( match, prop ) {
-                return prop.toUpperCase();
-            });
-
-            value = element.currentStyle[property];
-        }
-
-        return value;
-    }
-
-    global.getStyle = getStyle;
 
 /*
-    Function: Boot.disableTextSelect
-
-    Cross-browser method for disabling text selection - particularly an issue on ui elements that
-    may be clicked quickly enough to trigger the default action of selecting text.
-
-    Parameters:
-    
-        element - The element to disable text selection on.
-
-    Returns:
-        
-        The element
-
-    Usage:
-
-        Boot.disableTextSelect( myElement );
+	Function: Boot.log
+	
+	Simple method for keeping a log and outputting to the screen.
+	
+	Parameters:
+	
+		message - String of the message to log.
+	
+	Returns:
+	
+	Boot
 */
-
-    // The actual cross-browserness of this has NOT been tested
-    // This is an initial pass based on a stackoverflow example
-    // http://stackoverflow.com/questions/826782/css-rule-to-disable-text-selection-highlighting
-    function disableTextSelect( element ) {
-        if ( getStyle( element, "-khtml-user-select" ) ) {
-            // Set style for older webkit
-            element.style["-khtml-user-select"] = "none";
-        } else if ( getStyle( element, "-webkit-user-select" ) ) {
-            // Set style for webkit
-            element.style["-webkit-user-select"] = "none";
-        } else if ( getStyle( element, "-moz-user-select" ) ) {
-            // Set style for mozilla
-            element.style["-moz-user-select"] = "-moz-none";
-        } else if ( getStyle( element, "user-select" ) ) {
-            // Set style for mozilla
-            element.style["user-select"] = "none";
-        } else {
-            // Set property for IE & Opera
-            element.unselectable = true;
-        }
-
-        return element;
-    }
-
-    global.disableTextSelect = disableTextSelect;
-
+	var logList,
+		body,
+		logItems = [],
+		startTime = now(),
+		logEnabled = 0;
+		
+	function log( msg, ul ) {
+		
+		body || (body = document.body);
+		
+		logItems.push( (now() - startTime) + "ms: " + msg );
+		
+		if ( logEnabled ) {	
+			if ( logList || 
+			   ( logList = ul ) || 
+			   ( body && ( logList = document.createElement("div")) && body.insertBefore( logList, body.firstChild) ) ) {
+				logList.innerHTML = ["<ul><li>", logItems.join("</li><li>"), "</li></ul>"].join('');
+			}
+		}
+	}
+	
+	log.init = function( options ) {
+		logEnabled = 1;
+		logList = options.elem;
+	};
+	
+	global.log = log;
 
 /*
 	Function: Boot.contains
@@ -196,7 +174,7 @@
 	global.contains = contains;
 
 /*
-	Function: Boot.isArray
+	Function: Boot.is...
 	
 	Determines if the given object is an array.
 	
@@ -272,84 +250,78 @@
 	global.each = each;
 
 /*
-	UNDERSCORE UTILITIES
-	Helper utilities based on Underscore Library.
-	http://documentcloud.github.com/underscore/underscore.js
-*/
-  // Return the results of applying the iterator to each element.
-  // Delegates to **ECMAScript 5**'s native `map` if available.
-	function map( obj, iterator, context ) {
-		var results = [];
-		each( obj, function( value, index, list ) {
-      		results[ results.length ] = iterator.call( context, value, index, list );
-    	});
-    	return results;
-	}
-  
-	// Delays a function for the given number of milliseconds, and then calls
-	// it with the arguments supplied.
-	function delay( func, wait ) {
-		var args = slice.call( arguments, 2 );
-		return SetTimeout( function(){ return func.apply(func, args); }, wait );
-	}
+	Boot.extend
 	
-	// Defers a function, scheduling it to run after the current call stack has
-	// cleared.
-	function defer( func ) {
-		return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
-	}
-	global.defer = defer;
+	Merge the contents of two or more objects together into the first object.
 	
-	// Internal function used to implement throttle() and debounce()
-	function limit( func, wait, debounce ) {
-		
-		var timeout;
-		
-		return function() {
+	Boot.extend( target, [object1], [objectN] )
+	
+	Parameters
+	
+		target -  An object that will receive the new properties if additional 
+		          objects are passed in [or that will extend the Boot namespace 
+				  if it is the sole argument].
+		object1 - An object containing additional properties to merge in.
+		objectN - Additional objects containing properties to merge in.
+
+*/	
+	function extend() {
+
+		var args = arguments,
+			target = args[0],
+			name, 
+			source,
+			i = 1, // Source pointer.
+			l = args.length;
 			
-			function throttler() {
-				timeout = undefined;
-				func.call( this );
+	// Feature to consider:
+		// If it's a string, we should grab the 
+		// object from our modules.
+//		if ( isString( target ) ) {
+//			target = modules[ target ];
+//		}
+		
+	/*
+		// If the length is 1, extend Boot, and 
+		// set the source to thefirst argument.
+		//
+		// Artz: Removing this, think this is not 
+		// worth the bytes and/or non-intuitive.
+		
+		if ( l === i ) {
+			target = global;
+			i = 0;
+		}
+	*/
+		for (; i < l; i++ ) {
+			source = args[i];
+			for ( name in source ) {
+				if ( source.hasOwnProperty(name) ) {
+					// If an object or array and NOT a DOM node, we need to deep copy.
+					if ( isObject( source[name] ) && ! source[name].nodeType ) {
+						target[name] = extend( isArray( source[name] ) ? [] : {}, target[name], source[name] );
+					} else {
+						target[name] = source[name];
+					}
+				}
 			}
-				
-			if ( debounce ) {
-				clearTimeout( timeout );
-			}
-			
-			if ( debounce || ! timeout ) {
-				timeout = SetTimeout( throttler, wait );
-			}
-		};
+		}
+		return target;
 	}
-	
-	// Returns a function, that, when invoked, will only be triggered at most once
-	// during a given window of time.
-	function throttle( func, wait ) {
-		return limit( func, wait, false );
-	}
-	global.throttle = throttle;
-	
-	// Returns a function, that, as long as it continues to be invoked, will not
-	// be triggered. The function will be called after it stops being called for
-	// N milliseconds.
-	function debounce( func, wait ) {
-		return limit( func, wait, true );
-	}
-	global.debounce = debounce;
+	global.extend = extend;
 
 /*
-	Function: Boot.now
-	
-	Gets a current timestamp.
-	
-	Returns:
-	
-	Timestamp
+	Boot.options
 */
-	function now() {
-		return new Date().getTime();
+	var bootOptions = {};
+	function options( customOptions, value ) {
+		if ( isString( customOptions ) ) {
+			extend( bootOptions[ customOptions ], value );
+		} else {
+			extend( bootOptions, customOptions );
+		}
 	}
-	global.now = now;
+	global.options = options;
 
 /*
 	Boot.poll
@@ -380,101 +352,6 @@
 		 
 	}
 	global.poll = poll;
-
-/*
-	Function: Boot.log
-	
-	Simple method for keeping a log and outputting to the screen.
-	
-	Parameters:
-	
-		message - String of the message to log.
-	
-	Returns:
-	
-	Boot
-*/
-	var logList,
-		body,
-		logItems = [],
-		startTime = now(),
-		logEnabled = 0;
-		
-	function log( msg, ul ) {
-		
-		body || (body = document.body);
-		
-		logItems.push( (now() - startTime) + "ms: " + msg );
-		
-		if ( logEnabled ) {	
-			if ( logList || 
-			   ( logList = ul ) || 
-			   ( body && ( logList = document.createElement("div")) && body.insertBefore( logList, body.firstChild) ) ) {
-				logList.innerHTML = ["<ul><li>", logItems.join("</li><li>"), "</li></ul>"].join('');
-			}
-		}
-	}
-	
-	log.init = function( options ) {
-		logEnabled = 1;
-		logList = options.elem;
-	};
-	
-	global.log = log;
-
-/*
-	Boot.extend
-	
-	Merge the contents of two or more objects together into the first object.
-	
-	Boot.extend( target, [object1], [objectN] )
-	
-	Parameters
-	
-		target -  An object that will receive the new properties if additional 
-		          objects are passed in [or that will extend the Boot namespace 
-				  if it is the sole argument].
-		object1 - An object containing additional properties to merge in.
-		objectN - Additional objects containing properties to merge in.
-
-*/	
-	function extend() {
-
-		var args = arguments,
-			target = args[0],
-			name, 
-			source,
-			i = 1, // Source pointer.
-			l = args.length;
-
-	/*
-		// If the length is 1, extend Boot, and 
-		// set the source to thefirst argument.
-		//
-		// Artz: Removing this, think this is not 
-		// worth the bytes and/or non-intuitive.
-		
-		if ( l === i ) {
-			target = global;
-			i = 0;
-		}
-	*/
-		for (; i < l; i++ ) {
-			source = args[i];
-			for ( name in source ) {
-				if ( source.hasOwnProperty(name) ) {
-					// If an object or array and NOT a DOM node, we need to deep copy.
-					if ( isObject( source[name] ) && ! source[name].nodeType ) {
-						target[name] = extend( isArray( source[name] ) ? [] : {}, target[name], source[name] );
-					} else {
-						target[name] = source[name];
-					}
-				}
-			}
-		}
-		return target;
-	}
-	global.extend = extend;
 
 /*
 	Function: Boot.ready
@@ -688,176 +565,9 @@
 		
 	}
 	global.load = load;
-	
-/*
-	Function: Boot.attr
-	
-	Shorthand for setting and retrieving an attribute from an element.
-	Note this is not currently used by Boot, but used by Easync and ModuleT
-	
-	Parameters:
-	
-		elem - The object with the attribute to fetch.
-		attribute - The attribute to fetch.
-		value - The value to set.
-	
-	Returns:
-	
-	Attribute value (getting) or Boot (setting)
-*/
-	var styleNode = document.createElement("style");
-
-	function attr( elem, attribute, value ){
-
-		if ( value !== undefined ) {
-			if ( value === null ) {
-				elem.removeAttribute( attribute );
-			} else {
-				if ( attribute === "style" ) {
-					// For IE.
-					elem.style.cssText = value;
-				}
-				elem.setAttribute( attribute, value );
-			}	
-
-		} else {
-			return elem.getAttribute( attribute );
-		}
-		
-	}
-	global.attr = attr;
 
 /*
-	Boot.data
-	
-	Function for extracting data attributes and storing 
-	arbitrary data on elements.
-*/
-	function data( elem, key, value ) {
-		// Return an object of all data attributes.
-		var strData = "data-",
-		
-			attribute,
-			attributeName,
-			attributes = elem.attributes,
-			attributesLength = attributes.length,
-			attributesObject = {},
-			
-			ret;
-			
-		if ( value !== undefined ) {
-			attr( elem, strData + key, value );
-		} else if ( key !== undefined ) {
-			ret = attr( strData + key );
-		} else {
-			while( attributesLength-- ) {
-				attribute = attributes[ attributesLength ];
-				attributeName = attribute.nodeName;
-				if ( contains( attributeName, strData ) ) {
-					attributesObject[ attributeName.replace( strData, "" ) ] = attribute.nodeValue;
-				}
-			}
-			ret = attributesObject;
-		}
-		return ret;
-	}
-	global.data = data;
-
-/*
-	Function: Boot.globalEval
-	
-	Evaluates code in the global scope.
-	
-	Parameters:
-	
-		src - The source code to execute.
-	 
-	Returns:
-	
-	Boot
-	
-	Research:
-	http://web// logs.java.net/b// log/driscoll/archive/2009/09/08/eval-javascript-global-context
-*/
-	function globalEval( data ) {
-		( window.execScript || function( data ) {
-			window[ "eval" ].call( window, data );
-		} )( data );
-	}
-	global.globalEval = globalEval;
-	
-/*
-	Function: Boot.trim
-	
-	Trims whitespace before and after a string.
-	
-	Parameters
-	
-		str - The string to trim leading whitespace.
-	
-	Returns
-	
-	String - The trimmed string.
-*/
-	function trim( str ) {
-		return str.replace(/^\s+/, "").replace(/\s+$/, "");
-	}
-	global.trim = trim;
-	
-/* 
-	Function: Boot.parseJSON
-	
-	Parses a valid JSON string into a JavaScript object. Thanks, jQuery!
-	
-	Parameters
-	
-		data - The string of data to parse.
-	 
-	Returns:
-	
-	Object - Parsed JSON object.
-*/
-/*
-	Removing because it's too heavy and developers need to be smart.
-	var rvalidchars = /^[\],:{}\s]*$/,
-		rvalidescape = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,
-		rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,
-		rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g;
-*/
-	function parseJSON( data ) {
-		try {
-			// Make sure leading/trailing whitespace is removed (IE can't handle it)
-			data = trim( data );
-					
-			// Attempt to parse using the native JSON parser first
-			if ( JSON && JSON.parse ) {
-				return JSON.parse( data );
-			}
-	
-			// Make sure the incoming data is actual JSON
-			// // logic borrowed from http://json.org/json2.js
-			// *Removing this to decrease weight of the library.
-		//	if ( rvalidchars.test( 
-		//			data.replace( rvalidescape, "@" )
-		//				.replace( rvalidtokens, "]" )
-		//				.replace( rvalidbraces, "") ) ) {
-		
-			return (new Function( "return " + data ))();
-	
-		//	}
-		} catch (e) {
-			// This function may raise eyebrows so be sure to 
-			// inform developers why it failed.
-			if ( window.console ) {
-				console.log( "Bad JSON: " + data );
-			}
-		}
-	}
-	global.parseJSON = parseJSON;
-
-
-/*
-	Function: Boot.on
+	Function: Boot.subscribe
 	
 	Subscribes to an event, fires a callback once it is emitted.
 	http://en.wikipedia.org/wiki/Publish/subscribe
@@ -868,7 +578,7 @@
 	callback
 */
 	var events = {};
-	function on( object, event, callback ){
+	function subscribe( object, event, callback ){
 	
 		if ( isString( object ) ) {
 			callback = event;
@@ -881,10 +591,10 @@
 		eventQueue.push( [ object, callback ] );
 		
 	}
-	global.on = on;
+	global.subscribe = subscribe;
 
 /*
-	Function: Boot.emit
+	Function: Boot.publish
 	
 	Publishes an event, passing an optional object of data.
 	Triggers any events attached to the event.
@@ -899,7 +609,7 @@
 	Boot
 
 */
-	function emit( object, event, data ){
+	function publish( object, event, data ){
 		
 		// Support for associating events with DOM nodes.
 		if ( isString( object ) ) {
@@ -938,7 +648,7 @@
 			});
 		}
 	}
-	global.emit = emit;
+	global.publish = publish;
 	
 /*
 	Function: Boot.getCSS
@@ -1030,15 +740,10 @@
 			type - The script type, useful for caching scripts.
 			text - The text to load into the node.
 			async - Value of the async param, default is false.
-	 
-	Returns:
-	
-	Boot
+
 */
-	var fauxFunction = function(){},
-		
 		// Script collection on the page.
-		scripts = document.getElementsByTagName( strScript ),
+	var scripts = document.getElementsByTagName( strScript ),
 		
 		// The first script on the page.
 		firstScript = scripts[0],
@@ -1051,7 +756,7 @@
 		
 		// Ensure our arguments are what they proclaim to be.
 		options = options || callback || {};
-		callback = isFunction( callback ) ? callback : fauxFunction;
+		callback = isFunction( callback ) ? callback : 0;
 	
 		// Set the source of the script.
 		script.src = src;
@@ -1086,14 +791,14 @@
 				
 				// Emit an event indicating this script has just executed.
 			//	if ( ! script.type ) {
-			//		emit( eventNamespace + "js-done", { src: src } );
+			//		publish( eventNamespace + "js-done", { src: src } );
 				//	console.log( "Script executed: " + src );
 			//	}
 				
-			//	if ( callback ) {
+				if ( callback ) {
 			//	Boot.log( options.test );
 				callback( src ); 
-			//	}
+				}
 				
 				// Handle memory leak in IE
 				script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
@@ -1111,8 +816,6 @@
 		defer(function(){
 			firstScriptParent.insertBefore( script, firstScript );
 		});
-		
-		
 	}
 	global.getScript = getScript;
 
@@ -1159,10 +862,10 @@
 	function emitScript( scriptObject ) {
 		if ( scriptObject.src ) {
 			if ( isScriptAsync ) {
-				emit( eventNamespace + scriptDoneEvent, scriptObject );
+				publish( eventNamespace + scriptDoneEvent, scriptObject );
 			} else {
 				defer(function(){
-					emit( eventNamespace + scriptDoneEvent, scriptObject );
+					publish( eventNamespace + scriptDoneEvent, scriptObject );
 				});
 			}
 		}
@@ -1196,7 +899,7 @@
 		if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
 			
 // Boot.log( "Executing Scripts: [" + nextScriptIndex + "] " + nextScript );
-// emit( nextScript );
+// publish( nextScript );
 						
 			isScriptExecuted[ nextScript ] = 1;
 			
@@ -1205,7 +908,7 @@
 			
 			// We are moving this to getScript, which emits immediately
 			// after execution.
-			// emit( eventNamespace + "js-done", { src: lastScript, test: lastTest } );
+			// publish( eventNamespace + "js-done", { src: lastScript, test: lastTest } );
 			
 			// If browser supports asynch execution, continue.
 			if ( isScriptAsync ) {
@@ -1396,6 +1099,402 @@
 	}
 	global.getJS = getJS;
 
+
+/*
+	Boot.resolve
+	Utility for resolving URL addresses.
+	TBD on how we want this API to work if 
+	we expose it externally and further internally.
+	possibly make resolveJS, resolveCSS, resolveFont?
+*/
+	bootOptions.resolve = {
+		basePath: "",
+		filename: function(str){ return str.toLowerCase(); },
+		suffix: ".min.js"
+	};
+	
+	function resolve( customOptions, module ) {
+		var options = extend( {}, bootOptions.resolve, customOptions || {} );
+		return options.basePath + options.filename( module ) + options.suffix;
+	}
+
+/*
+	Boot.define
+	Define a module, based on the Asynchronous Module Definition (AMD)
+	http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition
+*/
+	var modules = {},
+		moduleDefinitions = {},
+		definedModules = [];
+
+	function define( moduleName, moduleDependencies, moduleDefinition ) {
+		
+//		Boot.log("Defining a module!");
+		if ( ! isString( moduleName ) ) {
+			moduleDefinition = moduleDependencies;
+			moduleDependencies = moduleName;
+			moduleName = undefined;				
+		}
+
+		if ( ! isArray( moduleDependencies ) ) {
+			moduleDefinition = moduleDependencies;
+			moduleDependencies = undefined;
+		}
+
+		// Load in any dependencies, and pass them into the use callback.
+		if ( moduleDependencies ) {
+
+//			Boot.log("Loading module dependencies for <b>" + "?" + "</b>: " + moduleDependencies.join(", "));
+
+			// Remember that this guy has a dependency, and which one it is.
+			moduleDefinition.d = moduleDependencies;
+
+		}
+
+		if ( moduleName ) {
+			moduleDefinitions[ moduleName ] = moduleDefinition;
+		} else {
+			definedModules.push( moduleDefinition );
+		}	
+	}
+	
+	// We conform to the AMD spec.
+	// https://github.com/amdjs/amdjs-api/wiki/AMD
+	define.amd = {};
+	
+	global.define = define;
+	
+	// Expose modules externally.
+	// global.modules = modules;
+
+/*
+	Boot.require
+	Based on YUI's use() function and RequireJS.
+*/	
+	// Resolves an object.
+	function getLibrary( moduleName ) {
+		// i.e. "jQuery.alpha", "MyLib.foo.bar"
+		var obj = window;
+
+		each( moduleName.split("."), function( name ) {
+			if ( obj.hasOwnProperty( name ) ) {
+				obj = obj[ name ];
+			}
+		});
+	
+		return obj;
+	}
+	
+	bootOptions.require = {};
+	function require( customOptions, moduleNames, callback ) {
+		
+		// Normalize parameters.
+		if ( isArray( customOptions ) || isString( customOptions ) ) {
+			callback = moduleNames;
+			moduleNames = customOptions;
+		}
+		
+		// Make moduleNames an array.
+		moduleNames = isString( moduleNames ) ? [ moduleNames ] : moduleNames;
+		
+		var options = extend( {}, bootOptions.require, customOptions || {} ),
+			callbackArgs = [],
+			moduleCount = 0;
+			
+		function moduleReady( i, moduleName, module ) {
+			
+			if ( module ) {
+				modules[ moduleName ] = module;
+			}
+			
+			callbackArgs[i] = modules[ moduleName ];
+			
+//			Boot.log("<b>" + moduleName + "</b> ready! " + ( i + 1 ) + " of " + moduleNames.length);
+			if ( ++moduleCount === moduleNames.length ) {
+
+//				Boot.log("All clear! Time to fire callback.");
+				callback.apply( callbackArgs, callbackArgs );
+			}
+			
+			if ( module ) {
+				publish( moduleName );
+			}
+		}
+
+		each( moduleNames, function( moduleName, i ) {
+
+			function defineModule(){
+				
+//				Boot.log("Done loading script for <b>" + moduleName + "</b>.");
+//				Boot.log( "Defined modules: " + definedModules.length );
+//				If a module was defined after our download.
+//				Boot.log( "Finished: " + src );
+
+				var module,
+					moduleDependencies,
+					moduleDefinition;
+
+				if ( moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift() ) {
+
+					if ( moduleDependencies = moduleDefinition.d ) {
+
+//						Boot.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d.join(", ") );
+
+						require( moduleDependencies, function(){
+//							Boot.log( "Dependencies loaded (" + moduleDefinition.d.join(", ") + "). <b>" + moduleName + "</b> is ready." );
+							module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
+							moduleReady( i, moduleName, module );
+						});
+
+					} else {
+
+						module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
+						moduleReady( i, moduleName, module );
+
+//						Boot.log("<b>" + moduleName + "</b> loaded! " + !!module);
+					}
+
+				// Otherwise see if we can snag the module by name (old skool).	
+				} else {
+					moduleReady( i, moduleName, getLibrary( moduleName )  );
+				}
+				
+			}	
+			
+//			Boot.log( "Inside require, using " + moduleName );
+
+			// If this module has already been defined, use it.
+			if ( moduleName in modules ) {
+				// Check for the object.
+				if ( modules[ moduleName ] ){
+//					Boot.log("Module <b>" + moduleName + "</b> is already defined.");
+					moduleReady( i, moduleName ); // callbackArgs[i] = module;
+				// It's undefined, so wait a little bit.
+				} else {
+//					Boot.log("Module <b>" + moduleName + "</b> is in the process of being defined. Queue time!");
+					subscribe( moduleName, function(){
+//						Boot.log("Module <b>" + moduleName + "</b> is now defined! Assigning to callback argument.");
+						moduleReady( i, moduleName );
+					});
+				}
+				
+			// Otherwise we'll need to load and define on the fly,
+			// all the whilest managing dependencies.	
+			} else {
+				
+				// Temporarily give this guy something so incoming 
+				// module requests wait until the event is emmitted.
+				modules[ moduleName ] = undefined;
+//				Boot.log("Calling getScript: " + moduleName );
+
+				// If the module was defined by some other script
+				if ( moduleDefinitions[ moduleName ] ) {
+					defineModule();
+				// Otherwise fetch the script based on the module name
+				} else {
+					getScript( resolve( options, moduleName ), defineModule );
+				}
+			}
+			
+		});
+		
+	}
+	global.require = require;
+	
+/*
+	Boot.widget
+	
+	The Widget factory is a wrapper function that 
+	binds an element to a module using a defined
+	object specification.
+	
+	Note: This is a work in progress!
+*/
+	function widget( widgetName, elem, options ) {
+
+		var source = modules[ widgetName ],
+			instance = extend( {}, source, {
+				element: elem,
+				name: elem.className,
+				namespace: elem.name,
+				option: function( key, value ) {
+					
+				},
+				options: options
+			});
+			
+		instance._create();
+		
+		return instance;
+
+	}
+//	global.widget = widget;
+
+
+/*
+	Function: Boot.attr
+	
+	Shorthand for setting and retrieving an attribute from an element.
+	Note this is not currently used by Boot, but used by Easync and ModuleT
+	
+	Parameters:
+	
+		elem - The object with the attribute to fetch.
+		attribute - The attribute to fetch.
+		value - The value to set.
+	
+	Returns:
+	
+	Attribute value (getting) or Boot (setting)
+*/
+	var styleNode = document.createElement("style");
+
+	function attr( elem, attribute, value ){
+
+		if ( value !== undefined ) {
+			if ( value === null ) {
+				elem.removeAttribute( attribute );
+			} else {
+				if ( attribute === "style" ) {
+					// For IE.
+					elem.style.cssText = value;
+				}
+				elem.setAttribute( attribute, value );
+			}	
+
+		} else {
+			return elem.getAttribute( attribute );
+		}
+		
+	}
+	global.attr = attr;
+
+/*
+	Boot.data
+	
+	Function for extracting data attributes and storing 
+	arbitrary data on elements.
+*/
+	function data( elem, key, value ) {
+		// Return an object of all data attributes.
+		var strData = "data-",
+		
+			attribute,
+			attributeName,
+			attributes = elem.attributes,
+			attributesLength = attributes.length,
+			attributesObject = {},
+			
+			ret;
+			
+		if ( value !== undefined ) {
+			attr( elem, strData + key, value );
+		} else if ( key !== undefined ) {
+			ret = attr( strData + key );
+		} else {
+			while( attributesLength-- ) {
+				attribute = attributes[ attributesLength ];
+				attributeName = attribute.nodeName;
+				if ( contains( attributeName, strData ) ) {
+					attributesObject[ attributeName.replace( strData, "" ) ] = attribute.nodeValue;
+				}
+			}
+			ret = attributesObject;
+		}
+		return ret;
+	}
+	global.data = data;
+
+/*
+	Simple add/remove classname functions.
+	Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
+	Supports multiple class additions.
+*/
+	function addClass( elem, classNames ) {
+		// Adding the class name greedily won't 
+		// hurt and keeps things small. 
+		classNames = classNames.split( strSpace );
+		
+		var elemClassName = elem.className,
+			className,
+			l = classNames.length,
+			reg;
+			
+		while ( l-- ) {
+			className = classNames[l];
+			reg = new RegExp("(\\s|^)" + className + "(\\s|$)");	
+			if ( ! reg.test( elem.className ) ) {
+				elemClassName += strSpace + className;
+			}	
+		}
+		
+		elem.className = elemClassName;
+		
+	}
+	global.addClass = addClass;
+
+	// Supports multiple class removals.
+	function removeClass( elem, classNames ) {
+		
+		classNames = classNames.split( strSpace );
+		
+		var elemClassName = elem.className,
+			className,
+			l = classNames.length,
+			reg;
+			
+		while ( l-- ) {
+			className = classNames[l];
+			reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");	
+			elemClassName = elemClassName.replace( reg, strSpace );
+		}
+		
+		elem.className = trim( elemClassName );
+	}
+	global.removeClass = removeClass;
+
+
+/*
+    Function: Boot.getStyle
+
+    Cross-browser method for getting the computed styles of elements
+
+    Parameters:
+
+        element - The element to find the computed style for.
+        property - The property we're asking for.
+
+    Returns:
+
+        The computed style value
+
+    Usage:
+    
+        var height = Boot.getStyle( myDiv, "height" );
+
+*/
+    // Largely taken from the example at
+    // http://robertnyman.com/2006/04/24/get-the-rendered-style-of-an-element/
+    function getStyle( element, property ) {
+        var value;
+
+        if ( document.defaultView && document.defaultView.getComputedStyle ) {
+            // The lovely way of retrieving computed style
+            value = document.defaultView.getComputedStyle( element, "" ).getPropertyValue( property );
+        } else {
+            // The... other (read: Microsoft) way
+            property = property.replace(/\-(\w)/g, function( match, prop ) {
+                return prop.toUpperCase();
+            });
+
+            value = element.currentStyle[property];
+        }
+
+        return value;
+    }
+
+    global.getStyle = getStyle;
+
 /*
 	Boot.inlineCSS
 	
@@ -1421,16 +1520,16 @@
 	global.inlineCSS = inlineCSS;
 
 /*
-	Boot.create
+	Boot.createHTML
 	
 	Research: http://domscripting.com/blog/display/99
 */
-	function create( html ) {	
+	function createHTML( html ) {	
 		var div = document.createElement("c");
 		div.innerHTML = html;
 		return div.firstChild;
 	}
-	global.create = create;
+	global.createHTML = createHTML;
 
 /*
 	Boot.getFont
@@ -1445,7 +1544,7 @@
 		strActive = "-active",
 		strInactive = "-inactive";
 	
-	function getFont( /* options, options, ... */ ) {
+	function getFont() {
 		
 		var args = arguments,
 			options = getFontOptions,
@@ -1462,7 +1561,7 @@
 	
 		if ( ! testDiv ) {
 			// Shouldn't need these: height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
-			testDiv = create("<div style=\"position:absolute;top:-999px;left:-999px;width:auto;font-size:300px;font-family:serif\">BESs</div>" ); 
+			testDiv = createHTML("<div style=\"position:absolute;top:-999px;left:-999px;width:auto;font-size:300px;font-family:serif\">BESs</div>" ); 
 			docElem.appendChild( testDiv );
 		}
 		
@@ -1477,14 +1576,14 @@
 					removeClass( docElem, namespacedFontName + strLoading );
 					addClass( docElem, namespacedFontName + strInactive );
 
-					emit( eventNamespace + namespacedFontName + strInactive );
+					publish( eventNamespace + namespacedFontName + strInactive );
 //					window.console && console.log( "Font timeout: " + namespacedFontName );
 				} else {
 				
 					removeClass( docElem, namespacedFontName + strLoading );
 					addClass( docElem, namespacedFontName + strActive );
 					
-					emit( eventNamespace + namespacedFontName + strActive );
+					publish( eventNamespace + namespacedFontName + strActive );
 
 				}
 //					fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
@@ -1516,7 +1615,7 @@
 						
 			namespacedFontName = options.namespace + fontName;
 			
-			emit( eventNamespace + namespacedFontName + strLoading );
+			publish( eventNamespace + namespacedFontName + strLoading );
 						
 			addClass( docElem, namespacedFontName + strLoading );
 			
@@ -1529,13 +1628,53 @@
 		inlineCSS( fontfaceCSS.join("") );
 		
 	}
-/*	
-	Allow customizable settings someday maybe.
-	getFont.set = function( options ) {
-		
-	};
-*/	
+
 	global.getFont = getFont;
+
+/*
+    Function: Boot.disableTextSelect
+
+    Cross-browser method for disabling text selection - particularly an issue on ui elements that
+    may be clicked quickly enough to trigger the default action of selecting text.
+
+    Parameters:
+    
+        element - The element to disable text selection on.
+
+    Returns:
+        
+        The element
+
+    Usage:
+
+        Boot.disableTextSelect( myElement );
+*/
+
+    // The actual cross-browserness of this has NOT been tested
+    // This is an initial pass based on a stackoverflow example
+    // http://stackoverflow.com/questions/826782/css-rule-to-disable-text-selection-highlighting
+    function disableTextSelect( element ) {
+        if ( getStyle( element, "-khtml-user-select" ) ) {
+            // Set style for older webkit
+            element.style["-khtml-user-select"] = "none";
+        } else if ( getStyle( element, "-webkit-user-select" ) ) {
+            // Set style for webkit
+            element.style["-webkit-user-select"] = "none";
+        } else if ( getStyle( element, "-moz-user-select" ) ) {
+            // Set style for mozilla
+            element.style["-moz-user-select"] = "-moz-none";
+        } else if ( getStyle( element, "user-select" ) ) {
+            // Set style for mozilla
+            element.style["user-select"] = "none";
+        } else {
+            // Set property for IE & Opera
+            element.unselectable = true;
+        }
+
+        return element;
+    }
+
+    global.disableTextSelect = disableTextSelect;
 
 /*
 	Screen Size Detection
@@ -1545,7 +1684,7 @@
 	
 	Consider ditching this, ef IE and yay media queries?
 */
-
+/*
 	var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
 		screensLength = screens.length,
 		screenWidth,
@@ -1572,22 +1711,22 @@
 				width = screens[i];
 				currentClasses.push( (currentWidth <= width ? "lt-" : "gt-") + width ); 
 			}
-/*
-			each( screens, function(i, width) {
-				if ( currentWidth < width ) { 
-					currentClasses.push( "lt-" + width ); 
-				}
-			});
-*/
+
+//			each( screens, function(i, width) {
+//				if ( currentWidth < width ) { 
+//					currentClasses.push( "lt-" + width ); 
+//				}
+//			});
+
 			screenWidth = currentWidth;
 			
-			currentClasses = currentClasses.join(" ");
+			currentClasses = currentClasses.join( strSpace );
 			
 			if ( currentClasses !== screenClasses ) {
 				removeClass( docElem, screenClasses );
 				addClass( docElem, currentClasses );
 				screenClasses = currentClasses;
-				emit( eventNamespace + "screen-update", { screens: screenClasses, width: currentWidth });
+				publish( eventNamespace + "screen-update", { screens: screenClasses, width: currentWidth });
 			}
 		}
     }
@@ -1596,6 +1735,7 @@
 	
 	// Throttling seemed to be more desirable than debouncing.
     bind( window, "resize", throttle( screenSize, 100 ) );
+*/
 
 /*
 	Boot.browser + CSS browser class targeting
@@ -1635,7 +1775,7 @@
 	browserClasses.push( browserName + browserVersion.toString().replace(".", "-").replace(/\..*/, "" ) ); // Minor version
 	
 	// Add classes all at once for performance reasons.
-	addClass( docElem, browserClasses.join(" ") );
+	addClass( docElem, browserClasses.join( strSpace ) );
 	
 	// Open up Boot.browser
 	browser = { version: browserVersion };
@@ -1650,7 +1790,7 @@
 */
 	if ( browser.ie ) {
 		// HTML5 support for IE
-		each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split(" "), function( elem ) {
+		each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split( strSpace ), function( elem ) {
 			document.createElement( elem );
 		});
 	}
@@ -1688,211 +1828,166 @@
 	}
 	global.feature = feature;
 
+
 /*
-	Boot.options
+	UNDERSCORE UTILITIES
+	Helper utilities based on Underscore Library.
+	http://documentcloud.github.com/underscore/underscore.js
 */
-	var bootOptions = {};
-	function options( customOptions, value ) {
-		if ( isString( customOptions ) ) {
-			extend( bootOptions[ customOptions ], value );
-		} else {
-			extend( bootOptions, customOptions );
-		}
+  // Return the results of applying the iterator to each element.
+  // Delegates to **ECMAScript 5**'s native `map` if available.
+	function map( obj, iterator, context ) {
+		var results = [];
+		each( obj, function( value, index, list ) {
+      		results[ results.length ] = iterator.call( context, value, index, list );
+    	});
+    	return results;
 	}
-	global.options = options;
+  
+	// Delays a function for the given number of milliseconds, and then calls
+	// it with the arguments supplied.
+	function delay( func, wait ) {
+		var args = slice.call( arguments, 2 );
+		return SetTimeout( function(){ return func.apply(func, args); }, wait );
+	}
 	
+	// Defers a function, scheduling it to run after the current call stack has
+	// cleared.
+	function defer( func ) {
+		return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
+		// setTimeout( func, 0 );
+	}
+	global.defer = defer;
+	
+	// Internal function used to implement throttle() and debounce()
+	function limit( func, wait, debounce ) {
+		
+		var timeout;
+		
+		return function() {
+			
+			function throttler() {
+				timeout = undefined;
+				func.call( this );
+			}
+				
+			if ( debounce ) {
+				clearTimeout( timeout );
+			}
+			
+			if ( debounce || ! timeout ) {
+				timeout = SetTimeout( throttler, wait );
+			}
+		};
+	}
+	
+	// Returns a function, that, when invoked, will only be triggered at most once
+	// during a given window of time.
+	function throttle( func, wait ) {
+		return limit( func, wait, false );
+	}
+	global.throttle = throttle;
+	
+	// Returns a function, that, as long as it continues to be invoked, will not
+	// be triggered. The function will be called after it stops being called for
+	// N milliseconds.
+	function debounce( func, wait ) {
+		return limit( func, wait, true );
+	}
+	global.debounce = debounce;
+
 /*
-	Boot.resolve
-	Utility for resolving URL addresses.
-	TBD on how we want this API to work if 
-	we expose it externally and further internally.
-	possibly make resolveJS, resolveCSS, resolveFont?
+	Function: Boot.globalEval
+	
+	Evaluates code in the global scope.
+	
+	Parameters:
+	
+		src - The source code to execute.
+	 
+	Returns:
+	
+	Boot
+	
+	Research:
+	http://web// logs.java.net/b// log/driscoll/archive/2009/09/08/eval-javascript-global-context
 */
-	bootOptions.resolve = {
-		basePath: "",
-		filename: function(str){ return str.toLowerCase(); },
-		suffix: ".min.js"
-	};
-	
-	function resolve( customOptions, module ) {
-		var options = extend( {}, bootOptions.resolve, customOptions || {} );
-		return options.basePath + options.filename( module ) + options.suffix;
+	function globalEval( data ) {
+		( window.execScript || function( data ) {
+			window[ "eval" ].call( window, data );
+		} )( data );
 	}
-	
+	global.globalEval = globalEval;
+
 /*
-	Boot.define
-	Define a module, based on the Asynchronous Module Definition (AMD)
-	http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition
+	Function: Boot.trim
+	
+	Trims whitespace before and after a string.
+	
+	Parameters
+	
+		str - The string to trim leading whitespace.
+	
+	Returns
+	
+	String - The trimmed string.
 */
-	var modules = {},
-		moduleDefinitions = {},
-		definedModules = [];
-	
-	function define( moduleName, moduleDependencies, moduleDefinition ) {
-
-		if ( ! isString( moduleName ) ) {
-			moduleDefinition = moduleDependencies;
-			moduleDependencies = moduleName;
-			moduleName = undefined;				
-		}
-
-		if ( ! isArray( moduleDependencies ) ) {
-			moduleDefinition = moduleDependencies;
-			moduleDependencies = undefined;
-		}
-
-		// Load in any dependencies, and pass them into the use callback.
-		if ( moduleDependencies ) {
-
-//			Boot.log("Loading module dependencies for <b>" + "?" + "</b>: " + moduleDependencies.join(", "));
-
-			// Remember that this guy has a dependency, and which one it is.
-			moduleDefinition.d = moduleDependencies;
-
-		}
-		
-		if ( moduleName ) {
-			moduleDefinitions[ moduleName ] = moduleDefinition;
-		} else {
-			definedModules.push( moduleDefinition );
-		}	
+	function trim( str ) {
+		return str.replace(/^\s+/, "").replace(/\s+$/, "");
 	}
-	
-	global.define = define;
-	
-	// Expose modules externally.
-	global.modules = modules;
+	global.trim = trim;
 
-
+/* 
+	Function: Boot.parseJSON
+	
+	Parses a valid JSON string into a JavaScript object. Thanks, jQuery!
+	
+	Parameters
+	
+		data - The string of data to parse.
+	 
+	Returns:
+	
+	Object - Parsed JSON object.
+*/
 /*
-	Boot.use
-	Based on YUI's use() function and RequireJS.
-*/	
-	// Resolves an object.
-	function getLibrary( moduleName ) {
-		// i.e. "jQuery.alpha", "MyLib.foo.bar"
-		var obj = window;
-
-		each( moduleName.split("."), function( name ) {
-			if ( obj && obj.hasOwnProperty( name ) ) {
-				obj = obj[ name ];
-			}
-		});
-	
-		return obj;
-	}
-
-	bootOptions.use = {};
-	function use( customOptions, moduleNames, callback ){
-
-		// Normalize parameters.
-		if ( isArray( customOptions ) || isString( customOptions ) ) {
-			callback = moduleNames;
-			moduleNames = customOptions;
-		}
-		
-		// Make moduleNames an array.
-		moduleNames = isString( moduleNames ) ? [ moduleNames ] : moduleNames;
-		
-		var options = extend( {}, bootOptions.use, customOptions || {} ),
-			callbackArgs = [],
-			moduleCount = 0;
-			
-		function moduleReady( i, moduleName, module ) {
-			
-			if ( module ) {
-				modules[ moduleName ] = module;
-			}
-			
-			callbackArgs[i] = modules[ moduleName ];
-			
-//			Boot.log("<b>" + moduleName + "</b> ready! " + ( i + 1 ) + " of " + moduleNames.length);
-			if ( ++moduleCount === moduleNames.length ) {
-
-//				Boot.log("All clear! Time to fire callback.");
-				callback.apply( callbackArgs, callbackArgs );
-			}
-			
-			if ( module ) {
-				emit( moduleName );
-			}
-		}
-
-		each( moduleNames, function( moduleName, i ) {
-
-//			Boot.log( "Inside use, using " + moduleName );
-
-			// If this module has already been defined, use it.
-			if ( moduleName in modules ) {
-				
-				// Check for the object.
-				if ( modules[ moduleName ] ){
-//					Boot.log("Module <b>" + moduleName + "</b> is already defined.");
-					moduleReady( i, moduleName ); // callbackArgs[i] = module;
-				// It's undefined, so wait a little bit.
-				} else {
-//					Boot.log("Module <b>" + moduleName + "</b> is in the process of being defined. Queue time!");
-					on( moduleName, function(){
-//						Boot.log("Module <b>" + moduleName + "</b> is now defined! Assigning to callback argument.");
-						moduleReady( i, moduleName );
-					});
-				}
-				
-			// Otherwise we'll need to load and define on the fly,
-			// all the whilest managing dependencies.	
-			} else {
-				
-				// Temporarily give this guy something so incoming 
-				// module requests wait until the event is emmitted.
-				modules[ moduleName ] = undefined;
-				// Boot.log("Calling getJS...");
-				getJS( resolve( options, moduleName ), function() {
-
-//					Boot.log("Done loading script for <b>" + moduleName + "</b>.");
-					// Boot.log( "Defined modules: " + definedModules.length );
-					// If a module was defined after our download.
-				
-					var module,
-						moduleDependencies,
-						moduleDefinition;
+	Removing because it's too heavy and developers need to be smart.
+	var rvalidchars = /^[\],:{}\s]*$/,
+		rvalidescape = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,
+		rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,
+		rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g;
+*/
+	function parseJSON( data ) {
+		try {
+			// Make sure leading/trailing whitespace is removed (IE can't handle it)
+			data = trim( data );
 					
-					// If a module was defined after our download.
-					if ( moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift() ) {
-						
-						if ( moduleDependencies = moduleDefinition.d ) {
-
-//							Boot.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d );
-
-							use( moduleDependencies, function(){
-//								Boot.log( "Dependencies loaded (" + moduleDefinition.d + "). <b>" + moduleName + "</b> is ready." );
-								module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
-								moduleReady( i, moduleName, module );
-							});
-
-						} else {
-							
-							module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
-							moduleReady( i, moduleName, module );
-
-//							Boot.log("<b>" + moduleName + "</b> loaded! " + !!module);
-						}
-
-					// Otherwise see if we can snag the module by name (old skool).	
-					} else if (	module = getLibrary( moduleName ) ) {
-
-						moduleReady( i, moduleName, module );
-
-					} else {
-						alert("Failed to register module." );
-					}
-
-				});
+			// Attempt to parse using the native JSON parser first
+			if ( JSON && JSON.parse ) {
+				return JSON.parse( data );
 			}
-			
-		});
+	
+			// Make sure the incoming data is actual JSON
+			// // logic borrowed from http://json.org/json2.js
+			// *Removing this to decrease weight of the library.
+		//	if ( rvalidchars.test( 
+		//			data.replace( rvalidescape, "@" )
+		//				.replace( rvalidtokens, "]" )
+		//				.replace( rvalidbraces, "") ) ) {
 		
+			return (new Function( "return " + data ))();
+	
+		//	}
+		} catch (e) {
+			// This function may raise eyebrows so be sure to 
+			// inform developers why it failed.
+			if ( window.console ) {
+				console.log( "Bad JSON: " + data );
+			}
+		}
 	}
-	global.use = use;
+	global.parseJSON = parseJSON;
+
 
 /*
 	Boot.getJSONP
@@ -1918,9 +2013,87 @@
 			
 	}
 	global.getJSONP = getJSONP;
+	
+	// AMD to the MAX
+	// Expose our internal utilities through a module definition.
+/*	define( namespace.toLowerCase() + ".core", {
+		
+		now: now,
+		log: log,
+		
+		contains: contains,
+		
+		is: is,
+		isArray: isArray,
+		isObject: isObject,
+		isString: isString,
+		isBoolean: isBoolean,
+		isFunction: isFunction,
+		isNumber: isNumber,
+		
+		each: each,
+		extend: extend,
+		
+	//	options: options, // Meh?
+
+		poll: poll,
+		
+		ready: ready,
+		bind: bind,
+		load: load,
+
+		events: events,
+		subscribe: subscribe,
+		publish: publish,
+
+		getCSS: getCSS,
+		cacheScript: cacheScript,
+		getScript: getScript,
+		getJS: getJS,
+		
+		getScript: getScript,
+		
+		modules: modules,
+		define: define,
+		require: require,
+		widget: widget,
+		
+		attr: attr,
+		data: data,
+		
+		addClass: addClass,
+		removeClass: removeClass,
+		getStyle: getStyle,
+		inlineCSS: inlineCSS,
+		
+		createHTML: createHTML,
+	
+		getFont: getFont,
+
+		disableTextSelect: disableTextSelect,
+		
+		feature: feature,
+		
+		map: map,
+		delay: delay,
+		defer: defer,
+		limit: limit,
+		throttle: throttle,
+		debounce: debounce,
+		
+		globalEval: globalEval,
+	
+		trim: trim,
+
+		parseJSON: parseJSON,
+		getJSONP: getJSONP
+		
+	});
+*/
 /*
 	To Do
 	? getJS merge support
+	? Remove getJS from Boot library, go AMD pro.
 	? Boot.once - Do a callback once only (immediately unbind event).
 	? Boot.unbind - Unbind function?
 	? Boot.off / Boot.removeEvent - Remove custom event.

@@ -32,11 +32,11 @@ Boot.log.init({
 });
 Boot.log("boot.pubsub.html: Starting tests.");
 
-Boot.on("test-event", function( data ){
+Boot.subscribe("test-event", function( data ){
 	Boot.log("boot.pubsub.html: foo (1) is <b>" + data.foo + "</b>, bar (2) is <b>" + this.bar + "</b>" );
 });
 
-Boot.emit("test-event", { foo: "1", bar: "2" } );
+Boot.publish("test-event", { foo: "1", bar: "2" } );
 
 </script>
 <p>This paragraph of text should not be blocked.</p>
