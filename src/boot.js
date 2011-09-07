@@ -196,10 +196,16 @@
 	}
 	global.isArray = isArray;
 	
+//	Artz: Should isObject weed out elements, maybe?
 	function isObject( obj ) {
-		return is( obj, strObject );
+		return obj !== null && is( obj, strObject );
 	}
 	global.isObject = isObject;
+	
+	function isElement( obj ) {
+		return isObject( obj ) && obj.nodeType;
+	}
+	global.isElement = isElement;
 	
 	function isString( obj ) {
 		return is( obj, strString );
@@ -298,7 +304,8 @@
 			for ( name in source ) {
 				if ( source.hasOwnProperty(name) ) {
 					// If an object or array and NOT a DOM node, we need to deep copy.
-					if ( isObject( source[name] ) && ! source[name].nodeType ) {
+					// Artz: Should we move nodeType check into isObject? Or make isElement?
+					if ( isObject( source[name] ) && ! isElement( source[name] ) ) {
 						target[name] = extend( isArray( source[name] ) ? [] : {}, target[name], source[name] );
 					} else {
 						target[name] = source[name];
@@ -2026,6 +2033,7 @@
 		is: is,
 		isArray: isArray,
 		isObject: isObject,
+		isElement: isElement,
 		isString: isString,
 		isBoolean: isBoolean,
 		isFunction: isFunction,
