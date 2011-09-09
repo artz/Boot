@@ -1,0 +1,113 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boot.query</title>
+<style>
+body {
+	font: 16px/1.5 verdana;	
+}
+pre {
+	font-size: 13px;
+	background-color: #F1E9E9;
+	padding: 10px;
+}
+pre ul {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+</style>
+<script src="../src/boot.js"></script>
+</head>
+<body>
+<h1>Boot.query</h1>
+<pre id="log"></pre>
+<div id="module1">
+	<h2>Mighty Source</h2>
+	<h3>Tab 1</h3>
+	<div>
+		<ul class="list">
+			<li><a href="#">Link 1</a></li>
+			<li><a href="#">Link 2</a></li>
+			<li><a href="#">Link 3</a></li>
+		</ul>
+	</div>
+	<h3>Tab 2</h3>
+	<div>
+		<ul class="list">
+			<li><a href="#">Link 4</a></li>
+			<li><a href="#">Link 5</a></li>
+			<li><a href="#">Link 6</a></li>
+		</ul>
+	</div>
+	<h3>Tab 3</h3>
+	<div>
+		<ul class="list">
+			<li><a href="#">Link 7</a></li>
+			<li><a href="#">Link 8</a></li>
+			<li><a href="#">Link 9</a></li>
+		</ul>
+	</div>
+</div>
+
+<div id="module2">
+	<h2>Mighty Source</h2>
+	<h3>Tab 1</h3>
+	<div>
+		<ul class="list">
+			<li><a href="#">Link 1</a></li>
+			<li><a href="#">Link 2</a></li>
+			<li><a href="#">Link 3</a></li>
+		</ul>
+	</div>
+	<h3>Tab 2</h3>
+	<div>
+		<ul class="list">
+			<li><a href="#">Link 4</a></li>
+			<li><a href="#">Link 5</a></li>
+			<li><a href="#">Link 6</a></li>
+		</ul>
+	</div>
+	<h3>Tab 3</h3>
+	<div>
+		<ul class="list">
+			<li><a href="#">Link 7</a>
+				<ul class="sublist">
+					<li><a href="#">Link 7a</a></li>
+					<li><a href="#">Link 7b</a></li>
+					<li><a href="#">Link 7c</a></li>
+				</ul>
+			</li>
+			<li><a href="#">Link 8</a></li>
+			<li><a href="#">Link 9</a></li>
+		</ul>
+	</div>
+</div>
+<script>
+// Initialize logging.
+var logElem = document.getElementById("log");
+
+Boot.log.init({
+	elem: logElem
+});
+Boot.log("boot.getjs.html: Starting tests.");
+
+Boot.log( "ul: " +  Boot.query("ul").join(", ") );
+
+var $context = Boot.query("#module1");
+
+Boot.log( "#module1: " + $context.join(", ") );
+
+Boot.log( "#module1 h3: " + Boot.query("h3", $context).join(", ") );
+
+Boot.log( "#module2 .list: " + Boot.query(".list", document.getElementById("module2")).join(", ") );
+
+Boot.log( "#module2 div: " + Boot.query("div", [document.getElementById("module2")]).join(", " ) );
+
+Boot.log( "#module2 .sublist li: " + Boot.query("#module2 .sublist li").join(", ") );
+
+</script>
+
+</body>
+</html>

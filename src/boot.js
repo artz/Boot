@@ -36,60 +36,11 @@
 		strOnReadyStateChange = "onreadystatechange",
 		strOnLoad = "onload",
 		strComplete = "complete",
-		strSpace = " ",
 		
 		strSpace = " ",
+		strDot = ".",
 		
-		eventNamespace = namespace.toLowerCase() + ".";
-
-
-/*
-	Simple add/remove classname functions.
-	Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
-	Supports multiple class additions.
-*/
-	function addClass( elem, classNames ) {
-		// Adding the class name greedily won't 
-		// hurt and keeps things small. 
-		classNames = classNames.split( strSpace );
-		
-		var elemClassName = elem.className,
-			className,
-			l = classNames.length,
-			reg;
-			
-		while ( l-- ) {
-			className = classNames[l];
-			reg = new RegExp("(\\s|^)" + className + "(\\s|$)");	
-			if ( ! reg.test( elem.className ) ) {
-				elemClassName += strSpace + className;
-			}	
-		}
-		
-		elem.className = elemClassName;
-		
-	}
-	global.addClass = addClass;
-
-	// Supports multiple class removals.
-	function removeClass( elem, classNames ) {
-
-		classNames = classNames.split( strSpace );
-		
-		var elemClassName = elem.className,
-			className,
-			l = classNames.length,
-			reg;
-			
-		while ( l-- ) {
-			className = classNames[l];
-			reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");	
-			elemClassName = elemClassName.replace( reg, strSpace );
-		}
-		
-		elem.className = trim( elemClassName );
-	}
-	global.removeClass = removeClass;
+		eventNamespace = namespace.toLowerCase() + strDot;
 
 
 /*
@@ -1183,7 +1134,7 @@
 		// i.e. "jQuery.alpha", "MyLib.foo.bar"
 		var obj = window;
 
-		each( moduleName.split("."), function( name ) {
+		each( moduleName.split(strDot), function( name ) {
 			if ( obj.hasOwnProperty( name ) ) {
 				obj = obj[ name ];
 			}
@@ -1335,7 +1286,141 @@
 		return instance;
 
 	}
-//	global.widget = widget;
+	global.widget = widget;
+
+
+/*
+	Function: Boot.query
+	
+	Intended to be the world's smallest selector engine.
+	
+	Parameters:
+		selector
+		context - can be an element, element collection (nodeList) or array of elements
+	
+	Usage:
+	
+	Supports simple id, class and tag selectors:
+		- #someid
+		- .someclass
+		- img
+		
+	Supports descendant selectors:
+		- #someid .someclass img
+	
+	Thanks:
+		John Resig - http://ejohn.org/blog/thoughts-on-queryselectorall/
+*/
+	function listToArray ( collection ) { 
+		var array = [],
+			l = collection.length;
+		while ( l-- ) {
+			array[l] = collection[l];
+		}
+		return array;
+	}
+
+	var getElementsByClassName = document.getElementsByClassName ? 
+			function( selector, element ) {
+				return listToArray( element.getElementsByClassName( selector ) );
+			} : function( selector, element ) {
+				
+				var elements = element.getElementsByTagName("*"),
+					className,
+					matches = [];
+
+				for ( var i = 0, l = elements.length; i < l; i++ ) {
+					className = elements[i].className;
+					if ( className && (new RegExp("(\\s|^)" + className + "(\\s|$)").test( selector ) ) ) {
+						matches.push( elements[i] );
+					}
+				}
+				return matches;
+			};
+
+	// Our simple selector engine.
+	// Context is required.
+	var querySelectorAll = document.querySelectorAll ? // Runtime feature detect.
+			function( selector, element ) {
+				
+				element = element || document;
+				
+				// Helps ensure that if we were given a descendant
+				// selector we only take the first segment.
+				selector = selector.split( strSpace )[0];
+
+				return listToArray( element.querySelectorAll( selector ) );  
+				
+			} : function( selector, element ) {
+				
+				element = element || document;
+				
+				// Helps ensure that if we were given a descendant
+				// selector we only take the first segment.
+				selector = selector.split( strSpace )[0];
+				
+				// Grabs the first character, which informs our selector engine.
+				var firstChar = selector.charAt(0),
+					nodes;
+				
+				switch( firstChar ) {
+					// ID selector :D
+					case "#":
+						nodes = [ element.getElementById( selector.replace("#", "") ) ];
+						break;
+					case strDot: 
+						nodes = getElementsByClassName( selector.replace(strDot, ""), element );
+						break;
+					default:
+						nodes = listToArray( element.getElementsByTagName( selector ) );
+						break;
+				}
+				return nodes;
+			};
+	
+	// Special wrapper function that allows
+	// multiple context elements to narrow down
+	// the set.
+	function query( selector, context ) {
+		
+		// Prepare selector.
+		selector = selector.split( strSpace );
+		
+		// Prepare context.
+		// It could be "document", [ ul, ul ]
+		if ( context ) {
+			// Detects if we received an element
+			// and turns it into an array.
+			if ( isElement( context ) ) {
+				context = [ context ];
+			}
+		} else {
+			context = [ document ];
+		}
+
+			// Result set.
+		var elems = context;
+		
+		// Loop through each selector segment and 
+		// find elements matching inside context.
+		for ( var x = 0, y = selector.length; x < y; x++ ) {
+			context = elems;
+			elems = [];
+			// Loop through each item in context
+			// and find elements.
+			for ( var i = 0, l = context.length; i < l; i++ ) {
+				
+				// Look for items matching the first 
+				// segement of the selector and add 
+				// them to our result set.
+				elems = elems.concat( querySelectorAll( selector[x], context[i] ) );
+				
+			}
+		}
+
+		return elems;
+	}
+	global.query = query;
 
 
 /*
@@ -1779,7 +1864,7 @@
 	
 	browserClasses.push( browserName );
 	browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
-	browserClasses.push( browserName + browserVersion.toString().replace(".", "-").replace(/\..*/, "" ) ); // Minor version
+	browserClasses.push( browserName + browserVersion.toString().replace(strDot, "-").replace(/\..*/, "" ) ); // Minor version
 	
 	// Add classes all at once for performance reasons.
 	addClass( docElem, browserClasses.join( strSpace ) );
@@ -2005,7 +2090,7 @@
 		
 		var callbackId = "JSONP_" + jsonpId++;
 		
-		url += "&callback=" + namespace + "." + callbackId;
+		url += "&callback=" + namespace + strDot + callbackId;
 
 		getScript( url, { async: true } );
 
@@ -2065,6 +2150,8 @@
 		define: define,
 		require: require,
 		widget: widget,
+		
+		query: query,
 		
 		attr: attr,
 		data: data,
