@@ -1290,7 +1290,7 @@
 				}
 			}
 		}
-		
+
 		// Initialize the widget.
 		instance._create();
 
@@ -1508,6 +1508,7 @@
 	}
 	global.data = data;
 
+
 /*
 	Simple add/remove classname functions.
 	Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
@@ -1531,7 +1532,10 @@
 			}	
 		}
 		
-		elem.className = elemClassName;
+		// Defer, IE is a shit.
+		defer(function(){
+			elem.className = elemClassName;
+		});
 		
 	}
 	global.addClass = addClass;
@@ -1552,7 +1556,10 @@
 			elemClassName = elemClassName.replace( reg, strSpace );
 		}
 		
-		elem.className = trim( elemClassName );
+		// Defer, IE is a shit.
+		defer(function(){
+			elem.className = trim( elemClassName );
+		});
 	}
 	global.removeClass = removeClass;
 
@@ -2102,9 +2109,7 @@
 		
 		var callbackId = "JSONP_" + jsonpId++;
 		
-		url += "&callback=" + namespace + strDot + callbackId;
-
-		getScript( url, { async: true } );
+		url += "&callback=" + namespace + "." + callbackId;
 
 		global[ callbackId ] = function( data ) {
 
@@ -2114,7 +2119,9 @@
 			// Cleanup function reference.
 			delete global[ callbackId ];
 		};
-			
+		
+		getScript( url );
+		
 	}
 	global.getJSONP = getJSONP;
 	
