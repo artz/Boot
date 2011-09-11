@@ -1551,11 +1551,7 @@
 			}	
 		}
 		
-		// Defer, IE is a shit.
-		defer(function(){
-			elem.className = elemClassName;
-		});
-		
+		elem.className = elemClassName;
 	}
 	global.addClass = addClass;
 
@@ -1574,11 +1570,8 @@
 			reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");	
 			elemClassName = elemClassName.replace( reg, strSpace );
 		}
-		
-		// Defer, IE is a shit.
-		defer(function(){
-			elem.className = trim( elemClassName );
-		});
+
+		elem.className = trim( elemClassName );
 	}
 	global.removeClass = removeClass;
 
