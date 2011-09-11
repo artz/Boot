@@ -2,8 +2,7 @@
 	BOOT UTILITY LIBRARY
 	Version 0.2
 */
-(function( namespace, window, undefined ){
-	
+(function( namespace, window, undefined ) {
 
 	// Return if global is already defined. (Optional behavior) 
 //	if ( window[ namespace ] ) {
@@ -15,7 +14,7 @@
 		// into the closure at the bottom of this script.
 //		global = window[ namespace ] = {},
 	var global = window[ namespace ] || ( window[ namespace ] = {} ),
-		
+
 		// Localize global objects and functions for better compression.
 		document = window.document,
 		JSON = window.JSON,
@@ -59,7 +58,7 @@
 
 
 /*
-	Function: Boot.log
+	Function: global.log
 	
 	Simple method for keeping a log and outputting to the screen.
 	
@@ -99,6 +98,7 @@
 	
 	global.log = log;
 
+
 /*
 	Function: Boot.contains
 	
@@ -123,6 +123,7 @@
 		return haystack && haystack.indexOf( needle ) !== -1;
 	}
 	global.contains = contains;
+
 
 /*
 	Function: Boot.is...
@@ -178,6 +179,7 @@
 	}
 	global.isNumber = isNumber;
 
+
 /*
 	Function: Boot.each
 	
@@ -206,6 +208,7 @@
 	}
 	global.each = each;
 
+
 /*
 	Boot.extend
 	
@@ -230,8 +233,8 @@
 			source,
 			i = 1, // Source pointer.
 			l = args.length;
-			
-	// Feature to consider:
+
+		// Feature to consider:
 		// If it's a string, we should grab the 
 		// object from our modules.
 //		if ( isString( target ) ) {
@@ -255,7 +258,7 @@
 			for ( name in source ) {
 				if ( source.hasOwnProperty(name) ) {
 					// If an object or array and NOT a DOM node, we need to deep copy.
-					// Artz: Should we move nodeType check into isObject? Or make isElement?
+					// Artz: Should isObject weed out elements, maybe?
 					if ( isObject( source[name] ) && ! isElement( source[name] ) ) {
 						target[name] = extend( isArray( source[name] ) ? [] : {}, target[name], source[name] );
 					} else {
@@ -267,6 +270,7 @@
 		return target;
 	}
 	global.extend = extend;
+
 
 /*
 	Boot.options
@@ -280,6 +284,7 @@
 		}
 	}
 	global.options = options;
+
 
 /*
 	Boot.poll
@@ -310,6 +315,7 @@
 		 
 	}
 	global.poll = poll;
+
 
 /*
 	Function: Boot.ready
@@ -435,6 +441,7 @@
 	// Public reference.
 	global.ready = ready;
 
+
 /*
 	Function: Boot.bind
 	
@@ -470,6 +477,7 @@
 		}
 	}
 	global.bind = bind;
+
 
 /*
 	Function: Boot.load
@@ -524,11 +532,15 @@
 	}
 	global.load = load;
 
+
 /*
 	Function: Boot.subscribe
 	
 	Subscribes to an event, fires a callback once it is emitted.
 	http://en.wikipedia.org/wiki/Publish/subscribe
+	
+	* Consider adding support for synchronous subscriptions,
+	  i.e. if an event already fired, execute callback now.
 	
 	Parameters:
 	
@@ -550,6 +562,7 @@
 		
 	}
 	global.subscribe = subscribe;
+
 
 /*
 	Function: Boot.publish
@@ -580,7 +593,7 @@
 		
 		if ( eventQueue ) {
 			
-			each( eventQueue, function( on, i ){
+			each( eventQueue, function( on ){
 				
 				var onObject = on[0],
 					onCallback = on[1];
@@ -607,23 +620,29 @@
 		}
 	}
 	global.publish = publish;
-	
+
+
 /*
 	Function: Boot.getCSS
 	
 	Fetches a CSS file and appends it to the DOM.
 */
-	var cssLoading = {};
+	var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement,
+		cssLoading = {};
+
 	function getCSS( src ) {
-		if ( ! cssLoading[ src ] ) {
-			cssLoading[ src ] = 1;
-			var styleSheet = document.createElement("link");
-			styleSheet.rel = "stylesheet";
-			styleSheet.href = src;
-			firstScriptParent.insertBefore( styleSheet, firstScript );
-		}
+		defer(function(){
+			if ( ! cssLoading[ src ] ) {
+				cssLoading[ src ] = 1;
+				var styleSheet = document.createElement("link");
+				styleSheet.rel = "stylesheet";
+				styleSheet.href = src;
+				head.insertBefore( styleSheet, head.firstChild );
+			}
+		});
 	}
 	global.getCSS = getCSS;
+
 
 /*
 	Function: Boot.cacheScript
@@ -682,7 +701,8 @@
 		
 	}
 	global.cacheScript = cacheScript;
-	
+
+
 /*
 	Function: Boot.getScript
 	
@@ -700,13 +720,6 @@
 			async - Value of the async param, default is false.
 
 */
-		// Script collection on the page.
-	var scripts = document.getElementsByTagName( strScript ),
-		
-		// The first script on the page.
-		firstScript = scripts[0],
-		firstScriptParent = firstScript.parentNode;
-
 	function getScript ( src, callback, options ) { // type, text ) {
 	
 		var	script = document.createElement( strScript ),
@@ -739,7 +752,7 @@
 		// Attach handlers for all browsers
 		script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
 	
-			if ( ! done && ( ! script[ strReadyState ] || contains( script[ strReadyState ], "m" ) ) ) {
+			if ( ! done && ! script[ strReadyState ] || /loaded|complete/.test( script[ strReadyState ] ) ) {
 						
 				// log( "Boot.getJS (getScript): Done loading <b>" + src + "</b>." );	
 				
@@ -752,12 +765,6 @@
 			//		publish( eventNamespace + "js-done", { src: src } );
 				//	console.log( "Script executed: " + src );
 			//	}
-				
-				if ( callback ) {
-			//	Boot.log( options.test );
-				callback( src ); 
-				}
-				
 				// Handle memory leak in IE
 				script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
 				
@@ -766,13 +773,18 @@
 	//			SetTimeout(function(){
 	//				firstScriptParent.removeChild( script );
 	//			}, 0);
+				
+				if ( callback ) {
+			//	global.log( options.test );
+					callback( src ); 
+				}
 			}
 		};
 		
 		// This is the safest insertion point to assume.
 		// We use a setTimeout to ensure non-blocking behavior.
 		defer(function(){
-			firstScriptParent.insertBefore( script, firstScript );
+			head.insertBefore( script, head.firstChild );
 		});
 	}
 	global.getScript = getScript;
@@ -853,10 +865,10 @@
 
 		// Remember the script we were passed is loaded.
 		isScriptDone[ src ] = 1;
-		// Boot.log("execScripts(" + src + ")");
+		// global.log("execScripts(" + src + ")");
 		if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
 			
-// Boot.log( "Executing Scripts: [" + nextScriptIndex + "] " + nextScript );
+// global.log( "Executing Scripts: [" + nextScriptIndex + "] " + nextScript );
 // publish( nextScript );
 						
 			isScriptExecuted[ nextScript ] = 1;
@@ -877,7 +889,7 @@
 			}
 			 
 		} else if ( isFunction( nextScript ) ) {
-// Boot.log( "Executing Function: " + nextScript );
+// global.log( "Executing Function: " + nextScript );
 			// Advance to the next script now, otherwise if there are
 			// nested getJS calls this goes into a recursive nightmare.
 			nextScriptIndex++;
@@ -891,16 +903,16 @@
 			} else {
 				// For other browsers, we continue to manage things
 				// manually using paced SetTimeouts.  IE likes it.
-				// Boot.log("Deferring callback. [" + nextScriptIndex + "]");
+				// global.log("Deferring callback. [" + nextScriptIndex + "]");
 				defer(function(){
-					// Boot.log("Executing callback. [" + nextScriptIndex + "]");
+					// global.log("Executing callback. [" + nextScriptIndex + "]");
 					nextScript( nextScript.t );
 					execScripts();
 				});
 			}
 			
 		}// else {
-			// Boot.log( "Doing nothing for now. " + nextScript );	
+			// global.log( "Doing nothing for now. " + nextScript );	
 	//	}
 	}
 	
@@ -920,7 +932,7 @@
 		if ( isArray( args[0] ) ) {
 			args = args[0];
 		}
-		// Boot.log("getJS(" + args[0] + ");");
+		// global.log("getJS(" + args[0] + ");");
 		each( args, function( arg ) {
 
 			var options = {},
@@ -1021,12 +1033,12 @@
 					
 				// Otherwise proceed through our queue system.	
 				} else if ( src && ! isScriptLoading[ src ] ) {
-				//	Boot.log("getJS( " + src + " );");
+				//	global.log("getJS( " + src + " );");
 					// Remember we already loaded this script.
 					isScriptLoading[ src ] = 1;
 					// Push the script options into our execution queue.
 					execScriptQueue.push( options );
-// Boot.log("Pushing script. [" + (execScriptQueue.length - 1) + "] " + src );					
+// global.log("Pushing script. [" + (execScriptQueue.length - 1) + "] " + src );					
 					// If this is a script, and it hasn't 
 					// been loaded yet, fetch it now.
 				
@@ -1042,10 +1054,10 @@
 					// Remember the script object associated
 					// with this callback.
 					callback.t = options.test;
-				//	Boot.log("getJS( function(){} );");
+				//	global.log("getJS( function(){} );");
 					// log( "Boot.getJS: Pushing callback function into queue.");
 					execScriptQueue.push( callback );
-// Boot.log("Pushing callback. [" + (execScriptQueue.length - 1) + "]");					
+// global.log("Pushing callback. [" + (execScriptQueue.length - 1) + "]");					
 				}
 			}
 			
@@ -1076,6 +1088,7 @@
 		return options.basePath + options.filename( module ) + options.suffix;
 	}
 
+
 /*
 	Boot.define
 	Define a module, based on the Asynchronous Module Definition (AMD)
@@ -1087,7 +1100,7 @@
 
 	function define( moduleName, moduleDependencies, moduleDefinition ) {
 		
-//		Boot.log("Defining a module!");
+//		global.log("Defining a module!");
 		if ( ! isString( moduleName ) ) {
 			moduleDefinition = moduleDependencies;
 			moduleDependencies = moduleName;
@@ -1102,17 +1115,19 @@
 		// Load in any dependencies, and pass them into the use callback.
 		if ( moduleDependencies ) {
 
-//			Boot.log("Loading module dependencies for <b>" + "?" + "</b>: " + moduleDependencies.join(", "));
+//			global.log("Loading module dependencies for <b>" + "?" + "</b>: " + moduleDependencies.join(", "));
 
 			// Remember that this guy has a dependency, and which one it is.
 			moduleDefinition.d = moduleDependencies;
 
 		}
-
+//		global.log( "Defining! Module name:"  + moduleName );
 		if ( moduleName ) {
 			moduleDefinitions[ moduleName ] = moduleDefinition;
 		} else {
 			definedModules.push( moduleDefinition );
+//			global.log( moduleDefinition.toString().replace(/\n/g, "").substring(0, 50) + "..." );
+//			global.log( definedModules.length );
 		}	
 	}
 	
@@ -1134,7 +1149,9 @@
 		// i.e. "jQuery.alpha", "MyLib.foo.bar"
 		var obj = window;
 
-		each( moduleName.split(strDot), function( name ) {
+		each( moduleName.split("."), function( name ) {
+//			if ( obj && isObject(obj) && obj.hasOwnProperty( name ) ) {
+//			Cross this bridge when it comes to us.
 			if ( obj.hasOwnProperty( name ) ) {
 				obj = obj[ name ];
 			}
@@ -1167,10 +1184,10 @@
 			
 			callbackArgs[i] = modules[ moduleName ];
 			
-//			Boot.log("<b>" + moduleName + "</b> ready! " + ( i + 1 ) + " of " + moduleNames.length);
+//			global.log("<b>" + moduleName + "</b> ready! " + ( i + 1 ) + " of " + moduleNames.length);
 			if ( ++moduleCount === moduleNames.length ) {
 
-//				Boot.log("All clear! Time to fire callback.");
+//				global.log("All clear! Time to fire callback.");
 				callback.apply( callbackArgs, callbackArgs );
 			}
 			
@@ -1183,10 +1200,10 @@
 
 			function defineModule(){
 				
-//				Boot.log("Done loading script for <b>" + moduleName + "</b>.");
-//				Boot.log( "Defined modules: " + definedModules.length );
+//				global.log("Done loading script for <b>" + moduleName + "</b>.");
+//				global.log( "Defined modules: " + definedModules.length );
 //				If a module was defined after our download.
-//				Boot.log( "Finished: " + src );
+//				global.log( "Finished: " + src );
 
 				var module,
 					moduleDependencies,
@@ -1196,10 +1213,10 @@
 
 					if ( moduleDependencies = moduleDefinition.d ) {
 
-//						Boot.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d.join(", ") );
+//						global.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d.join(", ") );
 
 						require( moduleDependencies, function(){
-//							Boot.log( "Dependencies loaded (" + moduleDefinition.d.join(", ") + "). <b>" + moduleName + "</b> is ready." );
+//							global.log( "Dependencies loaded (" + moduleDefinition.d.join(", ") + "). <b>" + moduleName + "</b> is ready." );
 							module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
 							moduleReady( i, moduleName, module );
 						});
@@ -1209,7 +1226,7 @@
 						module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
 						moduleReady( i, moduleName, module );
 
-//						Boot.log("<b>" + moduleName + "</b> loaded! " + !!module);
+//						global.log("<b>" + moduleName + "</b> loaded! " + !!module);
 					}
 
 				// Otherwise see if we can snag the module by name (old skool).	
@@ -1219,19 +1236,19 @@
 				
 			}	
 			
-//			Boot.log( "Inside require, using " + moduleName );
+//			global.log( "Inside require, using " + moduleName );
 
 			// If this module has already been defined, use it.
 			if ( moduleName in modules ) {
 				// Check for the object.
 				if ( modules[ moduleName ] ){
-//					Boot.log("Module <b>" + moduleName + "</b> is already defined.");
+//					global.log("Module <b>" + moduleName + "</b> is already defined.");
 					moduleReady( i, moduleName ); // callbackArgs[i] = module;
 				// It's undefined, so wait a little bit.
 				} else {
-//					Boot.log("Module <b>" + moduleName + "</b> is in the process of being defined. Queue time!");
+//					global.log("Module <b>" + moduleName + "</b> is in the process of being defined. Queue time!");
 					subscribe( moduleName, function(){
-//						Boot.log("Module <b>" + moduleName + "</b> is now defined! Assigning to callback argument.");
+//						global.log("Module <b>" + moduleName + "</b> is now defined! Assigning to callback argument.");
 						moduleReady( i, moduleName );
 					});
 				}
@@ -1243,13 +1260,15 @@
 				// Temporarily give this guy something so incoming 
 				// module requests wait until the event is emmitted.
 				modules[ moduleName ] = undefined;
-//				Boot.log("Calling getScript: " + moduleName );
+//				global.log("Calling getScript: " + moduleName );
 
 				// If the module was defined by some other script
 				if ( moduleDefinitions[ moduleName ] ) {
+//					global.log("Defining module immediately: " + moduleName);
 					defineModule();
 				// Otherwise fetch the script based on the module name
 				} else {
+//					global.log("Getting script for: " + moduleName);
 					getScript( resolve( options, moduleName ), defineModule );
 				}
 			}
@@ -1281,7 +1300,7 @@
 				options: options
 			}),
 			ui = instance.ui;
-			
+
 		// Convert UI selectors to elements.
 		if ( ui ) {
 			for ( var x in ui ) {
@@ -1605,6 +1624,7 @@
 
     global.getStyle = getStyle;
 
+
 /*
 	Boot.inlineCSS
 	
@@ -1629,6 +1649,7 @@
 	}
 	global.inlineCSS = inlineCSS;
 
+
 /*
 	Boot.createHTML
 	
@@ -1640,6 +1661,7 @@
 		return div.firstChild;
 	}
 	global.createHTML = createHTML;
+
 
 /*
 	Boot.getFont
@@ -1677,10 +1699,10 @@
 		
 		function pollFontDiv( fontDiv, namespacedFontName ) {
 			poll( function( time ){
-//					Boot.log( "Test width: " + testDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
+//					global.log( "Test width: " + testDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
 				return testDiv.offsetWidth !== fontDiv.offsetWidth;
 			}, function( isTimeout, time){ 
-//					Boot.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout); 
+//					global.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout); 
 				if ( isTimeout ) {
 					
 					removeClass( docElem, namespacedFontName + strLoading );
@@ -1705,15 +1727,15 @@
 			
 			fontName = args[i].toLowerCase();
 			
-//			Boot.log( "Getting font: <b>" + fontName + "</b>" );
+//			global.log( "Getting font: <b>" + fontName + "</b>" );
 			
 			fontPath = options.path.replace( fontTemplate, fontName );
 			
-//			Boot.log( "Setting font URL: <b>" + fontPath + "</b>" );
+//			global.log( "Setting font URL: <b>" + fontPath + "</b>" );
 			
 			fontFace = options.fontface.replace( fontTemplate, fontName ).replace( fontPathTemplate, fontPath );
 			
-//			Boot.log( "Generating @fontface: <b>" + fontFace + "</b>");
+//			global.log( "Generating @fontface: <b>" + fontFace + "</b>");
 			
 			fontfaceCSS.push( fontFace );
 			
@@ -1740,6 +1762,7 @@
 	}
 
 	global.getFont = getFont;
+
 
 /*
     Function: Boot.disableTextSelect
@@ -2030,6 +2053,7 @@
 	}
 	global.globalEval = globalEval;
 
+
 /*
 	Function: Boot.trim
 	
@@ -2047,6 +2071,7 @@
 		return str.replace(/^\s+/, "").replace(/\s+$/, "");
 	}
 	global.trim = trim;
+
 
 /* 
 	Function: Boot.parseJSON
