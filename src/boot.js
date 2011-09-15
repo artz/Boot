@@ -480,6 +480,28 @@
 
 
 /*
+	Boot.delegate
+*/
+	function delegate( elem, selector, event, callback ) {
+		bind( elem, event, function( evt ){
+
+			var target = evt.target,
+				id = target.id || "",
+				className = target.className || "",
+				tag = target.nodeName,
+				token = tag + ( id && "#" + id ) + ( className && "." + className );
+			
+			// console.log( selector, ":", token, ":", contains( token.toLowerCase(), selector.toLowerCase() ) );
+			if ( contains( token.toLowerCase(), selector.toLowerCase() ) ) {
+				callback( evt );
+			}
+
+		});
+	}
+//	global.delegate = delegate;
+
+
+/*
 	Function: Boot.load
 	
 	Cross-browser window load event binder.
@@ -2174,6 +2196,7 @@
 		
 		ready: ready,
 		bind: bind,
+		delegate: delegate,
 		load: load,
 
 		events: events,
