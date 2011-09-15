@@ -1292,15 +1292,16 @@
 		var source = modules[ widgetName ],
 			instance = extend( {}, source, {
 				element: elem,
-				name: elem.className,
-				namespace: elem.name,
+				name: widgetName.replace(strDot, "-"),
+				namespace: widgetName,
 				option: function( key, value ) {
 					
 				},
-				options: options
+				ui: {},
+				options: options || {}
 			}),
-			ui = instance.ui;
-
+			ui = extend( instance.ui, instance.options.ui );
+		
 		// Convert UI selectors to elements.
 		if ( ui ) {
 			for ( var x in ui ) {
@@ -1309,6 +1310,8 @@
 				}
 			}
 		}
+		
+		addClass( elem, instance.name );
 
 		// Initialize the widget.
 		instance._create();
@@ -1512,7 +1515,7 @@
 		if ( value !== undefined ) {
 			attr( elem, strData + key, value );
 		} else if ( key !== undefined ) {
-			ret = attr( strData + key );
+			ret = attr( elem, strData + key );
 		} else {
 			while( attributesLength-- ) {
 				attribute = attributes[ attributesLength ];
