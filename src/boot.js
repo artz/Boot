@@ -1319,6 +1319,7 @@
 		return instance;
 
 	}
+	global.widget = widget;
 
 
 /*
