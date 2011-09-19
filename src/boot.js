@@ -964,25 +964,22 @@
 			
 			// Convert the string or function
 			// into the object.
-			switch ( typeof arg ) {
-				case strString:
-					options.src = arg;
-					break;
-				case strFunction:
-					options.callback = arg;
-					break;
-				case strObject:
-					options = arg;
-					
-					// Remember deferScript setting.
-					deferScript = options.defer;
-					
-					// Should we have a callback.
-					callback = options.callback;
-					
-					// Reset it so it loads normally next time.
-					options.defer = undefined; 
-					break;
+			if ( isString( arg ) ) {
+				options.src = arg;
+			} else if ( isFunction( arg ) ) {
+				options.callback = arg;
+			} else if ( isObject( arg ) ) {
+				
+				options = arg;
+				
+				// Remember deferScript setting.
+				deferScript = options.defer;
+				
+				// Should we have a callback.
+				callback = options.callback;
+				
+				// Reset it so it loads normally next time.
+				options.defer = undefined; 
 			}
 
 			// Defer these options until document is ready.
@@ -1229,9 +1226,9 @@
 
 				var module,
 					moduleDependencies,
-					moduleDefinition;
+					moduleDefinition = moduleDefinitions[ moduleName ];
 
-				if ( moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift() ) {
+				if ( moduleDefinition || definedModules.shift() ) {
 
 					if ( moduleDependencies = moduleDefinition.d ) {
 
@@ -1417,18 +1414,14 @@
 				var firstChar = selector.charAt(0),
 					nodes;
 				
-				switch( firstChar ) {
-					// ID selector :D
-					case "#":
-						nodes = [ element.getElementById( selector.replace(firstChar, "") ) ];
-						break;
-					case strDot: 
-						nodes = getElementsByClassName( selector.replace(firstChar, ""), element );
-						break;
-					default:
-						nodes = listToArray( element.getElementsByTagName( selector ) );
-						break;
+				if ( firstChar === "#" ) {
+					nodes = [ element.getElementById( selector.replace(firstChar, "") ) ];
+				} else if ( firstChar === strDot ) {
+					nodes = getElementsByClassName( selector.replace(firstChar, ""), element );
+				} else {
+					nodes = listToArray( element.getElementsByTagName( selector ) );
 				}
+
 				return nodes;
 			};
 	
@@ -1640,7 +1633,6 @@
 
         return value;
     }
-
     global.getStyle = getStyle;
 
 
@@ -1648,23 +1640,29 @@
 	Boot.inlineCSS
 	
 	Thanks Stoyan!
+	http://www.phpied.com/dynamic-script-and-style-elements-in-ie/
 */
 	function inlineCSS( css ){
 
-		var style = styleNode.cloneNode(0),
-			styleSheet = style.styleSheet,
+		var style = document.createElement("style"),
 			textNode;
 
+		// Stoyan says this is "absolutely required",
+		// but so far has passed all our tests.
+//		style.setAttribute("type", "text/css");
+
+		// This must happen before setting CSS for IE.
+		head.insertBefore( style, head.firstChild );
+
 		// IE
-		if ( styleSheet ) { 
-			styleSheet.cssText = css;
+		if ( style.styleSheet ) {
+			style.styleSheet.cssText = css;
 		// The World
-		} else { 
+		} else {
 			textNode = document.createTextNode( css );
 			style.appendChild( textNode );
 		}
 		
-		head.insertBefore( style, head.firstChild );
 	}
 	global.inlineCSS = inlineCSS;
 
