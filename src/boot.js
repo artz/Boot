@@ -1309,6 +1309,15 @@
 	function widget( widgetName, elem, options ) {
 
 		var source = modules[ widgetName ],
+			instance,
+			ui;
+
+		if ( elem.widget && elem.widget[ widgetName ] ) {
+
+			instance = elem.widget[ widgetName ];
+	
+		} else {
+
 			instance = extend( {}, source, {
 				element: elem,
 				name: widgetName.replace(strDot, "-"),
@@ -1318,22 +1327,31 @@
 				},
 				ui: {},
 				options: options || {}
-			}),
+			});
+			
 			ui = extend( instance.ui, instance.options.ui );
-		
-		// Convert UI selectors to elements.
-		if ( ui ) {
-			for ( var x in ui ) {
-				if ( ui.hasOwnProperty( x ) ) {
-					ui[x] = query(ui[x], elem);
+			
+			// Convert UI selectors to elements.
+			if ( ui ) {
+				for ( var x in ui ) {
+					if ( ui.hasOwnProperty( x ) ) {
+						ui[x] = query(ui[x], elem);
+					}
 				}
 			}
-		}
-		
-		addClass( elem, instance.name );
+			
+			addClass( elem, instance.name );
+	
+			// Initialize the widget.
+			instance._create();
+			
+			// Save the instance on the element for later access.
+			if ( ! elem.widget ) {
+				elem.widget = {};
+			}
+			elem.widget[ widgetName ] = instance;
 
-		// Initialize the widget.
-		instance._create();
+		}
 
 		return instance;
 
