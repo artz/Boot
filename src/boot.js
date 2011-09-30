@@ -39,6 +39,7 @@
 		strSpace = " ",
 		strDot = ".",
 		
+		// Used only by getFont at this point, I believe.
 		eventNamespace = namespace.toLowerCase() + strDot;
 
 
@@ -147,13 +148,13 @@
 		return obj && contains( obj.constructor.toString(), "rray" );
 	}
 	global.isArray = isArray;
-	
+
 //	Artz: Should isObject weed out elements, maybe?
 	function isObject( obj ) {
 		return obj !== null && is( obj, strObject );
 	}
 	global.isObject = isObject;
-	
+
 	function isElement( obj ) {
 		return isObject( obj ) && obj.nodeType;
 	}
@@ -217,9 +218,9 @@
 	Boot.extend( target, [object1], [objectN] )
 	
 	Parameters
-	
+
 		target -  An object that will receive the new properties if additional 
-		          objects are passed in [or that will extend the Boot namespace 
+				  objects are passed in [or that will extend the Boot namespace 
 				  if it is the sole argument].
 		object1 - An object containing additional properties to merge in.
 		objectN - Additional objects containing properties to merge in.
@@ -1234,7 +1235,7 @@
 
 //						global.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d.join(", ") );
 
-						require( moduleDependencies, function(){
+						require( customOptions, moduleDependencies, function(){
 //							global.log( "Dependencies loaded (" + moduleDefinition.d.join(", ") + "). <b>" + moduleName + "</b> is ready." );
 							module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
 							moduleReady( i, moduleName, module );
@@ -1519,14 +1520,14 @@
 					elem.style.cssText = value;
 				}
 				elem.setAttribute( attribute, value );
-			}	
-
+			}
 		} else {
 			return elem.getAttribute( attribute );
 		}
 		
 	}
 	global.attr = attr;
+
 
 /*
 	Boot.data
@@ -1614,44 +1615,45 @@
 
 
 /*
-    Function: Boot.getStyle
+	Function: Boot.getStyle
 
-    Cross-browser method for getting the computed styles of elements
+	Cross-browser method for getting the computed styles of elements
 
-    Parameters:
+	Parameters:
 
-        element - The element to find the computed style for.
-        property - The property we're asking for.
+		element - The element to find the computed style for.
+		property - The property we're asking for.
 
-    Returns:
+	Returns:
 
-        The computed style value
+		The computed style value
 
-    Usage:
-    
-        var height = Boot.getStyle( myDiv, "height" );
+	Usage:
+	
+		var height = Boot.getStyle( myDiv, "height" );
 
 */
-    // Largely taken from the example at
-    // http://robertnyman.com/2006/04/24/get-the-rendered-style-of-an-element/
-    function getStyle( element, property ) {
-        var value;
+	// Largely taken from the example at
+	// http://robertnyman.com/2006/04/24/get-the-rendered-style-of-an-element/
+	function getStyle( element, property ) {
+		var value;
 
-        if ( document.defaultView && document.defaultView.getComputedStyle ) {
-            // The lovely way of retrieving computed style
-            value = document.defaultView.getComputedStyle( element, "" ).getPropertyValue( property );
-        } else {
-            // The... other (read: Microsoft) way
-            property = property.replace(/\-(\w)/g, function( match, prop ) {
-                return prop.toUpperCase();
-            });
+		if ( document.defaultView && document.defaultView.getComputedStyle ) {
+			// The lovely way of retrieving computed style
+			value = document.defaultView.getComputedStyle( element, "" ).getPropertyValue( property );
+		} else {
+			// The... other (read: Microsoft) way
+			property = property.replace(/\-(\w)/g, function( match, prop ) { // Artz: match var is unused
+				return prop.toUpperCase();
+			});
 
-            value = element.currentStyle[property];
-        }
+			value = element.currentStyle[property];
+		}
 
-        return value;
-    }
-    global.getStyle = getStyle;
+		return value;
+	}
+
+//    global.getStyle = getStyle;
 
 
 /*
@@ -1798,51 +1800,6 @@
 
 	global.getFont = getFont;
 
-
-/*
-    Function: Boot.disableTextSelect
-
-    Cross-browser method for disabling text selection - particularly an issue on ui elements that
-    may be clicked quickly enough to trigger the default action of selecting text.
-
-    Parameters:
-    
-        element - The element to disable text selection on.
-
-    Returns:
-        
-        The element
-
-    Usage:
-
-        Boot.disableTextSelect( myElement );
-*/
-
-    // The actual cross-browserness of this has NOT been tested
-    // This is an initial pass based on a stackoverflow example
-    // http://stackoverflow.com/questions/826782/css-rule-to-disable-text-selection-highlighting
-    function disableTextSelect( element ) {
-        if ( getStyle( element, "-khtml-user-select" ) ) {
-            // Set style for older webkit
-            element.style["-khtml-user-select"] = "none";
-        } else if ( getStyle( element, "-webkit-user-select" ) ) {
-            // Set style for webkit
-            element.style["-webkit-user-select"] = "none";
-        } else if ( getStyle( element, "-moz-user-select" ) ) {
-            // Set style for mozilla
-            element.style["-moz-user-select"] = "-moz-none";
-        } else if ( getStyle( element, "user-select" ) ) {
-            // Set style for mozilla
-            element.style["user-select"] = "none";
-        } else {
-            // Set property for IE & Opera
-            element.unselectable = true;
-        }
-
-        return element;
-    }
-
-    global.disableTextSelect = disableTextSelect;
 
 /*
 	Screen Size Detection
@@ -1998,6 +1955,52 @@
 
 
 /*
+    Function: Boot.disableTextSelect
+
+    Cross-browser method for disabling text selection - particularly an issue on ui elements that
+    may be clicked quickly enough to trigger the default action of selecting text.
+
+    Parameters:
+    
+        element - The element to disable text selection on.
+
+    Returns:
+        
+        The element
+
+    Usage:
+
+        Boot.disableTextSelect( myElement );
+*/
+
+    // The actual cross-browserness of this has NOT been tested
+    // This is an initial pass based on a stackoverflow example
+    // http://stackoverflow.com/questions/826782/css-rule-to-disable-text-selection-highlighting
+    function disableTextSelect( element ) {
+        if ( getStyle( element, "-khtml-user-select" ) ) {
+            // Set style for older webkit
+            element.style["-khtml-user-select"] = "none";
+        } else if ( getStyle( element, "-webkit-user-select" ) ) {
+            // Set style for webkit
+            element.style["-webkit-user-select"] = "none";
+        } else if ( getStyle( element, "-moz-user-select" ) ) {
+            // Set style for mozilla
+            element.style["-moz-user-select"] = "-moz-none";
+        } else if ( getStyle( element, "user-select" ) ) {
+            // Set style for mozilla
+            element.style["user-select"] = "none";
+        } else {
+            // Set property for IE & Opera
+            element.unselectable = true;
+        }
+
+        return element;
+    }
+
+    global.disableTextSelect = disableTextSelect;
+
+
+/*
 	UNDERSCORE UTILITIES
 	Helper utilities based on Underscore Library.
 	http://documentcloud.github.com/underscore/underscore.js
@@ -2065,6 +2068,24 @@
 	}
 	global.debounce = debounce;
 
+
+/*
+    Returns a new function with "this" (ie, the scope) set to a specified argument 
+
+    Parameters
+
+        scope - Sets "this" in the function to the object passed as scope
+        fn - The function to set scope for
+        args - an optional array of arguments
+*/
+	function proxy( scope, fn, args ) {
+        return (function() {
+            ( args ) ? fn.apply( scope, args ) : fn.call( scope );
+        });
+	}
+	global.proxy = proxy;
+
+
 /*
 	Function: Boot.globalEval
 	
@@ -2106,6 +2127,26 @@
 		return str.replace(/^\s+/, "").replace(/\s+$/, "");
 	}
 	global.trim = trim;
+
+
+/*
+	Function: Boot.toQueryString
+*/
+	function toQueryString( obj, param ) {
+		var str = [],
+			name,
+			encode = encodeURIComponent;
+
+		param = param || "&";
+
+		for ( name in obj ) {
+			if ( obj.hasOwnProperty( name ) ) {
+				str.push( encode( name ) + "=" + encode( obj[ name ] ) );
+			}
+		}
+		return str.length ? param + str.join("&") : "";
+	}
+//	global.toQueryString = toQueryString;
 
 
 /* 
@@ -2184,7 +2225,8 @@
 		
 	}
 	global.getJSONP = getJSONP;
-	
+
+
 	// AMD to the MAX
 	// Expose our internal utilities through a module definition.
 /*	define( namespace.toLowerCase() + ".core", {
@@ -2242,12 +2284,12 @@
 		inlineCSS: inlineCSS,
 		
 		createHTML: createHTML,
-	
+		
 		getFont: getFont,
-
-		disableTextSelect: disableTextSelect,
 		
 		feature: feature,
+		
+		disableTextSelect: disableTextSelect,
 		
 //		map: map,
 		delay: delay,
@@ -2255,11 +2297,13 @@
 		limit: limit,
 		throttle: throttle,
 		debounce: debounce,
+		proxy: proxy,
 		
 		globalEval: globalEval,
-	
+		
 		trim: trim,
-
+		toQueryString: toQueryString,
+		
 		parseJSON: parseJSON,
 		getJSONP: getJSONP
 		
