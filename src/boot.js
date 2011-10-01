@@ -1227,9 +1227,9 @@
 
 				var module,
 					moduleDependencies,
-					moduleDefinition = moduleDefinitions[ moduleName ];
+					moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift();
 
-				if ( moduleDefinition || definedModules.shift() ) {
+				if ( moduleDefinition ) {
 
 					if ( moduleDependencies = moduleDefinition.d ) {
 
