@@ -1120,7 +1120,6 @@
 
 	function define( moduleName, moduleDependencies, moduleDefinition ) {
 		
-//		global.log("Defining a module!");
 		if ( ! isString( moduleName ) ) {
 			moduleDefinition = moduleDependencies;
 			moduleDependencies = moduleName;
@@ -1135,19 +1134,14 @@
 		// Load in any dependencies, and pass them into the use callback.
 		if ( moduleDependencies ) {
 
-//			global.log("Loading module dependencies for <b>" + "?" + "</b>: " + moduleDependencies.join(", "));
-
 			// Remember that this guy has a dependency, and which one it is.
 			moduleDefinition.d = moduleDependencies;
-
 		}
-//		global.log( "Defining! Module name:"  + moduleName );
+
 		if ( moduleName ) {
 			moduleDefinitions[ moduleName ] = moduleDefinition;
 		} else {
 			definedModules.push( moduleDefinition );
-//			global.log( moduleDefinition.toString().replace(/\n/g, "").substring(0, 50) + "..." );
-//			global.log( definedModules.length );
 		}	
 	}
 	
@@ -1187,12 +1181,13 @@
 		if ( isArray( customOptions ) || isString( customOptions ) ) {
 			callback = moduleNames;
 			moduleNames = customOptions;
+      customOptions = {};
 		}
 		
 		// Make moduleNames an array.
 		moduleNames = isString( moduleNames ) ? [ moduleNames ] : moduleNames;
 		
-		var options = extend( {}, bootOptions.require, customOptions || {} ),
+		var options = extend( {}, bootOptions.require, customOptions ),
 			callbackArgs = [],
 			moduleCount = 0;
 			
@@ -1204,11 +1199,9 @@
 			
 			callbackArgs[i] = modules[ moduleName ];
 			
-//			global.log("<b>" + moduleName + "</b> ready! " + ( i + 1 ) + " of " + moduleNames.length);
+			// All dependencies loaded, fire callback.
 			if ( ++moduleCount === moduleNames.length ) {
-
-//				global.log("All clear! Time to fire callback.");
-				callback.apply( callbackArgs, callbackArgs );
+				callback.apply( global, callbackArgs );
 			}
 			
 			if ( module ) {
@@ -1220,11 +1213,6 @@
 
 			function defineModule(){
 				
-//				global.log("Done loading script for <b>" + moduleName + "</b>.");
-//				global.log( "Defined modules: " + definedModules.length );
-//				If a module was defined after our download.
-//				global.log( "Finished: " + src );
-
 				var module,
 					moduleDependencies,
 					moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift();
@@ -1233,10 +1221,7 @@
 
 					if ( moduleDependencies = moduleDefinition.d ) {
 
-//						global.log("<b>" + moduleName + "</b> has a dependency: " + moduleDefinition.d.join(", ") );
-
 						require( customOptions, moduleDependencies, function(){
-//							global.log( "Dependencies loaded (" + moduleDefinition.d.join(", ") + "). <b>" + moduleName + "</b> is ready." );
 							module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
 							moduleReady( i, moduleName, module );
 						});
@@ -1246,7 +1231,6 @@
 						module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
 						moduleReady( i, moduleName, module );
 
-//						global.log("<b>" + moduleName + "</b> loaded! " + !!module);
 					}
 
 				// Otherwise see if we can snag the module by name (old skool).	
@@ -1256,19 +1240,14 @@
 				
 			}	
 			
-//			global.log( "Inside require, using " + moduleName );
-
 			// If this module has already been defined, use it.
 			if ( moduleName in modules ) {
 				// Check for the object.
 				if ( modules[ moduleName ] ){
-//					global.log("Module <b>" + moduleName + "</b> is already defined.");
-					moduleReady( i, moduleName ); // callbackArgs[i] = module;
+					moduleReady( i, moduleName );
 				// It's undefined, so wait a little bit.
 				} else {
-//					global.log("Module <b>" + moduleName + "</b> is in the process of being defined. Queue time!");
 					subscribe( moduleName, function(){
-//						global.log("Module <b>" + moduleName + "</b> is now defined! Assigning to callback argument.");
 						moduleReady( i, moduleName );
 					});
 				}
@@ -1280,15 +1259,12 @@
 				// Temporarily give this guy something so incoming 
 				// module requests wait until the event is emmitted.
 				modules[ moduleName ] = undefined;
-//				global.log("Calling getScript: " + moduleName );
 
 				// If the module was defined by some other script
 				if ( moduleDefinitions[ moduleName ] ) {
-//					global.log("Defining module immediately: " + moduleName);
 					defineModule();
 				// Otherwise fetch the script based on the module name
 				} else {
-//					global.log("Getting script for: " + moduleName);
 					getScript( resolve( options, moduleName ), defineModule );
 				}
 			}
@@ -1297,7 +1273,8 @@
 		
 	}
 	global.require = require;
-	
+
+
 /*
 	Boot.widget
 	
