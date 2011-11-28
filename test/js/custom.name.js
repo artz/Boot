@@ -1,0 +1,3 @@
+jQuery.define({
+	"custom": true
+});

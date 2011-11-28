@@ -273,18 +273,39 @@
 	global.extend = extend;
 
 
-/*
-	Boot.options
-*/
-	var bootOptions = {};
-	function options( customOptions, value ) {
-		if ( isString( customOptions ) ) {
-			extend( bootOptions[ customOptions ], value );
-		} else {
-			extend( bootOptions, customOptions );
-		}
-	}
-	global.options = options;
+ /*
+   Boot.setup
+
+   A function that appends a new "option" method
+   on a method to allow developers to override
+   default options.
+ */
+  function setup( method, defaultOptions ) {
+
+    defaultOptions = defaultOptions || {};
+
+    // Create an option method on the method.
+    method.option = function( key, value ) {
+      if ( isString(key) ) {
+        // Retrieve an option using the key.
+        if ( value === undefined ) {
+          return defaultOptions[ key ];
+        // Set an option using a key.
+        } else {
+          defaultOptions[ key ] = value;
+        }
+      // Extend the default options.
+      } else if ( isObject(key) ) {
+        extend( defaultOptions, key );
+      // Return a copy of the current options.
+      } else {
+        return extend( {}, defaultOptions );
+      }
+    };
+
+    return global;
+  }
+  global.setup = setup;
 
 
 /*
@@ -1097,17 +1118,34 @@
 	we expose it externally and further internally.
 	possibly make resolveJS, resolveCSS, resolveFont?
 */
-	bootOptions.resolve = {
+	function resolve( customOptions, module ) {
+
+		var options = extend( resolve.option(), customOptions || {} ),
+      basePath = options.basePath,
+      filename = options.filename( module ),
+      suffix = options.suffix;
+
+    // If the module name ends with .js
+    if ( /\.js$/.test( module ) ) {
+      // Use the module as the filename instead.
+      filename = module;
+      suffix = "";
+
+      // If the module name starts with "http://" or "https://"
+      if ( /^http[s]*:\/\//.test( module ) ) {
+        // Remove the basePath
+        basePath = "";
+      }
+    }
+    return basePath + filename + suffix;
+	}
+
+	setup( resolve, {
 		basePath: "",
 		filename: function(str){ return str.toLowerCase(); },
 		suffix: ".min.js"
-	};
+	});
 	
-	function resolve( customOptions, module ) {
-		var options = extend( {}, bootOptions.resolve, customOptions || {} );
-		return options.basePath + options.filename( module ) + options.suffix;
-	}
-
 
 /*
 	Boot.define
@@ -1174,7 +1212,6 @@
 		return obj;
 	}
 	
-	bootOptions.require = {};
 	function require( customOptions, moduleNames, callback ) {
 		
 		// Normalize parameters.
@@ -1187,7 +1224,7 @@
 		// Make moduleNames an array.
 		moduleNames = isString( moduleNames ) ? [ moduleNames ] : moduleNames;
 		
-		var options = extend( {}, bootOptions.require, customOptions ),
+		var options = extend( require.option(), customOptions ), // See how Boot.setup works.
 			callbackArgs = [],
 			moduleCount = 0;
 			
@@ -1273,8 +1310,9 @@
 		
 	}
 	global.require = require;
-
-
+  
+  // Set up Boot.require with default options.
+  setup( require );
 /*
 	Boot.widget
 	
@@ -1680,20 +1718,15 @@
 /*
 	Boot.getFont
 */
-	var getFontOptions = {
-			namespace: "wf-",
-			path: "fonts/{f}/{f}-webfont",
-			fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
-		},
-		testDiv, // Keep it empty until invoked the first time.
+	var	fontTestDiv, // Keep it empty until invoked the first time.
 		strLoading = "-loading",
 		strActive = "-active",
 		strInactive = "-inactive";
-	
+
 	function getFont() {
 		
 		var args = arguments,
-			options = getFontOptions,
+			options = getFont.option(),
 			fontTemplate = /\{f\}/g,
 			fontPathTemplate = /\{p\}/g,
 			fontDiv,
@@ -1705,16 +1738,16 @@
 			i = 0, 
 			l = args.length;
 	
-		if ( ! testDiv ) {
+		if ( ! fontTestDiv ) {
 			// Shouldn't need these: height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
-			testDiv = createHTML("<div style=\"position:absolute;top:-999px;left:-999px;width:auto;font-size:300px;font-family:serif\">BESs</div>" ); 
-			docElem.appendChild( testDiv );
+			fontTestDiv = createHTML("<div style=\"position:absolute;top:-999px;left:-999px;width:auto;font-size:300px;font-family:serif\">BESs</div>" ); 
+			docElem.appendChild( fontTestDiv );
 		}
 		
 		function pollFontDiv( fontDiv, namespacedFontName ) {
 			poll( function( time ){
-//					global.log( "Test width: " + testDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
-				return testDiv.offsetWidth !== fontDiv.offsetWidth;
+//					global.log( "Test width: " + fontTestDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
+				return fontTestDiv.offsetWidth !== fontDiv.offsetWidth;
 			}, function( isTimeout, time){ 
 //					global.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout); 
 				if ( isTimeout ) {
@@ -1753,7 +1786,7 @@
 			
 			fontfaceCSS.push( fontFace );
 			
-			fontDiv = testDiv.cloneNode( true );
+			fontDiv = fontTestDiv.cloneNode( true );
 			
 			fontDiv.style.fontFamily = "'" + fontName + "',serif";
 						
@@ -1777,6 +1810,11 @@
 
 	global.getFont = getFont;
 
+	setup( getFont, {
+			namespace: "wf-",
+			path: "fonts/{f}/{f}-webfont",
+			fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
+		});
 
 /*
 	Screen Size Detection

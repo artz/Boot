@@ -65,7 +65,8 @@ require({
 );
 */
 
-Boot.options("require", { basePath: "../test/cdn/" });
+// Boot.options("require", { basePath: "../test/cdn/" });
+Boot.require.option("basePath", "../test/cdn/");
 /*
 Boot.require(["jQuery", "jQuery.alpha", "jQuery.beta"], function( jQuery ){
 	jQuery("<div />").alpha().appendTo(document.body);

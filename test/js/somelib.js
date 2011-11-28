@@ -1,0 +1,1 @@
+window.SomeLib = true;
