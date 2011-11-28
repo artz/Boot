@@ -1309,10 +1309,12 @@
 		});
 		
 	}
-	global.require = require;
   
-  // Set up Boot.require with default options.
   setup( require );
+	
+  global.require = require;
+
+
 /*
 	Boot.widget
 	
