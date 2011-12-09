@@ -28,6 +28,9 @@ pre ul {
 
 </style>
 <script src="../src/boot.js"></script>
+<script>
+Boot.getFont("Chewy", "SpecialElite", "NotThere");
+</script>
 </head>
 <body>
 <h1>Boot.getFont</h1>
@@ -44,7 +47,7 @@ Boot.log.init({
 
 Boot.log("boot.getjs.html: Starting tests.");
 
-Boot.getFont("Chewy", "SpecialElite", "NotThere");
+
 // Boot.getFont("specialelite");
 
 Boot.subscribe( "boot.wf-chewy-active", function(){

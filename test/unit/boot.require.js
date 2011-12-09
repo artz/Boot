@@ -120,4 +120,15 @@ asyncTest("Customized Filename", function(){
 	
 });
 
+asyncTest("Merged JS require.", function(){
+
+  Boot.require({ merge: true }, ["merge/foo", "merge/bar"], function( mergeFoo, mergeBar ) {
+    equal( mergeFoo.foo, true );
+    equal( mergeBar.bar, true );
+    start();
+  });
+
+});
+
+
 })();

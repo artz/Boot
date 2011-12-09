@@ -1227,7 +1227,7 @@
 		var options = extend( require.option(), customOptions ), // See how Boot.setup works.
 			callbackArgs = [],
 			moduleCount = 0;
-			
+
 		function moduleReady( i, moduleName, module ) {
 			
 			if ( module ) {
@@ -1302,12 +1302,28 @@
 					defineModule();
 				// Otherwise fetch the script based on the module name
 				} else {
-					getScript( resolve( options, moduleName ), defineModule );
-				}
+//        if ( options.merge ) {
+//          // TODO: Implement merge.
+//          mergeScript( moduleName, defineModule, i );
+//        } else {
+				  	getScript( resolve( options, moduleName ), defineModule );
+//        }
+        }
 			}
 			
 		});
-		
+
+    // EXPERIMENTAL MERGE FUNCTIONALITY
+//  var scripts = [],
+//      total = moduleNames.length - 1;
+
+//  function mergeScript( moduleName, defineModule, i ) {
+//    scripts.push( arguments );
+//    if ( i === total ) {
+//      // Fire the merged script, and execute all callbacks.
+//    }
+//  }
+
 	}
   
   setup( require );
@@ -1685,7 +1701,7 @@
 			textNode;
 
 		// Stoyan says this is "absolutely required",
-		// but so far has passed all our tests.
+		// but so far has passed all our unit tests.
 //		style.setAttribute("type", "text/css");
 
 		// This must happen before setting CSS for IE.
@@ -1737,13 +1753,20 @@
 			fontPath,
 			fontFace,
 			fontfaceCSS = [],
+      pollDelay = options.pollDelay,
+      timeout = options.timeout,
 			i = 0, 
 			l = args.length;
 	
 		if ( ! fontTestDiv ) {
 			// Shouldn't need these: height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
 			fontTestDiv = createHTML("<div style=\"position:absolute;top:-999px;left:-999px;width:auto;font-size:300px;font-family:serif\">BESs</div>" ); 
-			docElem.appendChild( fontTestDiv );
+
+			poll( function(){ return document.body }, function(){
+        body = document.body;
+        body.appendChild( fontTestDiv );
+      }, pollDelay, timeout );
+
 		}
 		
 		function pollFontDiv( fontDiv, namespacedFontName ) {
@@ -1768,7 +1791,7 @@
 
 				}
 //					fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
-			}, 25, 10000 ); // Make this configurable via Boot.options.
+			}, options.pollDelay, options.timeout ); // Make this configurable via Boot.options.
 		}
 		
 		// Boot.each might be a cleaner approach, revisit someday maybe.
@@ -1791,8 +1814,11 @@
 			fontDiv = fontTestDiv.cloneNode( true );
 			
 			fontDiv.style.fontFamily = "'" + fontName + "',serif";
-						
-			docElem.appendChild( fontDiv );
+			
+      poll( function(){ return document.body }, function(){
+        body = document.body;
+        body.appendChild( fontDiv );
+      }, pollDelay, timeout );	
 						
 			namespacedFontName = options.namespace + fontName;
 			
@@ -1800,7 +1826,7 @@
 						
 			addClass( docElem, namespacedFontName + strLoading );
 			
-			// Had to use a closure inside the loob because of the callback.
+			// Had to use a closure inside the loop because of the callback.
 			// Consider switching to Boot.each() for brevity.
 			pollFontDiv( fontDiv, namespacedFontName );
 			
@@ -1815,6 +1841,8 @@
 	setup( getFont, {
 			namespace: "wf-",
 			path: "fonts/{f}/{f}-webfont",
+      pollDelay: 100,
+      timeout: 10000,
 			fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
 		});
 
