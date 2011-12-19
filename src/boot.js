@@ -1853,8 +1853,8 @@
         http://www.webpagemistakes.ca/most-common-screen-resolution/
 
     Consider ditching this, ef IE and yay media queries?
+    Update: People actually need this.
 */
-/*
     var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
         screensLength = screens.length,
         screenWidth,
@@ -1875,20 +1875,10 @@
         // on the page resizes (retarded).
         if ( currentWidth !== screenWidth ) {
 
-            // Don't think we need this (headjs feature to set the width as a class).
-            //    currentClasses.push( "w-" + Math.floor( currentWidth / 50) * 50 );
             for ( i = 0; i < screensLength; i++ ) {
                 width = screens[i];
                 currentClasses.push( (currentWidth <= width ? "lt-" : "gt-") + width );
             }
-
-//            each( screens, function(i, width) {
-//                if ( currentWidth < width ) {
-//                    currentClasses.push( "lt-" + width );
-//                }
-//            });
-
-            screenWidth = currentWidth;
 
             currentClasses = currentClasses.join( strSpace );
 
@@ -1905,7 +1895,7 @@
 
     // Throttling seemed to be more desirable than debouncing.
     bind( window, "resize", throttle( screenSize, 100 ) );
-*/
+
 
 /*
     Boot.browser + CSS browser class targeting
