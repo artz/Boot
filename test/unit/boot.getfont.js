@@ -1,5 +1,5 @@
 (function(){
-  
+
 module("Boot.getFont");
 
 test( "Environment", function(){
@@ -9,10 +9,11 @@ test( "Environment", function(){
 test( "Set Font Options (Path)", function(){
   Boot.getFont.option({ path: "../test/fonts/{f}/{f}-webfont", timeout: 1000 });
   equal( Boot.getFont.option("path"), "../test/fonts/{f}/{f}-webfont" );
+  equal( Boot.getFont.option("timeout"), 1000 );
 });
 
 asyncTest( "Both font active events published.", function(){
-  
+
   var count = 0;
   Boot.subscribe( "boot.wf-chewy-active", function(){
     count++;
@@ -40,7 +41,7 @@ asyncTest( "getFont inactive event published.", function(){
     ok( true, "Font #3 (inactive) callback executed after timeout." );
     start();
   });
-  
+
 });
 
 })();

@@ -273,39 +273,38 @@
     global.extend = extend;
 
 
- /*
-   Boot.setup
+/*
+    Boot.setup
 
-   A function that appends a new "option" method
-   on a method to allow developers to override
-   default options.
- */
-  function setup( method, defaultOptions ) {
+    A function that appends a new "option" method
+    on a method to allow developers to override
+    default options.
+*/
+    function setup( method, defaultOptions ) {
 
-    defaultOptions = defaultOptions || {};
+        defaultOptions = defaultOptions || {};
 
-    // Create an option method on the method.
-    method.option = function( key, value ) {
-      if ( isString(key) ) {
-        // Retrieve an option using the key.
-        if ( value === undefined ) {
-          return defaultOptions[ key ];
-        // Set an option using a key.
-        } else {
-          defaultOptions[ key ] = value;
-        }
-      // Extend the default options.
-      } else if ( isObject(key) ) {
-        extend( defaultOptions, key );
-      // Return a copy of the current options.
-      } else {
-        return extend( {}, defaultOptions );
-      }
-    };
-
-    return global;
-  }
-  global.setup = setup;
+        // Create an option method on the method.
+        method.option = function( key, value ) {
+            if ( isString(key) ) {
+                // Retrieve an option using the key.
+                if ( value === undefined ) {
+                    return defaultOptions[ key ];
+                // Set an option using a key.
+                } else {
+                    defaultOptions[ key ] = value;
+                }
+                // Extend the default options.
+            } else if ( isObject(key) ) {
+                extend( defaultOptions, key );
+                // Return a copy of the current options.
+            } else {
+                return extend( {}, defaultOptions );
+            }
+        };
+//      return global;
+    }
+//  global.setup = setup;
 
 
 /*
@@ -323,6 +322,9 @@
             start = now(),
             time,
             isTimeout = false;
+
+        // Internet Explorer needs at least a 1 for setInterval.
+        pollDelay = pollDelay || 1;
 
         timers[ name ] = setInterval(function(){
 
@@ -1736,7 +1738,9 @@
 /*
     Boot.getFont
 */
-    var    fontTestDiv, // Keep it empty until invoked the first time.
+    var fontTestDiv, // Keep it empty until invoked the first time.
+        fontTestDivStatus,
+
         strLoading = "-loading",
         strActive = "-active",
         strInactive = "-inactive";
@@ -1744,107 +1748,147 @@
     function getFont() {
 
         var args = arguments,
+            arg,
             options = getFont.option(),
+            pollDelay = options.pollDelay,
+            timeout = options.timeout,
+            callback = options.callback,
             fontTemplate = /\{f\}/g,
             fontPathTemplate = /\{p\}/g,
             fontDiv,
+            fontDivParent = docElem,
             fontName,
             namespacedFontName,
             fontPath,
             fontFace,
             fontfaceCSS = [],
-      pollDelay = options.pollDelay,
-      timeout = options.timeout,
             i = 0,
             l = args.length;
 
+        // Create the test <div> on demand so as not to impact performance up front.
         if ( ! fontTestDiv ) {
-            // Shouldn't need these: height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
-            fontTestDiv = createHTML("<div style=\"position:absolute;top:-999px;left:-999px;width:auto;font-size:300px;font-family:serif\">BESs</div>" );
-
-            poll( function(){ return document.body }, function(){
-        body = document.body;
-        body.appendChild( fontTestDiv );
-      }, pollDelay, timeout );
-
+            // Removed these (from webfontloader):
+            // height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
+            fontTestDiv = createHTML("<div style=\"position:absolute;top:-999em;left:-999em;width:auto;font-size:300px;font-family:serif\">BESs</div>" );
         }
 
-        function pollFontDiv( fontDiv, namespacedFontName ) {
-            poll( function( time ){
-//                    global.log( "Test width: " + fontTestDiv.offsetWidth + ", " + fontName + ": " + fontDiv.offsetWidth );
-                return fontTestDiv.offsetWidth !== fontDiv.offsetWidth;
-            }, function( isTimeout, time){
-//                    global.log("Different widths detected in " + time + "ms. Timeout? " + isTimeout);
-                if ( isTimeout ) {
+        function fontReady( fontDiv, namespacedFontName ) {
 
-                    removeClass( docElem, namespacedFontName + strLoading );
-                    addClass( docElem, namespacedFontName + strInactive );
+            function fontReadyTest() {
+                // Insert the <div> with font to be tested.
+                fontDivParent.insertBefore( fontDiv, fontDivParent.firstChild );
 
-                    publish( eventNamespace + namespacedFontName + strInactive );
-//                    window.console && console.log( "Font timeout: " + namespacedFontName );
-                } else {
+                // Poll the DOM every interval to see if width changes.
+                poll(function(){
+//                    alert( namespacedFontName + ": " + fontTestDiv.offsetWidth + "!==" + fontDiv.offsetWidth );
+                    return fontTestDiv.offsetWidth !== fontDiv.offsetWidth;
+                }, function( isTimeout ){
+                    if ( isTimeout ) {
+                        removeClass( docElem, namespacedFontName + strLoading );
+                        addClass( docElem, namespacedFontName + strInactive );
+                        publish( eventNamespace + namespacedFontName + strInactive );
+                    } else {
+                        removeClass( docElem, namespacedFontName + strLoading );
+                        addClass( docElem, namespacedFontName + strActive );
+                        publish( eventNamespace + namespacedFontName + strActive );
+                    }
+                    if ( callback ) {
+                        callback( namespacedFontName, isTimeout );
+                    }
+                }, pollDelay, options.timeout );
+            }
 
-                    removeClass( docElem, namespacedFontName + strLoading );
-                    addClass( docElem, namespacedFontName + strActive );
-
-                    publish( eventNamespace + namespacedFontName + strActive );
-
-                }
-//                    fontDiv.parentNode.removeChild( fontDiv ); // Unnecessary expense?
-            }, options.pollDelay, options.timeout ); // Make this configurable via Boot.options.
+            if ( fontTestDivStatus === 2 ) {
+                fontReadyTest();
+            } else {
+                // IE 6/7 is not ready yet, wait until it is.
+                poll(function(){
+                    return fontTestDivStatus === 2;
+                }, fontReadyTest, pollDelay);
+            }
         }
 
-        // Boot.each might be a cleaner approach, revisit someday maybe.
+        // Artz: Not proud of this code but IE6/7 need to queue up
+        // font requests and wait until a <body> element exists.
+        // Lots of polling and waiting going on here.  Good news
+        // is that all other browsers zip on through this mess.
+        if ( ! fontTestDivStatus ) {
+
+            // Indicate we already inserted the font test <div>.
+            docElem.insertBefore( fontTestDiv, docElem.firstChild );
+            fontTestDivStatus = 1;
+
+            // We detect if our <div> has a 0 width, something that
+            // only happens in IE6/7.  Internet Explorer appears to
+            // need a test element inside the <body> to apply CSS.
+            if ( fontTestDiv.offsetWidth === 0 ) {
+
+                // Poll until we have a body.  When we do, update
+                // our status so anyone watching knows.
+                poll(function(){
+                    return document.body;
+                }, function(){
+                    fontDivParent = document.body;
+                    fontDivParent.insertBefore( fontTestDiv, fontDivParent.firstChild );
+                    fontTestDivStatus = 2;
+                }, pollDelay);
+            } else {
+                fontTestDivStatus = 2;
+            }
+        }
+
+        // Boot.each might be a cleaner approach, revisit someday (maybe).
         for (; i < l; i++ ) {
 
-            fontName = args[i].toLowerCase();
+            arg = args[i];
 
-//            global.log( "Getting font: <b>" + fontName + "</b>" );
+            if ( isString(arg) ) {
 
-            fontPath = options.path.replace( fontTemplate, fontName );
+                fontName = arg.toLowerCase();
 
-//            global.log( "Setting font URL: <b>" + fontPath + "</b>" );
+                fontPath = options.path.replace( fontTemplate, fontName );
 
-            fontFace = options.fontface.replace( fontTemplate, fontName ).replace( fontPathTemplate, fontPath );
+                fontFace = options.fontface.replace( fontTemplate, fontName ).replace( fontPathTemplate, fontPath );
 
-//            global.log( "Generating @fontface: <b>" + fontFace + "</b>");
+                fontfaceCSS.push( fontFace );
 
-            fontfaceCSS.push( fontFace );
+                fontDiv = fontTestDiv.cloneNode( true );
 
-            fontDiv = fontTestDiv.cloneNode( true );
+                fontDiv.style.fontFamily = "'" + fontName + "',serif";
 
-            fontDiv.style.fontFamily = "'" + fontName + "',serif";
+                namespacedFontName = options.namespace + fontName;
 
-      poll( function(){ return document.body }, function(){
-        body = document.body;
-        body.appendChild( fontDiv );
-      }, pollDelay, timeout );
+                publish( eventNamespace + namespacedFontName + strLoading );
 
-            namespacedFontName = options.namespace + fontName;
+                // Add the "loading" class for this font.
+                addClass( docElem, namespacedFontName + strLoading );
 
-            publish( eventNamespace + namespacedFontName + strLoading );
+                fontReady( fontDiv, namespacedFontName );
 
-            addClass( docElem, namespacedFontName + strLoading );
-
-            // Had to use a closure inside the loop because of the callback.
-            // Consider switching to Boot.each() for brevity.
-            pollFontDiv( fontDiv, namespacedFontName );
-
+            // If we have an object, extend our current options.
+            } else if ( isObject(arg) ) {
+                extend( options, arg );
+            // If a function is present, add it as a callback to options.
+            } else if ( isFunction(arg) ) {
+                callback = arg;
+            }
         }
 
+        // Inject the @fontface rules into the head.
         inlineCSS( fontfaceCSS.join("") );
 
     }
 
+    setup( getFont, {
+        namespace: "wf-",
+        path: "fonts/{f}/{f}-webfont",
+        pollDelay: 100,
+        timeout: 10000,
+        fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
+    });
+
     global.getFont = getFont;
 
-    setup( getFont, {
-            namespace: "wf-",
-            path: "fonts/{f}/{f}-webfont",
-      pollDelay: 100,
-      timeout: 10000,
-            fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
-        });
 
 /*
     Screen Size Detection
