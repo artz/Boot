@@ -7,7 +7,7 @@
 <title>Boot Unit Tests</title>
 <link rel="stylesheet" href="../../test/qunit/qunit.css">
 <script src="../../test/qunit/qunit.js"></script>
-<script src="boot.getfont.min.js"></script>
+<script src="boot.getfont.js"></script>
 <script>
 //getFont.option({ path: "../../test/fonts/{f}/{f}-webfont", timeout: 3000,
 //    callback: function( font, timeout ){ alert( font + ": " + timeout ); } });
@@ -20,10 +20,10 @@
 //getFont("SpecialElite");
 //getFont("Chewy", "SpecialElite", "NotThere");
 //getFont({path: "../../test/fonts/{f}/{f}-webfont" }, "Chewy", "SpecialElite", "NotThere");
-getFont({ path: "../../test/fonts/{f}/{f}-webfont", timeout: 2000 }, "Chewy", "SpecialElite",
-"NotThere", function(font,timeout){alert( font + ": " + timeout);});
+//Boot.getFont({ path: "../../test/fonts/{f}/{f}-webfont", timeout: 2000 }, "Chewy", "SpecialElite",
+//"NotThere", function(font,timeout){alert( font + ": " + timeout);});
 </script>
-<!--<script src="boot.getfont.unit.js"></script>-->
+<script src="boot.getfont.unit.js"></script>
 </head>
 <body>
 <h1 id="qunit-header">QUnit Test Suite</h1>

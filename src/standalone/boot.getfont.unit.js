@@ -1,16 +1,26 @@
 (function(){
 
 test("Environment", function(){
-    ok("getFont");
+    ok( Boot );
+    ok( Boot.getFont );
 });
 
 test( "Set Font Options (Path)", function(){
-  getFont.option({ path: "../../test/fonts/{f}/{f}-webfont", timeout: 1000 });
-  equal( getFont.option("path"), "../../test/fonts/{f}/{f}-webfont" );
+  Boot.getFont.option({ path: "../../test/fonts/{f}/{f}-webfont", timeout: 1000 });
+  equal( Boot.getFont.option("path"), "../../test/fonts/{f}/{f}-webfont" );
 });
 
-test("Get Fonts", function(){
-    getFont("Chewy", "SpecialElite", "NotThere");
+asyncTest("Get Fonts", function(){
+    function go(){
+        ok("All fonts loaded.");
+        start();
+    }
+    var count = 0;
+    Boot.getFont("Chewy", "SpecialElite", "NotThere", function(){
+        if ( ++count === 3 ) {
+            go();
+        }
+    });
 });
 
 })();

@@ -1,4 +1,4 @@
-(function(window, document){
+(function(global, window, document){
 
 /*
     Function: Boot.now
@@ -460,6 +460,12 @@
         fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
     });
 
-    window.getFont = getFont;
+    if ( window[ global ] ) {
+        window[ global ].getFont = getFont;
+    } else {
+        window[ global ] = {
+            getFont: getFont
+        };
+    }
 
-}(this, document));
+}("Boot", this, document));
