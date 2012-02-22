@@ -487,7 +487,10 @@
         event.preventDefault = function(){
             event.returnValue = false;
         };
-        event.target = event.srcElement;
+
+        if ( ! event.target ) {
+            event.target = event.srcElement;
+        }
 
         return event;
     }
@@ -561,7 +564,7 @@
 
             defer( callback );
         }
-
+console.log( document.readyState );
         // Browsers go through 3 readyStates:
         // 1 - loading
         // 2 - loaded (Safari) or interactive (everyone else)
@@ -1775,7 +1778,7 @@
         function fontReady( fontDiv, namespacedFontName ) {
 
             function fontReadyTest() {
-                // Insert the <div> with font to be tested.
+                // Insert the <div> wit font to be tested.
                 fontDivParent.insertBefore( fontDiv, fontDivParent.firstChild );
 
                 // Poll the DOM every interval to see if width changes.
