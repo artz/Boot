@@ -564,7 +564,7 @@
 
             defer( callback );
         }
-console.log( document.readyState );
+
         // Browsers go through 3 readyStates:
         // 1 - loading
         // 2 - loaded (Safari) or interactive (everyone else)
