@@ -23,8 +23,8 @@ HTMLIframeElement makeAdFrame( url, width, height, parent )
     // TODO (Artz): Consider adding <head><meta charset="UTF-8"></head> to ensure consistent rendering?
     var htmlTemplate = [
             "<!DOCTYPE html><html><body>",
-            "<script>window.inDapIF=true;</script>", // This lets ads know they are inside a friendly <iframe>.
-            document.domain !== window.location.hostname ? // Make the <iframe> friendly.
+            "<script>inDapIF=true;</script>", // This lets ads know they are inside a friendly <iframe>.
+            document.domain !== location.hostname ? // Make the <iframe> friendly.
                 "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>" : "",
             "<script src=\"",
             undefined, // Index 4
@@ -64,10 +64,21 @@ HTMLIframeElement makeAdFrame( url, width, height, parent )
 
         // Set the <iframe> contents to the HTML Template using the JavaScript protocol.
         // http://dev.w3.org/html5/spec/Overview.html#javascript-protocol
-//      iframeSrc[1] = encode( encode( html.join("") ) );
+        // More info: ,
+        //     http://bit.ly/yJSaCb
+        //     http://javascript.info/tutorial/frames-and-iframes
+        // Something to watch out for:
+        //     http://bit.ly/AphK3M
+//      iframeSrc[1] = encode( encode( html.join("") ) ); // Artz: Encoding unnecessary?
 //      iframeSrc = iframeSrc.join("");
 //      iframe.src = iframeSrc;
         iframe.src = "javascript:'" + html.join("") + "';";
+
+        // Alternative approach that did not work in Opera.
+//      var iframeDocument = iframe.contentWindow.document;
+//      iframeDocument.open();
+//      iframeDocument.write( html.join("") );
+//      iframeDocument.close();
 
         // If a callback was specified, add event listener.
         if ( callback ) {
