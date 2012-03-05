@@ -1,5 +1,7 @@
 /*
-HTMLIframeElement makeAdFrame( url, width, height, parent )
+Friendly IFrame
+authors: Dave Artz, Will Alexander
+Boot.fif( url, width, height, parent )
 
     Parameters:
         url -- a javascript url which will load the ad, e.g. doubleclick url
@@ -9,7 +11,7 @@ HTMLIframeElement makeAdFrame( url, width, height, parent )
         callback -- the function to execute once iframe has loaded
 
     Returns:
-        An IFRAME element which can be added to the DOM
+        The IFRAME element added to the DOM in the parent element.
 
     Description:
         Will create a dynamic iframe which loads the script specified by *url*
@@ -20,17 +22,16 @@ HTMLIframeElement makeAdFrame( url, width, height, parent )
 (function(global, window, document, undefined){
 
     // HTML template used inside the <iframe>.
-    // TODO (Artz): Consider adding <head><meta charset="UTF-8"></head> to ensure consistent rendering?
+    // Note: Code optimized for shortest length possible while maintaining
+    //       a valid HTML5 document compatable across browsers.
     var htmlTemplate = [
-            "<!DOCTYPE html><html><body>",
-            "<script>inDapIF=true;</script>", // This lets ads know they are inside a friendly <iframe>.
+            "<!DOCTYPE html><html>",
+            "<script>inDapIF=!0</script>", // This lets ads know they are inside a friendly <iframe>.
             document.domain !== location.hostname ? // Make the <iframe> friendly.
                 "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>" : "",
             "<script src=\"",
             undefined, // Index 4
-            "\"></script>",
-            "</body></html>" ];
-//      encode = encodeURIComponent;
+            "\"></script>" ];
 
     function fif( adUrl, width, height, parent, callback ) {
 
@@ -38,7 +39,6 @@ HTMLIframeElement makeAdFrame( url, width, height, parent )
             iframeStyle = iframe.style,
             parentElem = typeof parent === "string" ? document.getElementById(parent) : parent,
             html = htmlTemplate.slice(0); // Return a copy of the template array.
-//          iframeSrc = [ "javascript:decodeURIComponent('", /* Index 1 */ undefined, "')" ];
 
         // Set to specified width and height.
         iframe.height = height;
@@ -63,22 +63,14 @@ HTMLIframeElement makeAdFrame( url, width, height, parent )
         parentElem.appendChild( iframe );
 
         // Set the <iframe> contents to the HTML Template using the JavaScript protocol.
+        // Note: IE has a character limit of 2048; ensure ad URL is under limit.
         // http://dev.w3.org/html5/spec/Overview.html#javascript-protocol
         // More info: ,
         //     http://bit.ly/yJSaCb
         //     http://javascript.info/tutorial/frames-and-iframes
         // Something to watch out for:
         //     http://bit.ly/AphK3M
-//      iframeSrc[1] = encode( encode( html.join("") ) ); // Artz: Encoding unnecessary?
-//      iframeSrc = iframeSrc.join("");
-//      iframe.src = iframeSrc;
         iframe.src = "javascript:'" + html.join("") + "';";
-
-        // Alternative approach that did not work in Opera.
-//      var iframeDocument = iframe.contentWindow.document;
-//      iframeDocument.open();
-//      iframeDocument.write( html.join("") );
-//      iframeDocument.close();
 
         // If a callback was specified, add event listener.
         if ( callback ) {
@@ -92,6 +84,8 @@ HTMLIframeElement makeAdFrame( url, width, height, parent )
                 }
             };
         }
+
+        return iframe;
     }
 
     if ( ! window[ global ] ) {
