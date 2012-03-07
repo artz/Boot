@@ -8,7 +8,8 @@ iframe { border: 3px solid black }
 </style>
 </head>
 <body>
-<div id="ad"></div>
+<div id="ad1"></div>
+<div id="ad2"></div>
 <script src="boot.fif.js"></script>
 <script>
 function adLoadHandler(elem){
@@ -16,7 +17,8 @@ function adLoadHandler(elem){
     p.innerHTML = "Advertisement loaded.";
     document.body.appendChild( p );
 }
-Boot.fif( "boot.fif.ad.js", 300, 250, "ad", adLoadHandler );
+Boot.fif( "boot.fif.ad.js?ad1", 300, 250, "ad1", adLoadHandler );
+Boot.fif( "boot.fif.ad.js?ad2", 300, 250, "ad2", adLoadHandler );
 //Boot.fif( "http://at.atwola.com/addyn/3.0/5113.1/221794/0/-1/noperf=1;alias=93315260;noaddonpl=y;kvugc=0;kvui=98cb909c4b7c11e1b24a6b5f7b733e2e;kvmn=93315260;extmirroring=0;target=_blank;aduho=-300;grp=705361903", 300, 250, "ad" );
 </script>
 </body>

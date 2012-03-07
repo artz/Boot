@@ -10,10 +10,7 @@ Boot.fif( url, width, height, parent )
         parent -- the parent element or id (string) to which the iframe element will be appended
         callback -- the function to execute once iframe has loaded
 
-    Returns:
-        The IFRAME element added to the DOM in the parent element.
-
-    Description:
+        Description:
         Will create a dynamic iframe which loads the script specified by *url*
         When the iframe completes loading its resources, it will call the
         parent function adLoadHandler, passing it the iframe element
@@ -84,8 +81,6 @@ Boot.fif( url, width, height, parent )
                 }
             };
         }
-
-        return iframe;
     }
 
     if ( ! window[ global ] ) {
