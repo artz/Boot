@@ -24,9 +24,8 @@ Boot.fif( url, width, height, parent )
     var htmlTemplate = [
             "<!DOCTYPE html><html><body>",
             "<script>inDapIF=!0</script>", // This lets ads know they are inside a friendly <iframe>.
-//          document.domain !== location.hostname ? // Make the <iframe> friendly.
-//              "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>" : "",
-            "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>",
+            document.domain !== location.hostname ? // Make the <iframe> friendly.
+                "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>" : "",
             "<script src=\"",
             undefined, // Index 4
             "\"></script>" ];
