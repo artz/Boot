@@ -22,10 +22,11 @@ Boot.fif( url, width, height, parent )
     // Note: Code optimized for shortest length possible while maintaining
     //       a valid HTML5 document compatable across browsers.
     var htmlTemplate = [
-            "<!DOCTYPE html><html>",
+            "<!DOCTYPE html><html><body>",
             "<script>inDapIF=!0</script>", // This lets ads know they are inside a friendly <iframe>.
-            document.domain !== location.hostname ? // Make the <iframe> friendly.
-                "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>" : "",
+//          document.domain !== location.hostname ? // Make the <iframe> friendly.
+//              "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>" : "",
+            "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>",
             "<script src=\"",
             undefined, // Index 4
             "\"></script>" ];
@@ -72,9 +73,6 @@ Boot.fif( url, width, height, parent )
         // If a callback was specified, add event listener.
         if ( callback ) {
             iframe.onload = iframe.onreadystatechange = function(){
-
-                var iframe = this;
-
                 if ( ! iframe.readyState || /loaded|complete/.test( iframe.readyState ) ) {
                     iframe.onload = iframe.onreadystatechange = null;
                     callback( iframe );
