@@ -24,8 +24,7 @@ Boot.fif( url, width, height, parent )
     var htmlTemplate = [
             "<!DOCTYPE html><html><body>",
             "<script>inDapIF=!0</script>", // This lets ads know they are inside a friendly <iframe>.
-            document.domain !== location.hostname ? // Make the <iframe> friendly.
-                "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>" : "",
+            undefined, // Index 2
             "<script src=\"",
             undefined, // Index 4
             "\"></script>" ];
@@ -52,6 +51,11 @@ Boot.fif( url, width, height, parent )
         iframeStyle.border = 0;
         iframeStyle.margin = 0;
         iframeStyle.padding = 0;
+
+        // IE does not ensure document.domain is set the same (i.e. "friendly") when
+        // creating a dynamic iframe, so we ensure the domains match on demand.
+        html[2] = document.domain !== location.hostname ?
+            "<script>try{document.domain=\"" + document.domain + "\"}catch(e){}</script>" : "",
 
         // Update template ad script source.
         html[4] = adUrl;
