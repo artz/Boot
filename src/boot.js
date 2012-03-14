@@ -525,7 +525,7 @@
 
         });
     }
-//    global.delegate = delegate;
+    global.delegate = delegate;
 
 
 /*
@@ -1902,7 +1902,7 @@
     Consider ditching this, ef IE and yay media queries?
     Update: People actually need this.
 */
-    var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
+/*    var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
         screensLength = screens.length,
         screenWidth,
         screenClasses = "";
@@ -1942,6 +1942,7 @@
 
     // Throttling seemed to be more desirable than debouncing.
     bind( window, "resize", throttle( screenSize, 100 ) );
+*/
 
 
 /*
@@ -1952,6 +1953,7 @@
 
     Code too bloaty for what you get?  Do we really want to advocate pixel-perfect targeting?
 */
+/*
     var userAgent = navigator.userAgent.toLowerCase(),
         browser,
         browserName,
@@ -1989,23 +1991,29 @@
     browser[ browserName ] = true;
 
     global.browser = browser;
+*/
+
 
 /*
     HTML 5 Support for IE
     http://html5doctor.com/how-to-get-html5-working-in-ie-and-firefox-2/
     Research need for print protection: http://www.iecss.com/print-protector/
 */
+/*
     if ( browser.ie ) {
         // HTML5 support for IE
         each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split( strSpace ), function( elem ) {
             document.createElement( elem );
         });
     }
+*/
+
 
 /*
     Boot.feature
     Based on API by head.js
 */
+/*
     var features = {};
     function feature( key, test ) {
 
@@ -2034,6 +2042,7 @@
         return result;
     }
     global.feature = feature;
+*/
 
 
 /*
@@ -2078,7 +2087,6 @@
 
         return element;
     }
-
     global.disableTextSelect = disableTextSelect;
 
 
