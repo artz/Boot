@@ -1953,45 +1953,45 @@
 
     Code too bloaty for what you get?  Do we really want to advocate pixel-perfect targeting?
 */
-/*
-    var userAgent = navigator.userAgent.toLowerCase(),
-        browser,
-        browserName,
-        browserVersion,
-        browserClasses = [];
 
-    userAgent = /(firefox)[ \/]([\w.]+)/.exec( userAgent ) ||
-        /(chrome)[ \/]([\w.]+)/.exec( userAgent ) ||
-        (contains( userAgent, "safari" ) && /(version)[ \/]([\w.]+)/.exec( userAgent )) ||
-        /(opera)(?:.*version)?[ \/]([\w.]+)/.exec( userAgent ) ||
-        /(msie) ([\w.]+)/.exec( userAgent ) ||
-        /(webkit)[ \/]([\w.]+)/.exec( userAgent ) || [];
+//  var userAgent = navigator.userAgent.toLowerCase(),
+//      browser,
+//      browserName,
+//      browserVersion,
+//      browserClasses = [];
 
-    browserName = userAgent[1];
-    browserVersion = userAgent[2];
+//  userAgent = /(firefox)[ \/]([\w.]+)/.exec( userAgent ) ||
+//      /(chrome)[ \/]([\w.]+)/.exec( userAgent ) ||
+//      (contains( userAgent, "safari" ) && /(version)[ \/]([\w.]+)/.exec( userAgent )) ||
+//      /(opera)(?:.*version)?[ \/]([\w.]+)/.exec( userAgent ) ||
+//      /(msie) ([\w.]+)/.exec( userAgent ) ||
+//      /(webkit)[ \/]([\w.]+)/.exec( userAgent ) || [];
 
-    if ( browserName === "msie" ) {
-        browserName = "ie";
-        browserVersion = document.documentMode || browserVersion;
-    }
+//  browserName = userAgent[1];
+//  browserVersion = userAgent[2];
 
-    if ( browserName === "version" ) {
-        browserName = "safari";
-    }
+//  if ( browserName === "msie" ) {
+//      browserName = "ie";
+//      browserVersion = document.documentMode || browserVersion;
+//  }
 
-    browserClasses.push( browserName );
-    browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
-    browserClasses.push( browserName + browserVersion.toString().replace(strDot, "-").replace(/\..*/, "" ) ); // Minor version
+//  if ( browserName === "version" ) {
+//      browserName = "safari";
+//  }
 
-    // Add classes all at once for performance reasons.
-    addClass( docElem, browserClasses.join( strSpace ) );
+//  browserClasses.push( browserName );
+//  browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
+//  browserClasses.push( browserName + browserVersion.toString().replace(strDot, "-").replace(/\..*/, "" ) ); // Minor version
 
-    // Open up Boot.browser
-    browser = { version: browserVersion };
-    browser[ browserName ] = true;
+//  // Add classes all at once for performance reasons.
+//  addClass( docElem, browserClasses.join( strSpace ) );
 
-    global.browser = browser;
-*/
+//  // Open up Boot.browser
+//  browser = { version: browserVersion };
+//  browser[ browserName ] = true;
+
+//  global.browser = browser;
+
 
 
 /*
