@@ -15,8 +15,6 @@ window[global].flashDetect = function( minVersion ) {
 
     if ( ! playerVersion ) {
 
-        playerVersion = [];
-
         if ( navigatorPlugins && (flash = navigatorPlugins[ "Shockwave Flash" ]) ) {
 
             flashDesc = flash.description;
