@@ -25,7 +25,7 @@ test("Define Module by Function", function(){
 });
 
 asyncTest("Require Relative JavaScript Resource", function(){
-    Boot.require("js/somelib.js", function(){
+    Boot.require({ basePath: "" }, "js/somelib.js", function(){
         ok( window.SomeLib, "Resolve a relative JavaScript resource." );
         start();
     });
@@ -35,8 +35,8 @@ asyncTest("Require Absolute JavaScript Resource", function(){
 
   Boot.require("http://o.aolcdn.com/os/aol/jquery-1.6.2.min.js", function(){
         ok( window.jQuery, "Resolve an external JavaScript resource." );
-    clearTimeout(timer);
-    start();
+        clearTimeout(timer);
+        start();
     });
 
   var timer = setTimeout(function(){
@@ -47,52 +47,52 @@ asyncTest("Require Absolute JavaScript Resource", function(){
 
 test("Set Options", function(){
     // Change global default for require & define functions.
-  Boot.require.option("basePath", "js/");
-  // This should be: Boot.require.option("basePath", "js/"), yes yes?
+    Boot.require.option("basePath", "js/");
+    // This should be: Boot.require.option("basePath", "js/"), yes yes?
     equal( Boot.require.option("basePath"), "js/", "basePath set correctly." );
 });
 
 asyncTest("Require Single Defined Module (Object Literal)", function(){
 
-    Boot.require("mylib/foo", function( myLibFoo ){
+    Boot.require({ basePath: "js/" }, "mylib/foo", function( myLibFoo ){
         equal( myLibFoo.foo, true );
-    start();
+        start();
     });
 
 });
 
 asyncTest("Require Single Defined Module (Function)", function(){
 
-    Boot.require("mylib/bar", function( myLibBar ){
+    Boot.require({ basePath: "js/" }, "mylib/bar", function( myLibBar ){
         equal( myLibBar.bar(), true );
-    start();
+        start();
     });
 
 });
 
 asyncTest("Require a Previously Defined Module", function(){
 
-    Boot.require("mylib/foo", function( myLibFoo ){
+    Boot.require({ basePath: "js/" }, "mylib/foo", function( myLibFoo ){
         equal( myLibFoo.foo, true );
-    start();
+        start();
     });
 
 });
 
 asyncTest("Require Multiple Defined Modules", function(){
 
-  Boot.require(["mylib/foo", "mylib/bar"], function( myLibFoo, myLibBar ) {
-      equal( myLibFoo.foo, true );
-    equal( myLibBar.bar(), true );
-    start();
-  });
+    Boot.require({ basePath: "js/" }, ["mylib/foo", "mylib/bar"], function( myLibFoo, myLibBar ) {
+        equal( myLibFoo.foo, true );
+        equal( myLibBar.bar(), true );
+        start();
+    });
 
 });
 
 asyncTest("Require Defined Module With Dependency", function(){
 
-    Boot.require( "mylib/baz", function( myLibBaz ){
-    equal( myLibBaz.baz, true );
+    Boot.require({ basePath: "js/" }, "mylib/baz", function( myLibBaz ){
+        equal( myLibBaz.baz, true );
         start();
     });
 
@@ -100,33 +100,42 @@ asyncTest("Require Defined Module With Dependency", function(){
 
 asyncTest("Require Multiple Defined Modules With Multiple Dependencies", function(){
 
-  Boot.require(["mylib/foo", "yourlib/foo"], function( myLibFoo, yourLibFoo ) {
-    equal( myLibFoo.foo, true );
-    equal( yourLibFoo.foo, true );
-    equal( yourLibFoo.bar, true );
-    equal( yourLibFoo.baz, true );
-    start();
-  });
+    Boot.require({ basePath: "js/" }, ["mylib/foo", "yourlib/foo"], function( myLibFoo, yourLibFoo ) {
+        equal( myLibFoo.foo, true );
+        equal( yourLibFoo.foo, true );
+        equal( yourLibFoo.bar, true );
+        equal( yourLibFoo.baz, true );
+        start();
+    });
 
 });
 
-
 asyncTest("Customized Filename", function(){
 
-    Boot.require({ filename: function(name){ return name.replace("/", "."); }, suffix: ".js" }, "custom/name", function( custom ){
+    Boot.require({ basePath: "js/", filename: function(name){ return name.replace("/", "."); }, suffix: ".js" }, "custom/name", function( custom ){
         equal( custom.custom, true, "Customized filename works!");
         start();
     });
 
 });
 
-asyncTest("Merged JS require.", function(){
+asyncTest("Concatenated JS require.", function(){
 
-  Boot.require({ merge: true }, ["merge/foo", "merge/bar"], function( mergeFoo, mergeBar ) {
-    equal( mergeFoo.foo, true );
-    equal( mergeBar.bar, true );
-    start();
-  });
+    Boot.require({ basePath: "", concat: true, concatPath: "merge-rakaz/?type=js&files=" }, ["amd1", "amd2"], function( amd1, amd2 ) {
+        equal( amd1.amd, 1 );
+        equal( amd2.amd, 2 );
+        start();
+    });
+
+});
+
+asyncTest("Require a cached concatenated module plus a new one.", function(){
+
+    Boot.require({ basePath: "", concat: true, concatPath: "merge-rakaz/?type=js&files=" }, ["amd1", "amd3"], function( amd1, amd3 ) {
+        equal( amd1.amd, 1 );
+        equal( amd3.amd, 3 );
+        start();
+    });
 
 });
 
