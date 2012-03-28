@@ -302,9 +302,8 @@
                 return extend( {}, defaultOptions );
             }
         };
-//      return global;
     }
-//  global.setup = setup;
+    global.setup = setup;
 
 
 /*
@@ -675,6 +674,10 @@
     Function: Boot.getCSS
 
     Fetches a CSS file and appends it to the DOM.
+
+    TODO:
+    Add a callback using Jason's technique:
+    http://www.viget.com/inspire/js-201-run-a-function-when-a-stylesheet-finishes-loading/
 */
     var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement,
         cssLoading = {};
@@ -771,72 +774,74 @@
 */
     function getScript ( src, callback, options ) { // type, text ) {
 
-        var    script = document.createElement( strScript ),
-            done = 0;
-
-        // Ensure our arguments are what they proclaim to be.
-        options = options || callback || {};
-        callback = isFunction( callback ) ? callback : 0;
-
-        // Set the source of the script.
-        script.src = src;
-
-        // Set the type.
-        // Controlling this is useful for caching scripts.
-        script.type = options.type || "";  // Using "" assumes text/javascript.
-
-        // Sometimes nodes need to have text inside (rare).
-        // Deleting, this doesn't work across browsers (cough, IE).
-        // Tried: script.innerHTML, script.text, document.createTextNode...
-        // options.text && (script.innerHTML = options.text);
-
-        // This is for Firefox 4
-        // https://developer.mozilla.org/En/HTML/Element/Script
-        // We basically make it synchronously like in FF3.
-        // Not ideal, but we found <object> to be MUCH slower
-        // DOM nodes in Firefox.
-        // Check out /test/benchmarks/speed-test-* (need to update files)
-        script.async = options.async || false;
-
-        // Attach handlers for all browsers
-        script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
-
-            if ( ! done && ! script[ strReadyState ] || /loaded|complete/.test( script[ strReadyState ] ) ) {
-
-                // log( "Boot.getJS (getScript): Done loading <b>" + src + "</b>." );
-
-                // Tell global scripts object this script has loaded.
-                // Set scriptDone to prevent this function from being called twice.
-                done = 1;
-
-                // Emit an event indicating this script has just executed.
-            //    if ( ! script.type ) {
-            //        publish( eventNamespace + "js-done", { src: src } );
-                //    console.log( "Script executed: " + src );
-            //    }
-                // Handle memory leak in IE
-                script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
-
-                // Remove this script in the next available UI thread.
-                // * Removing this to reduce KB.  If people really care, we will add back.
-    //            SetTimeout(function(){
-    //                firstScriptParent.removeChild( script );
-    //            }, 0);
-
-                if ( callback ) {
-            //    global.log( options.test );
-                    callback( src );
-                }
-            }
-        };
-
-        // This is the safest insertion point to assume.
         // We use a setTimeout to ensure non-blocking behavior.
         defer(function(){
+
+            var script = document.createElement( strScript ),
+                done = 0;
+
+            // Ensure our arguments are what they proclaim to be.
+            options = options || callback || {};
+            callback = isFunction( callback ) ? callback : 0;
+
+            // Set the source of the script.
+            script.src = src;
+
+            // Set the type.
+            // Controlling this is useful for caching scripts.
+            script.type = options.type || "";  // Using "" assumes text/javascript.
+
+            // Sometimes nodes need to have text inside (rare).
+            // Deleting, this doesn't work across browsers (cough, IE).
+            // Tried: script.innerHTML, script.text, document.createTextNode...
+            // options.text && (script.innerHTML = options.text);
+
+            // This is for Firefox 4
+            // https://developer.mozilla.org/En/HTML/Element/Script
+            // We basically make it synchronously like in FF3.
+            // Not ideal, but we found <object> to be MUCH slower
+            // DOM nodes in Firefox.
+            // Check out /test/benchmarks/speed-test-* (need to update files)
+            script.async = options.async || false;
+
+            // Attach handlers for all browsers
+            script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
+
+                if ( ! done && ! script[ strReadyState ] || /loaded|complete/.test( script[ strReadyState ] ) ) {
+
+                    // log( "Boot.getJS (getScript): Done loading <b>" + src + "</b>." );
+
+                    // Tell global scripts object this script has loaded.
+                    // Set scriptDone to prevent this function from being called twice.
+                    done = 1;
+
+                    // Emit an event indicating this script has just executed.
+                //    if ( ! script.type ) {
+                //        publish( eventNamespace + "js-done", { src: src } );
+                    //    console.log( "Script executed: " + src );
+                //    }
+                    // Handle memory leak in IE
+                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
+
+                    // Remove this script in the next available UI thread.
+                    // * Removing this to reduce KB.  If people really care, we will add back.
+        //            SetTimeout(function(){
+        //                firstScriptParent.removeChild( script );
+        //            }, 0);
+
+                    if ( callback ) {
+                //    global.log( options.test );
+                        callback( src );
+                    }
+                }
+            };
+
+            // This is the safest insertion point to assume.
             head.insertBefore( script, head.firstChild );
         });
     }
     global.getScript = getScript;
+
 
 /*
     Function: Boot.getJS
@@ -1126,23 +1131,23 @@
     function resolve( customOptions, module ) {
 
         var options = extend( resolve.option(), customOptions || {} ),
-      basePath = options.basePath,
-      filename = options.filename( module ),
-      suffix = options.suffix;
+            basePath = options.basePath,
+            filename = options.filename( module ),
+            suffix = options.suffix;
 
-    // If the module name ends with .js
-    if ( /\.js$/.test( module ) ) {
-      // Use the module as the filename instead.
-      filename = module;
-      suffix = "";
+        // If the module name ends with .js
+        if ( /\.js$/.test( module ) ) {
+            // Use the module as the filename instead.
+            filename = module;
+            suffix = "";
 
-      // If the module name starts with "http://" or "https://"
-      if ( /^http[s]*:\/\//.test( module ) ) {
-        // Remove the basePath
-        basePath = "";
-      }
-    }
-    return basePath + filename + suffix;
+            // If the module name starts with "http://" or "https://"
+            if ( /^http[s]*:\/\//.test( module ) ) {
+                // Remove the basePath
+                basePath = "";
+            }
+        }
+        return basePath + filename + suffix;
     }
 
     setup( resolve, {
@@ -1197,19 +1202,43 @@
     // Expose modules externally.
     // global.modules = modules;
 
+
 /*
-    Boot.require
-    Based on YUI's use() function and RequireJS.
+    Boot.getConcatURL
+    Function useful for concat URLs for merged CSS and JS
 */
+    function getConcatURL() {
+
+        var args = slice.call( arguments ), // Convert to real array.
+            options = getConcatURL.option(),
+            queryParam,
+            mergeURL = "";
+
+        if ( isObject( args[0] ) ) {
+            extend( options, args.shift() );
+        }
+
+        if ( options.concatPath ) {
+            mergeURL += options.concatPath;
+        }
+
+        return mergeURL + args.join( options.concatJoin );
+    }
+
+    setup( getConcatURL, { concatJoin: "," } );
+
+//  global.getConcatURL = getConcatURL;
+
+
     // Resolves an object.
     function getLibrary( moduleName ) {
         // i.e. "jQuery.alpha", "MyLib.foo.bar"
         var obj = window;
 
         each( moduleName.split("."), function( name ) {
-//            if ( obj && isObject(obj) && obj.hasOwnProperty( name ) ) {
-//            Cross this bridge when it comes to us.
-            if ( obj.hasOwnProperty( name ) ) {
+//          if ( obj && isObject(obj) && obj.hasOwnProperty( name ) ) {
+//          if ( obj.hasOwnProperty( name ) )
+            if ( isObject( obj[ name ] ) ) {
                 obj = obj[ name ];
             }
         });
@@ -1217,13 +1246,18 @@
         return obj;
     }
 
+
+/*
+    Boot.require
+    Based on YUI's use() function and RequireJS.
+*/
     function require( customOptions, moduleNames, callback ) {
 
         // Normalize parameters.
         if ( isArray( customOptions ) || isString( customOptions ) ) {
             callback = moduleNames;
             moduleNames = customOptions;
-      customOptions = {};
+            customOptions = {};
         }
 
         // Make moduleNames an array.
@@ -1231,6 +1265,7 @@
 
         var options = extend( require.option(), customOptions ), // See how Boot.setup works.
             callbackArgs = [],
+            concatModules = [],
             moduleCount = 0;
 
         function moduleReady( i, moduleName, module ) {
@@ -1251,36 +1286,35 @@
             }
         }
 
-        each( moduleNames, function( moduleName, i ) {
+        function defineModule( i, moduleName ){
 
-            function defineModule(){
+            var module,
+                moduleDependencies,
+                moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift();
 
-                var module,
-                    moduleDependencies,
-                    moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift();
+            if ( moduleDefinition ) {
 
-                if ( moduleDefinition ) {
+                if ( moduleDependencies = moduleDefinition.d ) {
 
-                    if ( moduleDependencies = moduleDefinition.d ) {
-
-                        require( customOptions, moduleDependencies, function(){
-                            module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
-                            moduleReady( i, moduleName, module );
-                        });
-
-                    } else {
-
-                        module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
+                    require( customOptions, moduleDependencies, function(){
+                        module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
                         moduleReady( i, moduleName, module );
+                    });
 
-                    }
-
-                // Otherwise see if we can snag the module by name (old skool).
                 } else {
-                    moduleReady( i, moduleName, getLibrary( moduleName )  );
+
+                    module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
+                    moduleReady( i, moduleName, module );
+
                 }
 
+            // Otherwise see if we can snag the module by name (old skool).
+            } else {
+                moduleReady( i, moduleName, getLibrary( moduleName )  );
             }
+        }
+
+        each( moduleNames, function( moduleName, i ) {
 
             // If this module has already been defined, use it.
             if ( moduleName in modules ) {
@@ -1304,36 +1338,48 @@
 
                 // If the module was defined by some other script
                 if ( moduleDefinitions[ moduleName ] ) {
-                    defineModule();
+                    defineModule( i, moduleName );
                 // Otherwise fetch the script based on the module name
                 } else {
-//        if ( options.merge ) {
-//          // TODO: Implement merge.
-//          mergeScript( moduleName, defineModule, i );
-//        } else {
-                      getScript( resolve( options, moduleName ), defineModule );
-//        }
-        }
+                    // If concat is enabled, push this module into our queue.
+                    if ( options.concat ) {
+                        concatModules.push( [i, moduleName] );
+                    // Otherwise, fetch the module now.
+                    } else {
+                        getScript( resolve( options, moduleName ), function(){
+                            defineModule( i, moduleName );
+                        });
+                    }
+                }
+
             }
 
         });
 
-    // EXPERIMENTAL MERGE FUNCTIONALITY
-//  var scripts = [],
-//      total = moduleNames.length - 1;
+        // If we happened upon concatenated scripts, get 'em.
+        if ( concatModules.length ) {
 
-//  function mergeScript( moduleName, defineModule, i ) {
-//    scripts.push( arguments );
-//    if ( i === total ) {
-//      // Fire the merged script, and execute all callbacks.
-//    }
-//  }
+            var concatURL,
+                concatScripts = [];
+
+            each( concatModules, function( concatModule ) {
+                concatScripts.push( resolve( options, concatModule[1] ) );
+            });
+
+            concatURL = getConcatURL.apply( window, [ options ].concat( concatScripts ))
+
+            getScript( concatURL, function(){
+                each( concatModules, function( concatModule ) {
+                    defineModule( concatModule[0], concatModule[1] );
+                });
+            });
+        }
 
     }
 
-  setup( require );
+    setup( require );
 
-  global.require = require;
+    global.require = require;
 
 
 /*
@@ -1572,6 +1618,8 @@
 
     Function for extracting data attributes and storing
     arbitrary data on elements.
+
+    TODO: Add an option for converting hyphenated attributes into camelCase or underscores.
 */
     function data( elem, key, value ) {
         // Return an object of all data attributes.
@@ -2116,8 +2164,8 @@
     // Defers a function, scheduling it to run after the current call stack has
     // cleared.
     function defer( func ) {
-        return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
-        // setTimeout( func, 0 );
+        // return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
+        SetTimeout( func, 0 );
     }
     global.defer = defer;
 
@@ -2277,7 +2325,7 @@
         //                .replace( rvalidtokens, "]" )
         //                .replace( rvalidbraces, "") ) ) {
 
-            return ( new Function( "return " + data ))();
+            return (new Function( "return " + data ))();
 
         //    }
         } catch (e) {

@@ -12,7 +12,7 @@ test("Player Version", function(){
     if ( playerVersion ) {
         ok( playerVersion, "Flash version: " + playerVersion[0] + "." + playerVersion[1] + "." + playerVersion[2] );
     } else {
-        ok( playerVersion, "No Flash" );
+        ok( true, "No Flash" );
     }
 });
 
