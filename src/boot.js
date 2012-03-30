@@ -772,7 +772,7 @@
             async - Value of the async param, default is false.
 
 */
-    function getScript ( src, callback, options ) { // type, text ) {
+    function getScript ( src, callback, options ) {
 
         // We use a setTimeout to ensure non-blocking behavior.
         defer(function(){
@@ -807,7 +807,8 @@
             // Attach handlers for all browsers
             script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
 
-                if ( ! done && ! script[ strReadyState ] || /loaded|complete/.test( script[ strReadyState ] ) ) {
+                if ( ! done && ! script[ strReadyState ] ||
+                    /loaded|complete/.test( script[ strReadyState ] ) ) {
 
                     // log( "Boot.getJS (getScript): Done loading <b>" + src + "</b>." );
 
@@ -1591,8 +1592,6 @@
 
     Attribute value (getting) or Boot (setting)
 */
-    var styleNode = document.createElement("style");
-
     function attr( elem, attribute, value ){
 
         if ( value !== undefined ) {
