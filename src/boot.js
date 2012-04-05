@@ -507,23 +507,43 @@
 
 /*
     Boot.delegate
+    Thanks, jQuery!
 */
+    var rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\.([\w\-]+))?$/,
+        quickParse = function( selector ) {
+            var quick = rquickIs.exec( selector );
+            if ( quick ) {
+                //   0  1    2   3
+                // [ _, tag, id, class ]
+                quick[1] = ( quick[1] || "" ).toLowerCase();
+                quick[3] = quick[3] && new RegExp( "(?:^|\\s)" + quick[3] + "(?:\\s|$)" );
+            }
+            return quick;
+        },
+        quickIs = function( elem, m ) {
+            var attrs = elem.attributes || {};
+            return (
+                (!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
+                (!m[2] || (attrs.id || {}).value === m[2]) &&
+                (!m[3] || m[3].test( (attrs[ "class" ] || {}).value ))
+            );
+        };
+
     function delegate( elem, selector, event, callback ) {
+
+        var token = quickParse( selector );
+
         bind( elem, event, function( evt ){
 
-            var target = evt.target,
-                id = target.id || "",
-                className = target.className || "",
-                tag = target.nodeName,
-                token = tag + ( id && "#" + id ) + ( className && "." + className );
+            var target = evt.target;
 
-            // console.log( selector, ":", token, ":", contains( token.toLowerCase(), selector.toLowerCase() ) );
-            if ( contains( token.toLowerCase(), selector.toLowerCase() ) ) {
+            if ( quickIs( target, token ) ) {
                 callback( evt );
             }
 
         });
     }
+
     global.delegate = delegate;
 
 
