@@ -21,6 +21,7 @@
         SetTimeout = setTimeout,
 
         slice = Array.prototype.slice,
+        encode = encodeURIComponent,
 
         // String compression optimizations for the library.
         strLoad = "load",
@@ -1218,7 +1219,7 @@
     // https://github.com/amdjs/amdjs-api/wiki/AMD
     define.amd = {};
 
-    global.define = define;
+    global.define = window.define = define;
 
     // Expose modules externally.
     // global.modules = modules;
@@ -2287,23 +2288,22 @@
 
 
 /*
-    Function: Boot.toQueryString
+    Function: Boot.param
 */
-    function toQueryString( obj, param ) {
-        var str = [],
-            name,
-            encode = encodeURIComponent;
+    function param( obj ) {
 
-        param = param || "&";
+        var params = [],
+            name;
 
         for ( name in obj ) {
             if ( obj.hasOwnProperty( name ) ) {
-                str.push( encode( name ) + "=" + encode( obj[ name ] ) );
+                params.push( encode( name ) + "=" + encode( obj[ name ] ) );
             }
         }
-        return str.length ? param + str.join("&") : "";
+
+        return params.join("&");
     }
-//    global.toQueryString = toQueryString;
+    global.param = param;
 
 
 /*
