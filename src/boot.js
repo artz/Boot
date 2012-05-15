@@ -1450,7 +1450,9 @@
             addClass( elem, instance.name );
 
             // Initialize the widget.
-            instance._create();
+            if ( instance.create ) {
+                instance._create();
+            }
 
             // Save the instance on the element for later access.
             if ( ! elem.widget ) {
