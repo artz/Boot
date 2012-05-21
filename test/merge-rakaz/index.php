@@ -25,7 +25,7 @@
      */
 
 
-    $cache 	  = true;
+    $cache 	  = false;
     $cachedir = dirname(__FILE__) . '/cache';
     $cssdir   = dirname(__FILE__) . '/css';
     $jsdir    = dirname(__FILE__) . '/js';
