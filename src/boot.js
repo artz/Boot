@@ -21,6 +21,7 @@
 
         slice = Array.prototype.slice,
         encode = encodeURIComponent,
+        decode = decodeURIComponent,
 
         // String compression optimizations for the library.
         strLoad = "load",
@@ -1635,6 +1636,81 @@
 
 
 /*
+ * Boot.cookie
+ * Simple interface for interacting with document.cookie.
+ * https://developer.mozilla.org/en/DOM/document.cookie
+ */
+    function cookie(key, value, options) {
+
+        var cookies = document.cookie.split(";"),
+            cookieObject = {},
+            cookiePair,
+            i, l,
+            expires,
+            date;
+
+        // Create, update, or delete a cookie.
+        if (value !== undefined) {
+
+            // Set up options.
+            options = options || {};
+            extend(options, cookie.option());
+
+            // Set up expiration
+            expires = options.expires;
+
+            if (value === "" || value === null) {
+                // Delete the cookie.
+                expires = -1;
+            }
+
+            if (isNumber(expires)) {
+                date = new Date();
+                // Convert to milliseconds.
+                expires = expires * 24 * 60 * 60 * 1000;
+                // Offset curent time.
+                date.setTime(date.getTime() + expires);
+            }
+
+            // Create, update, or expire the cookie.
+            document.cookie = [
+                encode(key),
+                "=",
+                encode(value), // Ensure an encoded string.
+                date ? "; expires=" + date.toUTCString() : "",
+                options.path    ? "; path=" + options.path : "",
+                options.domain  ? "; domain=" + options.domain : "",
+                options.secure  ? "; secure" : ""
+            ].join("");
+
+            return true;
+
+        // Fetch cookies.
+        } else {
+            // First, populate the cookie object.
+            for (i = 0, l = cookies.length; i < l; i++) {
+                cookiePair = cookies[i].split("=");
+                cookieObject[trim(decode(cookiePair[0]))] = trim(decode(cookiePair[1]));
+            }
+
+            if (key) {
+                return cookieObject[key] || null;
+            } else {
+                return cookieObject;
+            }
+        }
+    }
+    setup(cookie, {
+        // Default to the fully qualified domain name; this
+        // prevents cookie pollution to top-level domain.
+//      path: "/", // Should "/" (sitewide) be default?
+//      domain: location.hostname
+//      expires: 0 // Time in days
+//      secure: false
+    });
+    global.cookie = cookie;
+
+/*
     Simple add/remove classname functions.
     Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
     Supports multiple class additions.
@@ -2396,6 +2472,7 @@
 
         attr: attr,
         data: data,
+        cookie: cookie,
 
         addClass: addClass,
         removeClass: removeClass,
@@ -2421,7 +2498,7 @@
         globalEval: globalEval,
 
         trim: trim,
-        toQueryString: toQueryString,
+        param: param,
 
         parseJSON: parseJSON,
         getJSONP: getJSONP
