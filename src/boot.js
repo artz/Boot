@@ -1,14 +1,25 @@
 /*jslint vars: true, browser: true*/
 /*
     BOOT UTILITY LIBRARY
-    Version 0.2
+    Version 0.3
+
+    To Do
+    ? getJS merge support
+    ? Boot.once - Do a callback once only (immediately unbind event).
+    ? Boot.unbind - Unbind function?
+    ? Boot.off / Boot.removeEvent - Remove custom event.
+    ? What should Boot(); do? Extend Boot, or set default params, etc.
+    ? Add element/string specific event binds.
+    ? Multiple event triggers (i.e. when two events happen, fire callback)
+    ? Investigate when.js, promise/deferreds libs
+    ? Add event triggers when scripts load, possibly labels? i.e. label: jquery, or autonlabel like "jquery-1-6-2"
 */
 (function (namespace, window, undefined) {
 
     "use strict";
 
     // Return if global is already defined. (Optional behavior)
-//    if ( window[ namespace ] ) {
+//    if (window[namespace]) {
 //        return;
 //    }
 
@@ -131,8 +142,8 @@
         Do something knowing this value contains it.
     }
 */
-    function contains(haystack, needle){
-        return haystack && haystack.indexOf( needle ) !== -1;
+    function contains(haystack, needle) {
+        return haystack && haystack.indexOf(needle) !== -1;
     }
     global.contains = contains;
 
@@ -554,7 +565,6 @@
 
         });
     }
-
     global.delegate = delegate;
 
 
@@ -1219,8 +1229,6 @@
         var obj = window;
 
         each( moduleName.split("."), function( name ) {
-//          if ( obj && isObject(obj) && obj.hasOwnProperty( name ) ) {
-//          if ( obj.hasOwnProperty( name ) )
             if ( isObject( obj[ name ] ) ) {
                 obj = obj[ name ];
             }
@@ -2480,8 +2488,6 @@
         getScript: getScript,
         getJS: getJS,
 
-        getScript: getScript,
-
         modules: modules,
         define: define,
         require: require,
@@ -2502,11 +2508,12 @@
 
         getFont: getFont,
 
+        browser: browser,
         feature: feature,
 
         disableTextSelect: disableTextSelect,
 
-//        map: map,
+        // map: map,
         delay: delay,
         defer: defer,
         limit: limit,
@@ -2523,17 +2530,6 @@
         getJSONP: getJSONP
 
     });
-*/
-/*
-    To Do
-    ? getJS merge support
-    ? Remove getJS from Boot library, go AMD pro.
-    ? Boot.once - Do a callback once only (immediately unbind event).
-    ? Boot.unbind - Unbind function?
-    ? Boot.off / Boot.removeEvent - Remove custom event.
-    ? What should Boot(); do? Extend Boot, or set default params, etc.
-    ? Add element/string specific event binds.
-    ? Add event triggers when scripts load, possibly labels? i.e. label: jquery, or autonlabel like "jquery-1-6-2"
 */
 
 }("Boot", this));
