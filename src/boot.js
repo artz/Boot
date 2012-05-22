@@ -1,8 +1,11 @@
+/*jslint vars: true, windows: true*/
 /*
     BOOT UTILITY LIBRARY
     Version 0.2
 */
 (function (namespace, window, undefined) {
+
+    "use strict";
 
     // Return if global is already defined. (Optional behavior)
 //    if ( window[ namespace ] ) {
@@ -42,7 +45,7 @@
     // Initialize the library's namespace.
     // This is controlled via arguments injected
     // into the closure at the bottom of this script.
-    if ( ! window[namespace]) {
+    if (!window[namespace]) {
         window[namespace] = {};
     }
     global = window[namespace];
@@ -84,13 +87,15 @@
 
     function log(msg, ul) {
 
-        body || (body = document.body);
+        if (!body) {
+            body = document.body;
+        }
 
-        logItems.push( (now() - startTime) + "ms: " + msg );
+        logItems.push((now() - startTime) + "ms: " + msg);
 
         if (logEnabled) {
-            if ( logList ||
-               ( logList = ul ) ||
+            if (logList ||
+               (logList = ul ) ||
                ( body && ( logList = document.createElement("div")) && body.insertBefore( logList, body.firstChild) ) ) {
                 logList.innerHTML = ["<ul><li>", logItems.join("</li><li>"), "</li></ul>"].join('');
             }
@@ -125,7 +130,7 @@
         Do something knowing this value contains it.
     }
 */
-    function contains( haystack, needle ){
+    function contains(haystack, needle){
         return haystack && haystack.indexOf( needle ) !== -1;
     }
     global.contains = contains;
