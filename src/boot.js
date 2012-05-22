@@ -1,4 +1,4 @@
-/*jslint vars: true, windows: true*/
+/*jslint vars: true, browser: true*/
 /*
     BOOT UTILITY LIBRARY
     Version 0.2
@@ -1710,6 +1710,7 @@
     });
     global.cookie = cookie;
 
+
 /*
     Simple add/remove classname functions.
     Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
@@ -2060,44 +2061,62 @@
     Code too bloaty for what you get?  Do we really want to advocate pixel-perfect targeting?
 */
 
-//  var userAgent = navigator.userAgent.toLowerCase(),
-//      browser,
-//      browserName,
-//      browserVersion,
-//      browserClasses = [];
+    var navigatorUserAgent = navigator.userAgent,
+        userAgent = navigatorUserAgent.toLowerCase(),
+        browser,
+        browserName,
+        browserVersion,
+        browserClasses = [];
 
-//  userAgent = /(firefox)[ \/]([\w.]+)/.exec( userAgent ) ||
-//      /(chrome)[ \/]([\w.]+)/.exec( userAgent ) ||
-//      (contains( userAgent, "safari" ) && /(version)[ \/]([\w.]+)/.exec( userAgent )) ||
-//      /(opera)(?:.*version)?[ \/]([\w.]+)/.exec( userAgent ) ||
-//      /(msie) ([\w.]+)/.exec( userAgent ) ||
-//      /(webkit)[ \/]([\w.]+)/.exec( userAgent ) || [];
+    userAgent = /(firefox)[ \/]([\w.]+)/.exec( userAgent ) ||
+        /(chrome)[ \/]([\w.]+)/.exec( userAgent ) ||
+        (contains( userAgent, "safari" ) && /(version)[ \/]([\w.]+)/.exec( userAgent )) ||
+        /(opera)(?:.*version)?[ \/]([\w.]+)/.exec( userAgent ) ||
+        /(msie) ([\w.]+)/.exec( userAgent ) ||
+        /(webkit)[ \/]([\w.]+)/.exec( userAgent ) || [];
 
-//  browserName = userAgent[1];
-//  browserVersion = userAgent[2];
+    browserName = userAgent[1];
+    browserVersion = userAgent[2];
 
-//  if ( browserName === "msie" ) {
-//      browserName = "ie";
-//      browserVersion = document.documentMode || browserVersion;
-//  }
+    if ( browserName === "msie" ) {
+        browserName = "ie";
+        browserVersion = document.documentMode || browserVersion;
+    } else if ( browserName === "version" ) {
+        browserName = "safari";
+    }
 
-//  if ( browserName === "version" ) {
-//      browserName = "safari";
-//  }
+    // Create browser object.
+    browser = { version: browserVersion };
 
-//  browserClasses.push( browserName );
-//  browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
-//  browserClasses.push( browserName + browserVersion.toString().replace(strDot, "-").replace(/\..*/, "" ) ); // Minor version
+    // Mobile detection
+    // TODO: Refactor this, DRY!
+    if ( /iPad/.test(navigatorUserAgent) ) {
+        browserClasses.push("ipad");
+        browser.iPad = true;
+    } else if ( /iPhone/.test(navigatorUserAgent) ) {
+        browserClasses.push("iphone");
+        browser.iPhone = true;
+    } else if ( /Android/.test(navigatorUserAgent) ) {
+        browserClasses.push("android");
+        browser.android = true;
+    }
 
-//  // Add classes all at once for performance reasons.
-//  addClass( docElem, browserClasses.join( strSpace ) );
+    browserClasses.push( "js" ); // JavaScript CSS class
 
-//  // Open up Boot.browser
-//  browser = { version: browserVersion };
-//  browser[ browserName ] = true;
+    browserClasses.push( browserName );
+    browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
+    browserClasses.push( browserName + browserVersion.toString().replace(strDot, "-").replace(/\..*/, "" ) ); // Minor version
 
-//  global.browser = browser;
+    // Add classes all at once for performance reasons.
+    addClass( docElem, browserClasses.join( strSpace ) );
 
+    // Remove no-js class if one exists.
+    removeClass( docElem, "no-js" );
+
+    // Open up Boot.browser
+    browser[ browserName ] = true;
+
+    global.browser = browser;
 
 
 /*
