@@ -2,23 +2,19 @@
     BOOT UTILITY LIBRARY
     Version 0.2
 */
-(function( namespace, window, undefined ) {
+(function (namespace, window, undefined) {
 
     // Return if global is already defined. (Optional behavior)
 //    if ( window[ namespace ] ) {
 //        return;
 //    }
 
-        // Initialize the library's namespace.
-        // This is controlled via arguments injected
-        // into the closure at the bottom of this script.
-//        global = window[ namespace ] = {},
-    var global = window[ namespace ] || ( window[ namespace ] = {} ),
+    var global,
 
         // Localize global objects and functions for better compression.
         document = window.document,
         JSON = window.JSON,
-        SetTimeout = setTimeout,
+        SetTimeout = window.setTimeout,
 
         slice = Array.prototype.slice,
         encode = encodeURIComponent,
@@ -42,6 +38,14 @@
 
         // Used only by getFont at this point, I believe.
         eventNamespace = namespace.toLowerCase() + strDot;
+
+    // Initialize the library's namespace.
+    // This is controlled via arguments injected
+    // into the closure at the bottom of this script.
+    if ( ! window[namespace]) {
+        window[namespace] = {};
+    }
+    global = window[namespace];
 
 
 /*
@@ -78,13 +82,13 @@
         startTime = now(),
         logEnabled = 0;
 
-    function log( msg, ul ) {
+    function log(msg, ul) {
 
         body || (body = document.body);
 
         logItems.push( (now() - startTime) + "ms: " + msg );
 
-        if ( logEnabled ) {
+        if (logEnabled) {
             if ( logList ||
                ( logList = ul ) ||
                ( body && ( logList = document.createElement("div")) && body.insertBefore( logList, body.firstChild) ) ) {
@@ -93,7 +97,7 @@
         }
     }
 
-    log.init = function( options ) {
+    log.init = function(options) {
         logEnabled = 1;
         logList = options.elem;
     };
@@ -201,9 +205,9 @@
     function each( array, callback ) {
     // Anything break if I comment this out?  Dummy protection needed?
     //    if ( array && array.length ) {
-        var i = 0, l = array.length;
-        for (; i < l; i++ ) {
-            callback( array[i], i, array );
+        var i, l;
+        for (i = 0, l = array.length; i < l; i += 1) {
+            callback(array[i], i, array);
         }
     //    }
 
@@ -827,32 +831,30 @@
 
             // Attach handlers for all browsers
             script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
-
                 if ( ! done && ! script[ strReadyState ] ||
                     /loaded|complete/.test( script[ strReadyState ] ) ) {
 
-                    // log( "Boot.getJS (getScript): Done loading <b>" + src + "</b>." );
+//                  log( "Boot.getJS (getScript): Done loading <b>" + src + "</b>. " + script.type );
 
                     // Tell global scripts object this script has loaded.
                     // Set scriptDone to prevent this function from being called twice.
                     done = 1;
 
                     // Emit an event indicating this script has just executed.
-                //    if ( ! script.type ) {
-                //        publish( eventNamespace + "js-done", { src: src } );
-                    //    console.log( "Script executed: " + src );
-                //    }
+                    // if ( ! script.type ) {
+                    //      publish( eventNamespace + "js-done", { src: src } );
+                    //      console.log( "Script executed: " + src );
+                    // }
                     // Handle memory leak in IE
                     script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
 
                     // Remove this script in the next available UI thread.
                     // * Removing this to reduce KB.  If people really care, we will add back.
-        //            SetTimeout(function(){
-        //                firstScriptParent.removeChild( script );
-        //            }, 0);
+//                  SetTimeout(function(){
+//                      firstScriptParent.removeChild( script );
+//                  }, 0);
 
                     if ( callback ) {
-                //    global.log( options.test );
                         callback( src );
                     }
                 }
@@ -903,35 +905,7 @@
 
         scriptType = isScriptAsync ? "" : "c";
 
-    // log( "Boot.getJS: Script <b>is " + (isScriptAsync ? "" : "not") + "</b> asynchronous." );
-/*
-    function emitScript( scriptObject ) {
-        if ( scriptObject.src ) {
-            if ( isScriptAsync ) {
-                publish( eventNamespace + scriptDoneEvent, scriptObject );
-            } else {
-                defer(function(){
-                    publish( eventNamespace + scriptDoneEvent, scriptObject );
-                });
-            }
-        }
-    }
-*/
-/*
- * We are eliminating this function due to a
-  recursive loop issue with nested getJS calls.
-     function shiftScripts() {
-//        emitScript(execScriptQueue[0]);
-        nextScriptIndex++;
-    //    console.log( "Shifting to index: " + nextScriptIndex );
-        execScripts();
-
-    }
-*/
-
-    global.exec = execScriptQueue;
-
-    function execScripts( src ){
+    function execScripts(){
 
             // Get the first script object in the queue.
         var nextScriptObject = execScriptQueue[ nextScriptIndex ] || {},
@@ -939,33 +913,24 @@
             // Look if next script object is a script or callback.
             nextScript = nextScriptObject.src || nextScriptObject;
 
-        // Remember the script we were passed is loaded.
-        isScriptDone[ src ] = 1;
-        // global.log("execScripts(" + src + ")");
         if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
-
-// global.log( "Executing Scripts: [" + nextScriptIndex + "] " + nextScript );
-// publish( nextScript );
-
-            isScriptExecuted[ nextScript ] = 1;
-
-            // Advance the pointer to the next script index.
-            nextScriptIndex++;
-
-            // We are moving this to getScript, which emits immediately
-            // after execution.
-            // publish( eventNamespace + "js-done", { src: lastScript, test: lastTest } );
 
             // If browser supports asynch execution, continue.
             if ( isScriptAsync ) {
+                // Advance the pointer to the next script index.
+                nextScriptIndex++;
                 execScripts();
             // Otherwise fetch this script and shift it out when executed.
             } else {
-                getScript( nextScript, execScripts );
+                isScriptExecuted[ nextScript ] = 1;
+                getScript( nextScript, function () {
+                    nextScriptIndex++;
+                    execScripts();
+                });
             }
 
-        } else if ( isFunction( nextScript ) ) {
-// global.log( "Executing Function: " + nextScript );
+        } else if (isFunction(nextScript)) {
+            // global.log( "Executing Function: " + nextScript );
             // Advance to the next script now, otherwise if there are
             // nested getJS calls this goes into a recursive nightmare.
             nextScriptIndex++;
@@ -977,19 +942,14 @@
                 nextScript( nextScript.t );
                 execScripts();
             } else {
-                // For other browsers, we continue to manage things
-                // manually using paced SetTimeouts.  IE likes it.
-                // global.log("Deferring callback. [" + nextScriptIndex + "]");
-                defer(function(){
-                    // global.log("Executing callback. [" + nextScriptIndex + "]");
+                SetTimeout(function(){
+                    // For other browsers, we continue to manage things
+                    // manually using paced SetTimeouts.  IE likes it.
                     nextScript( nextScript.t );
                     execScripts();
-                });
+                }, 0);
             }
-
-        }// else {
-            // global.log( "Doing nothing for now. " + nextScript );
-    //    }
+        }
     }
 
     function dispatchScriptQueue( queue ) {
@@ -1008,7 +968,7 @@
         if ( isArray( args[0] ) ) {
             args = args[0];
         }
-        // global.log("getJS(" + args[0] + ");");
+
         each( args, function( arg ) {
 
             var options = {},
@@ -1100,37 +1060,32 @@
                         // Remember we already loaded this script.
                         isScriptLoading[ src ] = 1;
 
-                    //    log( "Boot.getJS: Caching script: " + src);
                         cacheScript( src, options.delay );
                     }
 
                 // Otherwise proceed through our queue system.
                 } else if ( src && ! isScriptLoading[ src ] ) {
-                //    global.log("getJS( " + src + " );");
+
                     // Remember we already loaded this script.
                     isScriptLoading[ src ] = 1;
+
                     // Push the script options into our execution queue.
                     execScriptQueue.push( options );
-// global.log("Pushing script. [" + (execScriptQueue.length - 1) + "] " + src );
+
                     // If this is a script, and it hasn't
                     // been loaded yet, fetch it now.
-
-                    // log( "Boot.getJS: Loading script: " + src);
-                    // Look into letting getScript accept an options {}.
-                    getScript( src, execScripts, { type: scriptType /* , text: options.text*/ } ); // Removing text support, IE problems.
-
+                    getScript( src, function () {
+                        isScriptDone[ src ] = 1;
+                        execScripts();
+                    }, { type: scriptType /* , text: options.text*/ } ); // Removing text support, IE problems.
                 }
 
                 // Push the callback into the queue if we had one.
                 if ( callback ) {
-
                     // Remember the script object associated
                     // with this callback.
                     callback.t = options.test;
-                //    global.log("getJS( function(){} );");
-                    // log( "Boot.getJS: Pushing callback function into queue.");
                     execScriptQueue.push( callback );
-// global.log("Pushing callback. [" + (execScriptQueue.length - 1) + "]");
                 }
             }
 

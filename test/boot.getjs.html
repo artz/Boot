@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Boot.getJS</title>
+<title>Boot.getJS Demo</title>
 <style>
 body {
     font: 16px/1.5 verdana;
@@ -21,7 +21,7 @@ pre ul {
 <script src="../src/boot.js"></script>
 </head>
 <body>
-<h1>Boot.getJS</h1>
+<h1>Boot.getJS Demo</h1>
 <pre id="log"></pre>
 <script>
 // Initialize logging.
@@ -38,7 +38,7 @@ Boot.log("Setting up script #4 to run on DOM Ready.");
 Boot.getJS({
     src: "javascript.php?num=4&sleep=2",
     callback: function( src ){
-        Boot.log("boot.getjs.html: Executing <b>document.ready</b> script #4 callback (" + src + ").");
+        Boot.log("boot.getjs.html: Executing <b>document.ready</b> script #4 callback (" + src + "), Module 4: " + window.Module4 );
     },
     defer: "ready"
 });
@@ -51,7 +51,7 @@ Boot.log("Setting up script #5 to run on Window.load.");
 Boot.getJS({
     src: "javascript.php?num=5",
     callback: function( src ){
-        Boot.log("boot.getjs.html: Executing <b>window.load</b> script #5 callback (" + src + ").");
+        Boot.log("boot.getjs.html: Executing <b>window.load</b> script #5 callback (" + src + "). Module 5: " + window.Module5 );
     },
     defer: "load"
 });
@@ -59,7 +59,7 @@ Boot.getJS({
 // Standard script fetch with callback.
 Boot.log("boot.getjs.html: Loading script #1.");
 Boot.getJS("javascript.php?num=1&sleep=2", function( src ){
-    Boot.log("boot.getjs.html: Executing script #1 callback (" + src + ").");
+    Boot.log("boot.getjs.html: Executing script #1 callback (" + src + "), Module 1: " + window.Module1 );
 });
 
 // Executing a callback only.
@@ -73,24 +73,36 @@ Boot.log("boot.getjs.html: Loading script #2.");
 Boot.getJS({
     src: "javascript.php?num=2",
     callback: function( src ){
-        Boot.log("boot.getjs.html: Executing script #2 callback (" + src + "). <b>Loading script #6 inside callback!</b>");
+        Boot.log("boot.getjs.html: Executing script #2 callback (" + src + "), Module 2: " + window.Module2 + " <b>Loading script #6 inside callback!</b>");
         Boot.getJS("javascript.php?num=6", function(){
-            Boot.log("boot.getjs.html: Executing script #6 callback (" + src + ").");
+            Boot.log("boot.getjs.html: Executing script #6 callback (" + src + "). Module 6: " + window.Module6 );
         });
     }
 });
 
 // 2nd script requested again should not execute, but callback should.
 Boot.getJS("javascript.php?num=2", function( src ) {
-    Boot.log("boot.getjs.html: Executing 2nd script #2 callback (" + src + ")")
-})
+    Boot.log("boot.getjs.html: Executing 2nd script #2 callback (" + src + "), Module 2: " + window.Module2 );
+});
+
+/*
+Boot.getJS("javascript.php?num=3", function( ) {
+    Boot.log("Script #3 callback");
+}, "javascript.php?num=4&sleep=2", function () {
+    Boot.log("Script #4 callback");
+}, "javascript.php?num=5");
+
+Boot.getJS(function () {
+    Boot.log("Script #5 callback");
+});
+*/
 
 Boot.log("Setting up script #7 to execute on load.");
 Boot.getJS({
     src: "javascript.php?num=7",
     defer: "load",
     callback: function(){
-        Boot.log("boot.getjs.html: Executing script #7 callback.");
+        Boot.log("boot.getjs.html: Executing script #7 callback, Module 7: " + window.Module7 );
     }
 });
 
@@ -106,7 +118,6 @@ Boot.getJS({
     },
     delay: 3
 });
-
 </script>
 <p>This paragraph of text should not be blocked.</p>
 <script type="text/javascript">
