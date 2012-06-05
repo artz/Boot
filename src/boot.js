@@ -860,7 +860,7 @@
                     // }
 
                     // Handle memory leak in IE
-                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
+                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = script = null;
 
                     // Remove this script in the next available UI thread.
                     // * Removing this to reduce KB.  If people really care, we will add back.
@@ -872,6 +872,12 @@
                         callback( src );
                     }
                 }
+            }
+
+            if (isNormal) {
+                script[strOnLoad] = loadHandler;
+            } else {
+                script[strOnReadyStateChange] = loadHandler;
             }
 
             if (isNormal) {
