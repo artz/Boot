@@ -4,6 +4,8 @@
 
     "use strict";
 
+    module("Boot.cookie");
+
     test("Environment", function () {
         ok(window.Boot);
         ok(window.Boot.cookie);
