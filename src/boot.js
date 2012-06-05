@@ -819,7 +819,10 @@
         defer(function(){
 
             var script = document.createElement( strScript ),
-                done = 0;
+
+                // IE 8 and below need to poll the readyState property, while
+                // Chrome, Safari, Firefox and IE 10 can use the onload handler.
+                isNormal = !script.readyState || document.documentMode > 8;
 
             // Ensure our arguments are what they proclaim to be.
             options = options || callback || {};
@@ -845,24 +848,19 @@
             // Check out /test/benchmarks/speed-test-* (need to update files)
             script.async = options.async || false;
 
-            // Attach handlers for all browsers
-            script[ strOnLoad ] = script[ strOnReadyStateChange ] = function(){
-                if ( ! done && ! script[ strReadyState ] ||
-                    /loaded|complete/.test( script[ strReadyState ] ) ) {
+            function loadHandler() {
+                if (isNormal || /loaded|complete/.test(script.readyState)) {
 
 //                  log( "Boot.getJS (getScript): Done loading <b>" + src + "</b>. " + script.type );
-
-                    // Tell global scripts object this script has loaded.
-                    // Set scriptDone to prevent this function from being called twice.
-                    done = 1;
 
                     // Emit an event indicating this script has just executed.
                     // if ( ! script.type ) {
                     //      publish( eventNamespace + "js-done", { src: src } );
                     //      console.log( "Script executed: " + src );
                     // }
+
                     // Handle memory leak in IE
-                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
+                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = script = null;
 
                     // Remove this script in the next available UI thread.
                     // * Removing this to reduce KB.  If people really care, we will add back.
@@ -875,6 +873,12 @@
                     }
                 }
             };
+
+            if (isNormal) {
+                script[strOnLoad] = loadHandler;
+            } else {
+                script[strOnReadyStateChange] = loadHandler;
+            }
 
             // This is the safest insertion point to assume.
             head.insertBefore( script, head.firstChild );
