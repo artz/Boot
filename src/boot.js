@@ -879,6 +879,7 @@
             // This is the safest insertion point to assume.
             head.insertBefore( script, head.firstChild );
         });
+        return src;
     }
     global.getScript = getScript;
 
@@ -2430,21 +2431,26 @@
     var jsonpId = 0;
     function getJSONP( url, callback ) {
 
-        var callbackId = "JSONP_" + jsonpId++;
+        // If URL contains a question mark, replace it
+        // with our special callback.
+        if (contains(url, "=?")) {
 
-        url += "&callback=" + namespace + "." + callbackId;
+            jsonpId += 1;
+            var callbackId = "_JSONP_" + jsonpId;
+            url = url.replace("=?", "=" + namespace + "." + callbackId);
 
-        global[ callbackId ] = function( data ) {
+            global[ callbackId ] = function( data ) {
 
-            // Pass data to the callback.
-            callback && callback.call( window, data );
+                // Pass data to the callback.
+                callback && callback.call( window, data );
 
-            // Cleanup function reference.
-            delete global[ callbackId ];
-        };
+                // Cleanup function reference.
+                delete global[ callbackId ];
+            };
 
-        getScript( url );
+        }
 
+        return getScript( url );
     }
     global.getJSONP = getJSONP;
 
