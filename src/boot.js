@@ -723,16 +723,38 @@
     var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement,
         cssLoading = {};
 
-    function getCSS( src ) {
-        defer(function(){
-            if ( ! cssLoading[ src ] ) {
-                cssLoading[ src ] = 1;
-                var styleSheet = document.createElement("link");
+    function getCSS( src, callback ) {
+
+        if ( ! cssLoading[ src ] ) {
+
+            cssLoading[ src ] = 1;
+
+            defer(function(){
+
+                function loadHandler() {
+                    head.insertBefore( styleSheet, head.firstChild );
+                    callback();
+                }
+
+                var styleSheet = document.createElement("link"),
+                    image;
+
                 styleSheet.rel = "stylesheet";
                 styleSheet.href = src;
-                head.insertBefore( styleSheet, head.firstChild );
-            }
-        });
+
+                // If there's a callback, load as image first then
+                // reload to parse styles.
+                if (callback) {
+                    image = new Image();
+                    image.onerror = loadHandler;
+                    image.src = src;
+                } else {
+                    head.insertBefore( styleSheet, head.firstChild );
+                }
+            });
+        } else if ( callback ) {
+            callback();
+        }
     }
     global.getCSS = getCSS;
 
@@ -860,7 +882,7 @@
                     // }
 
                     // Handle memory leak in IE
-                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = script = null;
+                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
 
                     // Remove this script in the next available UI thread.
                     // * Removing this to reduce KB.  If people really care, we will add back.
@@ -868,22 +890,16 @@
 //                      firstScriptParent.removeChild( script );
 //                  }, 0);
 
-                    if ( callback ) {
-                        callback( src );
-                    }
+                    callback( src );
                 }
             }
 
-            if (isNormal) {
-                script[strOnLoad] = loadHandler;
-            } else {
-                script[strOnReadyStateChange] = loadHandler;
-            }
-
-            if (isNormal) {
-                script[strOnLoad] = loadHandler;
-            } else {
-                script[strOnReadyStateChange] = loadHandler;
+            if ( callback ) {
+                if (isNormal) {
+                    script[strOnLoad] = loadHandler;
+                } else {
+                    script[strOnReadyStateChange] = loadHandler;
+                }
             }
 
             // This is the safest insertion point to assume.
