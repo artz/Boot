@@ -860,7 +860,7 @@
                     // }
 
                     // Handle memory leak in IE
-                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = script = null;
+                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
 
                     // Remove this script in the next available UI thread.
                     // * Removing this to reduce KB.  If people really care, we will add back.
@@ -872,7 +872,7 @@
                         callback( src );
                     }
                 }
-            };
+            }
 
             if (isNormal) {
                 script[strOnLoad] = loadHandler;
@@ -2205,6 +2205,7 @@
     // The actual cross-browserness of this has NOT been tested
     // This is an initial pass based on a stackoverflow example
     // http://stackoverflow.com/questions/826782/css-rule-to-disable-text-selection-highlighting
+/*
     function disableTextSelect( element ) {
         if ( getStyle( element, "-khtml-user-select" ) ) {
             // Set style for older webkit
@@ -2226,6 +2227,7 @@
         return element;
     }
     global.disableTextSelect = disableTextSelect;
+*/
 
 
 /*
@@ -2330,12 +2332,14 @@
     Research:
     http://web// logs.java.net/b// log/driscoll/archive/2009/09/08/eval-javascript-global-context
 */
+/*
     function globalEval( data ) {
         ( window.execScript || function( data ) {
             window[ "eval" ].call( window, data );
         } )( data );
     }
     global.globalEval = globalEval;
+*/
 
 
 /*
