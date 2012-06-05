@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+    <head>
+        <title>getScript() IE10 Test</title>
+        <script src="jquery-1.7.1.min.js"></script>
+    </head>
+    <body>
+        <ul id="log">
+        </ul>
+        <script>
+
+            var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement;
+
+            function getScript( url, callback ){
+
+                var script = document.createElement("script");
+
+                script.async = false;
+                script.onload = function(){
+                    script.onload = null;
+                    if ( callback ) {
+                        callback();
+                    }
+                };
+
+                head.insertBefore( script, head.firstChild );
+                script.src = url;
+            }
+
+            var start = new Date().getTime();
+
+            function log(msg){
+                jQuery("<li>" + (new Date().getTime() - start) + "ms: " + msg + "</li>").appendTo("#log");
+            }
+
+            log( "Starting log.");
+
+            getScript("http://o.aolcdn.com/os/fed/test/js1.js", function(){
+                log("Executing Script #1 Callback");
+            });
+            getScript("http://o.aolcdn.com/os/fed/test/js2.js", function(){
+                log("Executing Script #2 Callback");
+            });
+            getScript("http://o.aolcdn.com/os/fed/test/js3.js", function(){
+                log("Executing Script #3 Callback");
+            });
+            getScript("http://o.aolcdn.com/os/fed/test/js4.js", function(){
+                log("Executing Script #4 Callback");
+            });
+            getScript("http://o.aolcdn.com/os/fed/test/js5.js", function(){
+                log("Executing Script #5 Callback");
+            });
+        </script>
+    </body>
+</html>

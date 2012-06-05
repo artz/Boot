@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Boot.getScript() IE10 Test</title>
+        <script src="jquery-1.7.1.min.js"></script>
+        <script src="http://www.artzstudio.com/files/Boot/src/boot.js"></script>
+    </head>
+    <body>
+        <ul id="log">
+        </ul>
+        <script>
+            var start = new Date().getTime();
+
+            function log(msg){
+                jQuery("<li>" + (new Date().getTime() - start) + "ms: " + msg + "</li>").appendTo("#log");
+            }
+
+            log( "Starting log.");
+
+            Boot.getScript("http://o.aolcdn.com/os/fed/test/js1.js", function(){
+                log("Executing Script #1 Callback");
+            });
+            Boot.getScript("http://o.aolcdn.com/os/fed/test/js2.js", function(){
+                log("Executing Script #2 Callback");
+            });
+            Boot.getScript("http://o.aolcdn.com/os/fed/test/js3.js", function(){
+                log("Executing Script #3 Callback");
+            });
+            Boot.getScript("http://o.aolcdn.com/os/fed/test/js4.js", function(){
+                log("Executing Script #4 Callback");
+            });
+            Boot.getScript("http://o.aolcdn.com/os/fed/test/js5.js", function(){
+                log("Executing Script #5 Callback");
+            });
+        </script>
+    </body>
+</html>
