@@ -715,10 +715,6 @@
     Function: Boot.getCSS
 
     Fetches a CSS file and appends it to the DOM.
-
-    TODO:
-    Add a callback using Jason's technique:
-    http://www.viget.com/inspire/js-201-run-a-function-when-a-stylesheet-finishes-loading/
 */
     var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement,
         cssLoading = {};
@@ -732,7 +728,8 @@
             defer(function(){
 
                 function loadHandler() {
-                    head.insertBefore( styleSheet, head.firstChild );
+                    // Append is used to maintain CSS cascade order.
+                    head.appendChild(styleSheet);
                     callback();
                 }
 
@@ -749,10 +746,10 @@
                     image.onerror = loadHandler;
                     image.src = src;
                 } else {
-                    head.insertBefore( styleSheet, head.firstChild );
+                    head.appendChild(styleSheet);
                 }
             });
-        } else if ( callback ) {
+        } else if (callback) {
             callback();
         }
     }
