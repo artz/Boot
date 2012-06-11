@@ -108,15 +108,17 @@
         if (logEnabled) {
             if (logList ||
                (logList = ul ) ||
-               ( body && ( logList = document.createElement("div")) && body.insertBefore( logList, body.firstChild) ) ) {
+               (body && (logList = document.createElement("div")) && body.insertBefore(logList, body.firstChild))) {
                 logList.innerHTML = ["<ul><li>", logItems.join("</li><li>"), "</li></ul>"].join('');
             }
         }
     }
 
-    log.init = function(options) {
+    log.init = function (options) {
         logEnabled = 1;
-        logList = options.elem;
+        if (options && options.elem) {
+            logList = options.elem;
+        }
     };
 
     global.log = log;
@@ -162,43 +164,43 @@
     Boolean
 */
     // String optimizations.
-    function is( str, type ) {
+    function is(str, type) {
         return typeof str === type;
     }
 
-    function isArray( obj ) {
-        return obj && contains( obj.constructor.toString(), "rray" );
+    function isArray(obj) {
+        return obj && contains(obj.constructor.toString(), "rray");
     }
     global.isArray = isArray;
 
 //    Artz: Should isObject weed out elements, maybe?
-    function isObject( obj ) {
-        return obj !== null && is( obj, strObject );
+    function isObject(obj) {
+        return obj !== null && is(obj, strObject);
     }
     global.isObject = isObject;
 
-    function isElement( obj ) {
-        return isObject( obj ) && obj.nodeType;
+    function isElement(obj) {
+        return isObject(obj) && obj.nodeType;
     }
     global.isElement = isElement;
 
-    function isString( obj ) {
-        return is( obj, strString );
+    function isString(obj) {
+        return is(obj, strString);
     }
     global.isString = isString;
 
-    function isBoolean( obj ) {
-        return is( obj, strBoolean );
+    function isBoolean(obj) {
+        return is(obj, strBoolean);
     }
     global.isBoolean = isBoolean;
 
-    function isFunction( obj ) {
-        return is( obj, strFunction );
+    function isFunction(obj) {
+        return is(obj, strFunction);
     }
     global.isFunction = isFunction;
 
-    function isNumber( obj ) {
-        return is( obj, strNumber );
+    function isNumber(obj) {
+        return is(obj, strNumber);
     }
     global.isNumber = isNumber;
 
@@ -219,7 +221,7 @@
 
     Boot
 */
-    function each( array, callback ) {
+    function each(array, callback) {
     // Anything break if I comment this out?  Dummy protection needed?
     //    if ( array && array.length ) {
         var i, l;
@@ -254,7 +256,7 @@
             target = args[0],
             name,
             source,
-            i = 1, // Source pointer.
+            i, // Source pointer.
             l = args.length;
 
         // Feature to consider:
@@ -276,14 +278,14 @@
             i = 0;
         }
     */
-        for (; i < l; i++ ) {
+        for (i = 1; i < l; i += 1) {
             source = args[i];
-            for ( name in source ) {
-                if ( source.hasOwnProperty(name) ) {
+            for (name in source) {
+                if (source.hasOwnProperty(name)) {
                     // If an object or array and NOT a DOM node, we need to deep copy.
                     // Artz: Should isObject weed out elements, maybe?
-                    if ( isObject( source[name] ) && ! isElement( source[name] ) ) {
-                        target[name] = extend( isArray( source[name] ) ? [] : {}, target[name], source[name] );
+                    if (isObject(source[name]) && !isElement(source[name])) {
+                        target[name] = extend(isArray(source[name]) ? [] : {}, target[name], source[name]);
                     } else {
                         target[name] = source[name];
                     }
@@ -302,26 +304,26 @@
     on a method to allow developers to override
     default options.
 */
-    function setup( method, defaultOptions ) {
+    function setup(method, defaultOptions) {
 
         defaultOptions = defaultOptions || {};
 
         // Create an option method on the method.
-        method.option = function( key, value ) {
-            if ( isString(key) ) {
+        method.option = function (key, value) {
+            if (isString(key)) {
                 // Retrieve an option using the key.
-                if ( value === undefined ) {
-                    return defaultOptions[ key ];
+                if (value === undefined) {
+                    return defaultOptions[key];
                 // Set an option using a key.
-                } else {
-                    defaultOptions[ key ] = value;
                 }
+                defaultOptions[key] = value;
+
                 // Extend the default options.
-            } else if ( isObject(key) ) {
-                extend( defaultOptions, key );
+            } else if (isObject(key)) {
+                extend(defaultOptions, key);
                 // Return a copy of the current options.
             } else {
-                return extend( {}, defaultOptions );
+                return extend({}, defaultOptions);
             }
         };
     }
@@ -337,9 +339,11 @@
     var timers = {},
         timerId = 0;
 
-    function poll( check, callback, pollDelay, timeout ){
+    function poll(check, callback, pollDelay, timeout) {
 
-        var name = timerId++,
+        timerId += 1;
+
+        var name = timerId,
             start = now(),
             time,
             isTimeout = false;
@@ -347,16 +351,16 @@
         // Internet Explorer needs at least a 1 for setInterval.
         pollDelay = pollDelay || 1;
 
-        timers[ name ] = setInterval(function(){
+        timers[name] = setInterval(function () {
 
             time = now() - start;
 
-            if ( check() || ( timeout && ( isTimeout = time > timeout )) ) {
-                callback.call( window, isTimeout, time );
-                clearInterval( timers[ name ] );
+            if (check() || (timeout && (isTimeout = time > timeout))) {
+                callback.call(window, isTimeout, time);
+                clearInterval(timers[name]);
             }
 
-        }, pollDelay );
+        }, pollDelay);
 
     }
     global.poll = poll;
@@ -406,7 +410,7 @@
         isReadyBound = 0,
         readyQueue = [],
 
-        checkReady = function(){
+        checkReady = function () {
             // Browsers go through 3 readyStates:
             // 1 - loading
             // 2 - loaded (Safari) or interactive (everyone else)
@@ -415,7 +419,7 @@
             // Needs to be "interactive" or "loaded" (Safari) or "complete" (catch all)
             // "e" fits the bill nicely.
             // indexOf is much faster than regex or doScroll hack in Safari and IE (see /test/regex-vs-indexof.html)
-            return contains( document.readyState, "e" );
+            return contains(document.readyState, "e");
         },
 /*
     Replaced this with Boot.poll. So far so good!
@@ -427,12 +431,12 @@
             }
         },
 */
-        execReady = function(){
+        execReady = function () {
 
             isReady = 1;
 
-            each( readyQueue, function( callback ){
-                defer( callback );
+            each(readyQueue, function (callback) {
+                defer(callback);
             });
 
             // Clear the queue.
@@ -440,9 +444,9 @@
         },
 
         // Internal reference.
-        ready = function( callback ){
+        ready = function (callback) {
 
-            if ( isReady ) {
+            if (isReady) {
 
                 // Execute callback immediately in the next UI thread.
             //    console.log("Executing in the next cycle.");
@@ -900,6 +904,7 @@
             }
 
             // This is the safest insertion point to assume.
+            // TODO: Switch to first <script> insertBefore
             head.insertBefore( script, head.firstChild );
         });
         return src;
@@ -1152,8 +1157,8 @@
             filename = options.filename( module ),
             suffix = options.suffix;
 
-        // If the module name ends with .js
-        if ( /\.js$/.test( module ) ) {
+        // If the module name ends with .js or .css
+        if ( /\.js$|\.css$/.test( module ) ) {
             // Use the module as the filename instead.
             filename = module;
             suffix = "";
@@ -1285,6 +1290,9 @@
 
         function moduleReady( i, moduleName, module ) {
 
+            var args = [],
+                i, l;
+
             if ( module ) {
                 modules[ moduleName ] = module;
             }
@@ -1293,7 +1301,14 @@
 
             // All dependencies loaded, fire callback.
             if ( ++moduleCount === moduleNames.length ) {
-                callback.apply( global, callbackArgs );
+                // Remove CSS from callbackArgs
+                // TODO: Instead of this, maintain a callbackArgIndex
+                for (i = 0, l = callbackArgs.length; i < l; i++) {
+                    if (!/\.css$/.test(moduleNames[i])) {
+                        args.push(callbackArgs[i]);
+                    }
+                }
+                callback.apply( global, args );
             }
 
             if ( module ) {
@@ -1331,6 +1346,9 @@
 
         each( moduleNames, function( moduleName, i ) {
 
+            // Choose script or stylesheet loader.
+            var get = /\.css$/.test(moduleName) ? getCSS : getScript;
+
             // If this module has already been defined, use it.
             if ( moduleName in modules ) {
                 // Check for the object.
@@ -1361,7 +1379,7 @@
                         concatModules.push( [i, moduleName] );
                     // Otherwise, fetch the module now.
                     } else {
-                        getScript( resolve( options, moduleName ), function(){
+                        get( resolve( options, moduleName ), function(){
                             defineModule( i, moduleName );
                         });
                     }
@@ -2041,7 +2059,7 @@
     Consider ditching this, ef IE and yay media queries?
     Update: People actually need this.
 */
-/*    var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
+    var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
         screensLength = screens.length,
         screenWidth,
         screenClasses = "";
@@ -2081,7 +2099,6 @@
 
     // Throttling seemed to be more desirable than debouncing.
     bind( window, "resize", throttle( screenSize, 100 ) );
-*/
 
 
 /*
