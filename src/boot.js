@@ -1,4 +1,5 @@
-/*jslint vars: true, browser: true*/
+/*global console*/
+/*jslint vars: true, browser: true, newcap: true*/
 /*
     BOOT UTILITY LIBRARY
     Version 0.3
@@ -107,7 +108,7 @@
 
         if (logEnabled) {
             if (logList ||
-               (logList = ul ) ||
+               (logList = ul) ||
                (body && (logList = document.createElement("div")) && body.insertBefore(logList, body.firstChild))) {
                 logList.innerHTML = ["<ul><li>", logItems.join("</li><li>"), "</li></ul>"].join('');
             }
@@ -173,7 +174,7 @@
     }
     global.isArray = isArray;
 
-//    Artz: Should isObject weed out elements, maybe?
+//  TODO: Decide if we need isPlainObject like jQuery (to detect non-elements)
     function isObject(obj) {
         return obj !== null && is(obj, strObject);
     }
@@ -295,6 +296,208 @@
         return target;
     }
     global.extend = extend;
+
+
+/*
+    UNDERSCORE UTILITIES
+    Helper utilities based on Underscore Library.
+    http://documentcloud.github.com/underscore/underscore.js
+*/
+  // Return the results of applying the iterator to each element.
+  // Delegates to **ECMAScript 5**'s native `map` if available.
+/*    function map( obj, iterator, context ) {
+        var results = [];
+        each( obj, function( value, index, list ) {
+            results.push( iterator.call( context, value, index, list ) );
+        });
+        return results;
+    }*/
+//    global.map = map;
+
+    // Delays a function for the given number of milliseconds, and then calls
+    // it with the arguments supplied.
+    function delay(func, wait) {
+        var args = slice.call(arguments, 2);
+        return SetTimeout(function () { return func.apply(func, args); }, wait);
+    }
+
+    // Defers a function, scheduling it to run after the current call stack has
+    // cleared.
+    function defer(func) {
+        // return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
+        SetTimeout(func, 0);
+    }
+    global.defer = defer;
+
+    // Internal function used to implement throttle() and debounce()
+    function limit(func, wait, debounce) {
+
+        var timeout;
+
+        return function () {
+
+            function throttler() {
+                timeout = undefined;
+                func.call(this);
+            }
+
+            if (debounce) {
+                clearTimeout(timeout);
+            }
+
+            if (debounce || !timeout) {
+                timeout = SetTimeout(throttler, wait);
+            }
+        };
+    }
+
+    // Returns a function, that, when invoked, will only be triggered at most once
+    // during a given window of time.
+    function throttle(func, wait) {
+        return limit(func, wait, false);
+    }
+    global.throttle = throttle;
+
+    // Returns a function, that, as long as it continues to be invoked, will not
+    // be triggered. The function will be called after it stops being called for
+    // N milliseconds.
+    function debounce(func, wait) {
+        return limit(func, wait, true);
+    }
+    global.debounce = debounce;
+
+
+/*
+    Returns a new function with "this" (ie, the scope) set to a specified argument
+
+    Parameters
+
+        scope - Sets "this" in the function to the object passed as scope
+        fn - The function to set scope for
+        args - an optional array of arguments
+*/
+    function proxy(scope, fn, args) {
+        return (function () {
+            (args) ? fn.apply(scope, args) : fn.call(scope);
+        });
+    }
+    global.proxy = proxy;
+
+
+/*
+    Function: Boot.globalEval
+
+    Evaluates code in the global scope.
+
+    Parameters:
+
+        src - The source code to execute.
+
+    Returns:
+
+    Boot
+
+    Research:
+    http://weblogs.java.net/blog/driscoll/archive/2009/09/08/eval-javascript-global-context
+*/
+/*
+    function globalEval( data ) {
+        ( window.execScript || function( data ) {
+            window[ "eval" ].call( window, data );
+        } )( data );
+    }
+    global.globalEval = globalEval;
+*/
+
+
+/*
+    Function: Boot.trim
+
+    Trims whitespace before and after a string.
+
+    Parameters
+
+        str - The string to trim leading whitespace.
+
+    Returns
+
+    String - The trimmed string.
+*/
+    function trim(str) {
+        return str.replace(/^\s+/, "").replace(/\s+$/, "");
+    }
+    global.trim = trim;
+
+
+/*
+    Function: Boot.param
+*/
+    function param(obj) {
+
+        var params = [],
+            name;
+
+        for (name in obj) {
+            if (obj.hasOwnProperty(name)) {
+                params.push(encode(name) + "=" + encode(obj[name]));
+            }
+        }
+
+        return params.join("&");
+    }
+    global.param = param;
+
+
+/*
+    Function: Boot.parseJSON
+
+    Parses a valid JSON string into a JavaScript object. Thanks, jQuery!
+
+    Parameters
+
+        data - The string of data to parse.
+
+    Returns:
+
+    Object - Parsed JSON object.
+*/
+/*
+    Removing because it's too heavy and developers need to be smart.
+    var rvalidchars = /^[\],:{}\s]*$/,
+        rvalidescape = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,
+        rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,
+        rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g;
+*/
+    function parseJSON(data) {
+        try {
+            // Make sure leading/trailing whitespace is removed (IE can't handle it)
+            data = trim(data);
+
+            // Attempt to parse using the native JSON parser first
+            if (JSON && JSON.parse) {
+                return JSON.parse(data);
+            }
+
+            // Make sure the incoming data is actual JSON
+            // // logic borrowed from http://json.org/json2.js
+            // *Removing this to decrease weight of the library.
+        //    if ( rvalidchars.test(
+        //            data.replace( rvalidescape, "@" )
+        //                .replace( rvalidtokens, "]" )
+        //                .replace( rvalidbraces, "") ) ) {
+
+            return (new Function("return " + data))();
+
+        //    }
+        } catch (e) {
+            // This function may raise eyebrows so be sure to
+            // inform developers why it failed.
+            if (window.console) {
+                console.log("Bad JSON: " + data);
+            }
+        }
+    }
+    global.parseJSON = parseJSON;
 
 
 /*
@@ -450,14 +653,14 @@
 
                 // Execute callback immediately in the next UI thread.
             //    console.log("Executing in the next cycle.");
-                defer( callback );
+                defer(callback);
 
             } else {
 
-                if ( isReadyBound ) {
+                if (isReadyBound) {
                 //    log("Pushing ready callback.");
                     // Push function into the queue.
-                    readyQueue.push( callback );
+                    readyQueue.push(callback);
 
                 } else {
                 //    log("Binding ready.");
@@ -467,18 +670,18 @@
                     // be executed when ready.
                     readyQueue = [ callback ];
 
-                    if ( checkReady() ) {
+                    if (checkReady()) {
                     //    log("Already ready.");
                         // It is ready right now, execute ready.
                         execReady();
                     } else {
                         // Good browsers.
-                        if ( document.addEventListener ) {
+                        if (document.addEventListener) {
                 //            console.log("Binding DOMContentLoaded.");
-                            document.addEventListener( "DOMContentLoaded", execReady, false );
+                            document.addEventListener("DOMContentLoaded", execReady, false);
                         // IE.
                         } else {
-                            poll( checkReady, execReady, 50 );
+                            poll(checkReady, execReady, 50);
                         }
                     }
                 }
@@ -507,23 +710,23 @@
     Boot
 */
     // Patch function to normalize IE events to standard.
-    function patchIEEvent( event ) {
+    function patchIEEvent(event) {
 
-        event.preventDefault = function(){
+        event.preventDefault = function () {
             event.returnValue = false;
         };
 
-        if ( ! event.target ) {
+        if (!event.target) {
             event.target = event.srcElement;
         }
 
         return event;
     }
 
-    function bind( object, event, callback ) {
+    function bind(object, event, callback) {
 
         if (object.attachEvent) {
-            object.attachEvent("on" + event, function(){ callback( patchIEEvent( window.event ) ); } );
+            object.attachEvent("on" + event, function () { callback(patchIEEvent(window.event)); });
         } else if (object.addEventListener) {
             object.addEventListener(event, callback, false);
         }
@@ -536,35 +739,35 @@
     Thanks, jQuery!
 */
     var rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\.([\w\-]+))?$/,
-        quickParse = function( selector ) {
-            var quick = rquickIs.exec( selector );
-            if ( quick ) {
+        quickParse = function (selector) {
+            var quick = rquickIs.exec(selector);
+            if (quick) {
                 //   0  1    2   3
                 // [ _, tag, id, class ]
-                quick[1] = ( quick[1] || "" ).toLowerCase();
-                quick[3] = quick[3] && new RegExp( "(?:^|\\s)" + quick[3] + "(?:\\s|$)" );
+                quick[1] = (quick[1] || "").toLowerCase();
+                quick[3] = quick[3] && new RegExp("(?:^|\\s)" + quick[3] + "(?:\\s|$)");
             }
             return quick;
         },
-        quickIs = function( elem, m ) {
+        quickIs = function (elem, m) {
             var attrs = elem.attributes || {};
             return (
                 (!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
                 (!m[2] || (attrs.id || {}).value === m[2]) &&
-                (!m[3] || m[3].test( (attrs[ "class" ] || {}).value ))
+                (!m[3] || m[3].test((attrs["class"] || {}).value))
             );
         };
 
-    function delegate( elem, selector, event, callback ) {
+    function delegate(elem, selector, event, callback) {
 
-        var token = quickParse( selector );
+        var token = quickParse(selector);
 
-        bind( elem, event, function( evt ){
+        bind(elem, event, function (evt) {
 
             var target = evt.target;
 
-            if ( quickIs( target, token ) ) {
-                callback( evt );
+            if (quickIs(target, token)) {
+                callback(evt);
             }
 
         });
@@ -595,10 +798,10 @@
     <Boot.load>
 */
     var isLoaded = 0;
-    function load( callback ) {
+    function load(callback) {
 
         // When loaded, set the internal flag and do the callback.
-        function loaded(){
+        function loaded() {
 
             // Ensure we process our ready queue before stuff
             // bound to window.load.
@@ -606,7 +809,7 @@
 
             isLoaded = 1;
 
-            defer( callback );
+            defer(callback);
         }
 
         // Browsers go through 3 readyStates:
@@ -616,10 +819,10 @@
         // This check looks for #3, the equivalent of window.onload.
         // "m" fits the bill nicely.
         // indexOf is much faster than regex in Safari and IE (see /test/regex-vs-indexof-vs-doscroll.html)
-        if ( contains( document.readyState, "m" ) ) {
+        if (contains(document.readyState, "m")) {
             loaded();
         } else {
-            bind( window, strLoad, loaded );
+            bind(window, strLoad, loaded);
         }
 
     }
@@ -641,17 +844,17 @@
     callback
 */
     var events = {};
-    function subscribe( object, event, callback ){
+    function subscribe(object, event, callback) {
 
-        if ( isString( object ) ) {
+        if (isString(object)) {
             callback = event;
             event = object;
             object = undefined;
         }
 
-        var eventQueue = events[ event ] || ( events[ event ] = [] );
+        var eventQueue = events[event] || (events[event] = []);
 
-        eventQueue.push( [ object, callback ] );
+        eventQueue.push([object, callback]);
 
     }
     global.subscribe = subscribe;
@@ -673,32 +876,32 @@
     Boot
 
 */
-    function publish( object, event, data ){
+    function publish(object, event, data) {
 
         // Support for associating events with DOM nodes.
-        if ( isString( object ) ) {
+        if (isString(object)) {
             data = event;
             event = object;
             object = undefined;
         }
 
-        var eventQueue = events[ event ];
+        var eventQueue = events[event];
 
-        if ( eventQueue ) {
+        if (eventQueue) {
 
-            each( eventQueue, function( on ){
+            each(eventQueue, function (on) {
 
                 var onObject = on[0],
                     onCallback = on[1];
 
-                if ( object ) {
+                if (object) {
 
                     // Only execute the callback if this is
                     // the object emitting the event or
                     // the handler doesn't require an object.
-                    if ( object === onObject || onObject === undefined ) {
+                    if (object === onObject || onObject === undefined) {
 
-                        onCallback.call( object, data );
+                        onCallback.call(object, data);
 
                         // Break the each loop, no sense wasting cycles.
                         // Worried this could have adverse effects.
@@ -706,7 +909,7 @@
                         // return false;
                     }
                 } else {
-                    onCallback.call( data, data );
+                    onCallback.call(data, data);
                 }
 
             });
@@ -720,25 +923,26 @@
 
     Fetches a CSS file and appends it to the DOM.
 */
-    var head = document.head || document.getElementsByTagName( "head" )[0] || document.documentElement,
+    var docElem = document.documentElement,
+        head = document.head || document.getElementsByTagName("head")[0] || docElem,
         cssLoading = {};
 
-    function getCSS( src, callback ) {
+    function getCSS(src, callback) {
 
-        if ( ! cssLoading[ src ] ) {
+        if (!cssLoading[src]) {
 
-            cssLoading[ src ] = 1;
+            cssLoading[src] = 1;
 
-            defer(function(){
+            defer(function () {
+
+                var styleSheet = document.createElement("link"),
+                    image;
 
                 function loadHandler() {
                     // Append is used to maintain CSS cascade order.
                     head.appendChild(styleSheet);
                     callback();
                 }
-
-                var styleSheet = document.createElement("link"),
-                    image;
 
                 styleSheet.rel = "stylesheet";
                 styleSheet.href = src;
@@ -778,26 +982,28 @@
     Consider making this a generic cacheResource function that can cache CSS too?
     Or we can simply do cacheCSS = cacheScript (or cacheJS?)
 */
-    function cacheScript( src, cacheDelay ){
+    var isGecko = "MozAppearance" in docElem.style;
+
+    function cacheScript(src, cacheDelay) {
 
         // log( "Boot.getJS (cacheScript): Caching script (" + src + ")" );
         var elem;
 
         body || (body = document.body);
 
-        if ( cacheDelay ) {
+        if (cacheDelay) {
             // Convert cacheDelay to seconds.
             cacheDelay = cacheDelay * 1000;
         }
 
         // Body element is required for this to work.
-        if ( body ) {
+        if (body) {
 
             // Cache the script after the optional cacheDelay.
-            SetTimeout(function(){
+            SetTimeout(function () {
                 // Gecko gets an object, everyone else gets an image.
                 // See /test/boot.cachescript.html
-                elem = document.createElement( isGecko ? strObject : "img" );
+                elem = document.createElement(isGecko ? strObject : "img");
 
                 // Set the src (image) and data (object).
                 elem.src = elem.data = src;
@@ -809,9 +1015,9 @@
 
                 // Using setTimeout here will cause Firefox to
                 // hang perpetually, making users sad. :(
-                body.appendChild( elem );
+                body.appendChild(elem);
 
-            }, cacheDelay || 0 );
+            }, cacheDelay || 0);
 
         }
 
@@ -836,12 +1042,12 @@
             async - Value of the async param, default is false.
 
 */
-    function getScript ( src, callback, options ) {
+    function getScript(src, callback, options) {
 
         // We use a setTimeout to ensure non-blocking behavior.
-        defer(function(){
+        defer(function () {
 
-            var script = document.createElement( strScript ),
+            var script = document.createElement(strScript),
 
                 // IE 8 and below need to poll the readyState property, while
                 // Chrome, Safari, Firefox and IE 10 can use the onload handler.
@@ -849,7 +1055,7 @@
 
             // Ensure our arguments are what they proclaim to be.
             options = options || callback || {};
-            callback = isFunction( callback ) ? callback : 0;
+            callback = isFunction(callback) ? callback : 0;
 
             // Set the source of the script.
             script.src = src;
@@ -883,7 +1089,7 @@
                     // }
 
                     // Handle memory leak in IE
-                    script[ strOnLoad ] = script[ strOnReadyStateChange ] = null;
+                    script[strOnLoad] = script[strOnReadyStateChange] = null;
 
                     // Remove this script in the next available UI thread.
                     // * Removing this to reduce KB.  If people really care, we will add back.
@@ -891,11 +1097,11 @@
 //                      firstScriptParent.removeChild( script );
 //                  }, 0);
 
-                    callback( src );
+                    callback(src);
                 }
             }
 
-            if ( callback ) {
+            if (callback) {
                 if (isNormal) {
                     script[strOnLoad] = loadHandler;
                 } else {
@@ -905,7 +1111,7 @@
 
             // This is the safest insertion point to assume.
             // TODO: Switch to first <script> insertBefore
-            head.insertBefore( script, head.firstChild );
+            head.insertBefore(script, head.firstChild);
         });
         return src;
     }
@@ -942,34 +1148,32 @@
 
 //        scriptDoneEvent = "js-done",
 
-        docElem = document.documentElement,
-        isGecko = "MozAppearance" in docElem.style,
 
         // If the browser supports asynchronous executing scripts. (Firefox 3.6, Opera, Chrome 12)
-        isScriptAsync = isGecko || window.opera || document.createElement( strScript ).async, /* === true */
+        isScriptAsync = isGecko || window.opera || document.createElement(strScript).async, /* === true */
 
         scriptType = isScriptAsync ? "" : "c";
 
-    function execScripts(){
+    function execScripts() {
 
             // Get the first script object in the queue.
-        var nextScriptObject = execScriptQueue[ nextScriptIndex ] || {},
+        var nextScriptObject = execScriptQueue[nextScriptIndex] || {},
 
             // Look if next script object is a script or callback.
             nextScript = nextScriptObject.src || nextScriptObject;
 
-        if ( isScriptDone[ nextScript ] && ! isScriptExecuted[ nextScript ] ) {
+        if (isScriptDone[nextScript] && !isScriptExecuted[nextScript]) {
 
             // If browser supports asynch execution, continue.
-            if ( isScriptAsync ) {
+            if (isScriptAsync) {
                 // Advance the pointer to the next script index.
-                nextScriptIndex++;
+                nextScriptIndex += 1;
                 execScripts();
             // Otherwise fetch this script and shift it out when executed.
             } else {
-                isScriptExecuted[ nextScript ] = 1;
-                getScript( nextScript, function () {
-                    nextScriptIndex++;
+                isScriptExecuted[nextScript] = 1;
+                getScript(nextScript, function () {
+                    nextScriptIndex += 1;
                     execScripts();
                 });
             }
@@ -978,43 +1182,44 @@
             // global.log( "Executing Function: " + nextScript );
             // Advance to the next script now, otherwise if there are
             // nested getJS calls this goes into a recursive nightmare.
-            nextScriptIndex++;
+            nextScriptIndex += 1;
 
             // We handle things differently for async browsers, since
             // we want to be sure to execute the callback immediately
             // after the script downloads.
-            if ( isScriptAsync ) {
-                nextScript( nextScript.t );
+            if (isScriptAsync) {
+                nextScript(nextScript.t);
                 execScripts();
             } else {
-                SetTimeout(function(){
+                // TODO: Use defer instead.
+                SetTimeout(function () {
                     // For other browsers, we continue to manage things
                     // manually using paced SetTimeouts.  IE likes it.
-                    nextScript( nextScript.t );
+                    nextScript(nextScript.t);
                     execScripts();
                 }, 0);
             }
         }
     }
 
-    function dispatchScriptQueue( queue ) {
+    function getJS() { /* url, callback, or options */
 
-        // Call getJS on each item in the queue.
-        while ( queue[0] ) {
-            getJS( queue[0] );
-            queue.shift();
+        function dispatchScriptQueue(queue) {
+
+            // Call getJS on each item in the queue.
+            while (queue[0]) {
+                getJS(queue[0]);
+                queue.shift();
+            }
         }
-    }
-
-    function getJS ( /* url, callback, or options */ ) {
 
         var args = arguments;
 
-        if ( isArray( args[0] ) ) {
+        if (isArray(args[0])) {
             args = args[0];
         }
 
-        each( args, function( arg ) {
+        each(args, function (arg) {
 
             var options = {},
                 deferScript,
@@ -1023,11 +1228,11 @@
 
             // Convert the string or function
             // into the object.
-            if ( isString( arg ) ) {
+            if (isString(arg)) {
                 options.src = arg;
-            } else if ( isFunction( arg ) ) {
+            } else if (isFunction(arg)) {
                 options.callback = arg;
-            } else if ( isObject( arg ) ) {
+            } else if (isObject(arg)) {
 
                 options = arg;
 
@@ -1042,26 +1247,26 @@
             }
 
             // Defer these options until document is ready.
-            if ( deferScript === "ready" ) {
+            if (deferScript === "ready") {
                 // Push options into queue for later processing.
-                readyScriptQueue.push( options );
+                readyScriptQueue.push(options);
 
             //    log( "Boot.getJS: Pushing script to ready event." );
                 // On the ready event, dispatch the ready queue.
-                ready(function(){
-                    dispatchScriptQueue( readyScriptQueue );
+                ready(function () {
+                    dispatchScriptQueue(readyScriptQueue);
                 });
 
             // Defer these options until document is complete.
-            } else if ( deferScript === strLoad ) {
+            } else if (deferScript === strLoad) {
 
                 // Push options into queue for later processing.
-                loadScriptQueue.push( options );
+                loadScriptQueue.push(options);
 
             //    log( "Boot.getJS: Pushing script to load event." );
                 // On the load event, dispatch the load queue.
-                load(function(){
-                    dispatchScriptQueue( loadScriptQueue );
+                load(function () {
+                    dispatchScriptQueue(loadScriptQueue);
                 });
 
             // Proceed as normal.
@@ -1072,9 +1277,9 @@
 
                 // Simple yepnope-ish implementation.
                 // For the real deal look here: http://yepnopejs.com/
-                if ( ! src && options.nay ) {
+                if (!src && options.nay) {
 
-                    if ( options.test ) {
+                    if (options.test) {
                         src = options.yay;
                     } else {
                         src = options.nay;
@@ -1083,7 +1288,7 @@
 
                     // Grab the alternates if they exist,
                     // and reset the source.
-                    getJS( src );
+                    getJS(src);
                     src = undefined;
                 }
 
@@ -1096,41 +1301,41 @@
 
                 // If the type is set to cache, do so immediately.
                 // Artz: Why isn't this inside our src check (next)?
-                if ( contains( options.type, "cache" ) ) {
+                if (contains(options.type, "cache")) {
 
                     // If this is a script and it hasn't been
                     // loaded yet, fetch it now.
-                    if ( src && ! isScriptLoading[ src ] ) {
+                    if (src && !isScriptLoading[src]) {
 
                         // Remember we already loaded this script.
-                        isScriptLoading[ src ] = 1;
+                        isScriptLoading[src] = 1;
 
-                        cacheScript( src, options.delay );
+                        cacheScript(src, options.delay);
                     }
 
                 // Otherwise proceed through our queue system.
-                } else if ( src && ! isScriptLoading[ src ] ) {
+                } else if (src && !isScriptLoading[src]) {
 
                     // Remember we already loaded this script.
-                    isScriptLoading[ src ] = 1;
+                    isScriptLoading[src] = 1;
 
                     // Push the script options into our execution queue.
-                    execScriptQueue.push( options );
+                    execScriptQueue.push(options);
 
                     // If this is a script, and it hasn't
                     // been loaded yet, fetch it now.
-                    getScript( src, function () {
-                        isScriptDone[ src ] = 1;
+                    getScript(src, function () {
+                        isScriptDone[src] = 1;
                         execScripts();
-                    }, { type: scriptType /* , text: options.text*/ } ); // Removing text support, IE problems.
+                    }, { type: scriptType /* , text: options.text*/ }); // Removing text support, IE problems.
                 }
 
                 // Push the callback into the queue if we had one.
-                if ( callback ) {
+                if (callback) {
                     // Remember the script object associated
                     // with this callback.
                     callback.t = options.test;
-                    execScriptQueue.push( callback );
+                    execScriptQueue.push(callback);
                 }
             }
 
@@ -1150,21 +1355,21 @@
     we expose it externally and further internally.
     possibly make resolveJS, resolveCSS, resolveFont?
 */
-    function resolve( customOptions, module ) {
+    function resolve(customOptions, module) {
 
-        var options = extend( resolve.option(), customOptions || {} ),
+        var options = extend(resolve.option(), customOptions || {}),
             basePath = options.basePath,
-            filename = options.filename( module ),
+            filename = options.filename(module),
             suffix = options.suffix;
 
         // If the module name ends with .js or .css
-        if ( /\.js$|\.css$/.test( module ) ) {
+        if (/\.js$|\.css$/.test(module)) {
             // Use the module as the filename instead.
             filename = module;
             suffix = "";
 
             // If the module name starts with "http://" or "https://"
-            if ( /^http[s]*:\/\//.test( module ) ) {
+            if (/^http[s]*:\/\//.test(module)) {
                 // Remove the basePath
                 basePath = "";
             }
@@ -1172,9 +1377,9 @@
         return basePath + filename + suffix;
     }
 
-    setup( resolve, {
+    setup(resolve, {
         basePath: "",
-        filename: function(str){ return str.toLowerCase(); },
+        filename: function (str) { return str.toLowerCase(); },
         suffix: ".min.js"
     });
 
@@ -1188,30 +1393,30 @@
         moduleDefinitions = {},
         definedModules = [];
 
-    function define( moduleName, moduleDependencies, moduleDefinition ) {
+    function define(moduleName, moduleDependencies, moduleDefinition) {
 
-        if ( ! isString( moduleName ) ) {
+        if (!isString(moduleName)) {
             moduleDefinition = moduleDependencies;
             moduleDependencies = moduleName;
             moduleName = undefined;
         }
 
-        if ( ! isArray( moduleDependencies ) ) {
+        if (!isArray(moduleDependencies)) {
             moduleDefinition = moduleDependencies;
             moduleDependencies = undefined;
         }
 
         // Load in any dependencies, and pass them into the use callback.
-        if ( moduleDependencies ) {
+        if (moduleDependencies) {
 
             // Remember that this guy has a dependency, and which one it is.
             moduleDefinition.d = moduleDependencies;
         }
 
-        if ( moduleName ) {
-            moduleDefinitions[ moduleName ] = moduleDefinition;
+        if (moduleName) {
+            moduleDefinitions[moduleName] = moduleDefinition;
         } else {
-            definedModules.push( moduleDefinition );
+            definedModules.push(moduleDefinition);
         }
     }
 
@@ -1231,35 +1436,35 @@
 */
     function getConcatURL() {
 
-        var args = slice.call( arguments ), // Convert to real array.
+        var args = slice.call(arguments), // Convert to real array.
             options = getConcatURL.option(),
             queryParam,
             mergeURL = "";
 
-        if ( isObject( args[0] ) ) {
-            extend( options, args.shift() );
+        if (isObject(args[0])) {
+            extend(options, args.shift());
         }
 
-        if ( options.concatPath ) {
+        if (options.concatPath) {
             mergeURL += options.concatPath;
         }
 
-        return mergeURL + args.join( options.concatJoin );
+        return mergeURL + args.join(options.concatJoin);
     }
 
-    setup( getConcatURL, { concatJoin: "," } );
+    setup(getConcatURL, { concatJoin: "," });
 
 //  global.getConcatURL = getConcatURL;
 
 
     // Resolves an object.
-    function getLibrary( moduleName ) {
+    function getLibrary(moduleName) {
         // i.e. "jQuery.alpha", "MyLib.foo.bar"
         var obj = window;
 
-        each( moduleName.split("."), function( name ) {
-            if ( isObject( obj[ name ] ) ) {
-                obj = obj[ name ];
+        each(moduleName.split("."), function (name) {
+            if (isObject(obj[name])) {
+                obj = obj[name];
             }
         });
 
@@ -1271,93 +1476,94 @@
     Boot.require
     Based on YUI's use() function and RequireJS.
 */
-    function require( customOptions, moduleNames, callback ) {
+    function require(customOptions, moduleNames, callback) {
 
         // Normalize parameters.
-        if ( isArray( customOptions ) || isString( customOptions ) ) {
+        if (isArray(customOptions) || isString(customOptions)) {
             callback = moduleNames;
             moduleNames = customOptions;
             customOptions = {};
         }
 
         // Make moduleNames an array.
-        moduleNames = isString( moduleNames ) ? [ moduleNames ] : moduleNames;
+        moduleNames = isString(moduleNames) ? [moduleNames] : moduleNames;
 
-        var options = extend( require.option(), customOptions ), // See how Boot.setup works.
+        var options = extend(require.option(), customOptions), // See how Boot.setup works.
             callbackArgs = [],
             concatModules = [],
             moduleCount = 0;
 
-        function moduleReady( i, moduleName, module ) {
+        function moduleReady(i, moduleName, module) {
 
             var args = [],
                 i, l;
 
-            if ( module ) {
-                modules[ moduleName ] = module;
+            if (module) {
+                modules[moduleName] = module;
             }
 
-            callbackArgs[i] = modules[ moduleName ];
+            callbackArgs[i] = modules[moduleName];
 
             // All dependencies loaded, fire callback.
-            if ( ++moduleCount === moduleNames.length ) {
+            moduleCount += 1;
+            if (moduleCount === moduleNames.length) {
                 // Remove CSS from callbackArgs
                 // TODO: Instead of this, maintain a callbackArgIndex
-                for (i = 0, l = callbackArgs.length; i < l; i++) {
+                for (i = 0, l = callbackArgs.length; i < l; i += 1) {
                     if (!/\.css$/.test(moduleNames[i])) {
                         args.push(callbackArgs[i]);
                     }
                 }
-                callback.apply( global, args );
+                callback.apply(global, args);
             }
 
-            if ( module ) {
-                publish( moduleName );
+            if (module) {
+                publish(moduleName);
             }
         }
 
-        function defineModule( i, moduleName ){
+        function defineModule(i, moduleName){
 
             var module,
                 moduleDependencies,
-                moduleDefinition = moduleDefinitions[ moduleName ] || definedModules.shift();
+                moduleDefinition = moduleDefinitions[moduleName] || definedModules.shift();
 
-            if ( moduleDefinition ) {
+            if (moduleDefinition) {
 
-                if ( moduleDependencies = moduleDefinition.d ) {
+                if (moduleDependencies = moduleDefinition.d) {
 
-                    require( customOptions, moduleDependencies, function(){
-                        module = isFunction( moduleDefinition ) ? moduleDefinition.apply( global, arguments ) : moduleDefinition;
-                        moduleReady( i, moduleName, module );
+                    require(customOptions, moduleDependencies, function () {
+                        module = isFunction(moduleDefinition) ? moduleDefinition.apply(global, arguments) : moduleDefinition;
+                        moduleReady(i, moduleName, module);
                     });
 
                 } else {
 
-                    module = isFunction( moduleDefinition ) ? moduleDefinition() : moduleDefinition;
-                    moduleReady( i, moduleName, module );
+                    module = isFunction(moduleDefinition) ? moduleDefinition() : moduleDefinition;
+                    moduleReady(i, moduleName, module);
 
                 }
 
             // Otherwise see if we can snag the module by name (old skool).
             } else {
-                moduleReady( i, moduleName, getLibrary( moduleName )  );
+                moduleReady(i, moduleName, getLibrary(moduleName));
             }
         }
 
-        each( moduleNames, function( moduleName, i ) {
+        each(moduleNames, function (moduleName, i) {
 
             // Choose script or stylesheet loader.
             var get = /\.css$/.test(moduleName) ? getCSS : getScript;
 
             // If this module has already been defined, use it.
-            if ( moduleName in modules ) {
+            if (moduleName in modules) {
                 // Check for the object.
-                if ( modules[ moduleName ] ){
-                    moduleReady( i, moduleName );
+                if (modules[moduleName]) {
+                    moduleReady(i, moduleName);
                 // It's undefined, so wait a little bit.
                 } else {
-                    subscribe( moduleName, function(){
-                        moduleReady( i, moduleName );
+                    subscribe(moduleName, function () {
+                        moduleReady(i, moduleName);
                     });
                 }
 
@@ -1370,17 +1576,17 @@
                 modules[ moduleName ] = undefined;
 
                 // If the module was defined by some other script
-                if ( moduleDefinitions[ moduleName ] ) {
-                    defineModule( i, moduleName );
+                if (moduleDefinitions[moduleName]) {
+                    defineModule(i, moduleName);
                 // Otherwise fetch the script based on the module name
                 } else {
                     // If concat is enabled, push this module into our queue.
-                    if ( options.concat ) {
-                        concatModules.push( [i, moduleName] );
+                    if (options.concat) {
+                        concatModules.push([i, moduleName]);
                     // Otherwise, fetch the module now.
                     } else {
-                        get( resolve( options, moduleName ), function(){
-                            defineModule( i, moduleName );
+                        get(resolve(options, moduleName), function () {
+                            defineModule(i, moduleName);
                         });
                     }
                 }
@@ -1390,93 +1596,29 @@
         });
 
         // If we happened upon concatenated scripts, get 'em.
-        if ( concatModules.length ) {
+        if (concatModules.length) {
 
             var concatURL,
                 concatScripts = [];
 
-            each( concatModules, function( concatModule ) {
-                concatScripts.push( resolve( options, concatModule[1] ) );
+            each(concatModules, function (concatModule) {
+                concatScripts.push(resolve(options, concatModule[1]));
             });
 
-            concatURL = getConcatURL.apply( window, [ options ].concat( concatScripts ))
+            concatURL = getConcatURL.apply(window, [options].concat(concatScripts))
 
-            getScript( concatURL, function(){
-                each( concatModules, function( concatModule ) {
-                    defineModule( concatModule[0], concatModule[1] );
+            getScript(concatURL, function () {
+                each(concatModules, function (concatModule) {
+                    defineModule(concatModule[0], concatModule[1]);
                 });
             });
         }
 
     }
 
-    setup( require );
+    setup(require);
 
     global.require = require;
-
-
-/*
-    Boot.widget
-
-    The Widget factory is a wrapper function that
-    binds an element to a module using a defined
-    object specification.
-
-    Note: This is a work in progress!
-*/
-    function widget( widgetName, elem, options ) {
-
-        var source = modules[ widgetName ],
-            instance,
-            ui;
-
-        if ( elem.widget && elem.widget[ widgetName ] ) {
-
-            instance = elem.widget[ widgetName ];
-
-        } else {
-
-            instance = extend( {}, source, {
-                element: elem,
-                name: widgetName.replace(strDot, "-"),
-                namespace: widgetName,
-                option: function( key, value ) {
-
-                },
-                ui: {},
-                options: options || {}
-            });
-
-            ui = extend( instance.ui, instance.options.ui );
-
-            // Convert UI selectors to elements.
-            if ( ui ) {
-                for ( var x in ui ) {
-                    if ( ui.hasOwnProperty( x ) ) {
-                        ui[x] = query(ui[x], elem);
-                    }
-                }
-            }
-
-            addClass( elem, instance.name );
-
-            // Initialize the widget.
-            if ( instance.create ) {
-                instance._create();
-            }
-
-            // Save the instance on the element for later access.
-            if ( ! elem.widget ) {
-                elem.widget = {};
-            }
-            elem.widget[ widgetName ] = instance;
-
-        }
-
-        return instance;
-
-    }
-    global.widget = widget;
 
 
 /*
@@ -1501,32 +1643,33 @@
     Thanks:
         John Resig - http://ejohn.org/blog/thoughts-on-queryselectorall/
 */
-    function listToArray ( collection ) {
+    function listToArray(collection) {
         var array = [],
             l = collection.length;
-        while ( l-- ) {
+        while (l--) {
             array[l] = collection[l];
         }
         return array;
     }
 
     var getElementsByClassName = document.getElementsByClassName ? // Runtime feature detect.
-            function( selector, element ) {
-                return listToArray( element.getElementsByClassName( selector ) );
-            } : function( selector, element ) {
+            function (selector, element) {
+                return listToArray(element.getElementsByClassName(selector));
+            } : function (selector, element) {
 
-                var elements = element.getElementsByTagName("*"),
-                    className,
-                    matches = [];
+        var elements = element.getElementsByTagName("*"),
+            className,
+            matches = [],
+            i, l;
 
-                for ( var i = 0, l = elements.length; i < l; i++ ) {
-                    className = elements[i].className;
-                    if ( className && (new RegExp("(\\s|^)" + className + "(\\s|$)").test( selector ) ) ) {
-                        matches.push( elements[i] );
-                    }
-                }
-                return matches;
-            };
+        for (i = 0, l = elements.length; i < l; i += 1) {
+            className = elements[i].className;
+            if (className && (new RegExp("(\\s|^)" + className + "(\\s|$)").test(selector))) {
+                matches.push( elements[i] );
+            }
+        }
+        return matches;
+    };
 
     // Our simple selector engine.
     var querySelectorAll = document.querySelectorAll ? // Runtime feature detect.
@@ -1542,60 +1685,64 @@
 
             } : function( selector, element ) {
 
-                element = element || document;
+        element = element || document;
 
-                // Helps ensure that if we were given a descendant
-                // selector we only take the first segment.
-                selector = selector.split( strSpace )[0];
+        // Helps ensure that if we were given a descendant
+        // selector we only take the first segment.
+        selector = selector.split( strSpace )[0];
 
-                // Grabs the first character, which informs our selector engine.
-                var firstChar = selector.charAt(0),
-                    nodes;
+        // Grabs the first character, which informs our selector engine.
+        var firstChar = selector.charAt(0),
+            nodes;
 
-                if ( firstChar === "#" ) {
-                    nodes = [ element.getElementById( selector.replace(firstChar, "") ) ];
-                } else if ( firstChar === strDot ) {
-                    nodes = getElementsByClassName( selector.replace(firstChar, ""), element );
-                } else {
-                    nodes = listToArray( element.getElementsByTagName( selector ) );
-                }
+        if (firstChar === "#") {
+            nodes = [ element.getElementById(selector.replace(firstChar, "")) ];
+        } else if (firstChar === strDot) {
+            nodes = getElementsByClassName(selector.replace(firstChar, ""), element);
+        } else {
+            nodes = listToArray(element.getElementsByTagName(selector));
+        }
 
-                return nodes;
-            };
+        return nodes;
+    };
 
     // Special wrapper function that allows
     // multiple context elements to narrow down
     // the set.
-    function query( selector, context ) {
+    function query(selector, context) {
 
         // Prepare selector.
-        selector = selector.split( strSpace );
+        selector = selector.split(strSpace);
 
         // Prepare context.
         // It could be "document", [ ul, ul ]
-        if ( context ) {
+        if (context) {
             // Detects if we received an element
             // and turns it into an array.
-            if ( isElement( context ) ) {
-                context = [ context ];
+            if (isElement(context)) {
+                context = [context];
             }
         } else {
-            context = [ document ];
+            context = [document];
         }
 
-            // Result set.
-        var elems = context;
+        // Result set.
+        var elems = context,
+            x,
+            y,
+            i,
+            l;
 
         // Loop through each selector segment and
         // find elements matching inside context.
-        for ( var x = 0, y = selector.length; x < y; x++ ) {
+        for (x = 0, y = selector.length; x < y; x++) {
 
             context = elems;
             elems = [];
 
             // Loop through each item in context
             // and find elements.
-            for ( var i = 0, l = context.length; i < l; i++ ) {
+            for (i = 0, l = context.length; i < l; i++) {
 
                 // Look for items matching the first
                 // segement of the selector and add
@@ -1607,7 +1754,72 @@
 
         return elems;
     }
-//    global.query = query;
+    global.query = query;
+
+
+/*
+    Boot.widget
+
+    The Widget factory is a wrapper function that
+    binds an element to a module using a defined
+    object specification.
+
+    Note: This is a work in progress!
+*/
+    function widget(widgetName, elem, options) {
+
+        var source = modules[widgetName],
+            instance,
+            x,
+            ui;
+
+        if (elem.widget && elem.widget[widgetName]) {
+
+            instance = elem.widget[widgetName];
+
+        } else {
+
+            instance = extend({}, source, {
+                element: elem,
+                name: widgetName.replace(strDot, "-"),
+                namespace: widgetName,
+                option: function (key, value) {
+                    // TODO: Implement dynamic option setting like jQuery UI
+                },
+                ui: {},
+                options: options || {}
+            });
+
+            ui = extend( instance.ui, instance.options.ui );
+
+            // Convert UI selectors to elements.
+            if (ui) {
+                for (x in ui) {
+                    if (ui.hasOwnProperty(x)) {
+                        ui[x] = query(ui[x], elem);
+                    }
+                }
+            }
+
+            addClass(elem, instance.name);
+
+            // Initialize the widget.
+            if (instance.create) {
+                instance._create();
+            }
+
+            // Save the instance on the element for later access.
+            if (!elem.widget) {
+                elem.widget = {};
+            }
+            elem.widget[widgetName] = instance;
+
+        }
+
+        return instance;
+
+    }
+    global.widget = widget;
 
 
 /*
@@ -1626,22 +1838,20 @@
 
     Attribute value (getting) or Boot (setting)
 */
-    function attr( elem, attribute, value ){
-
-        if ( value !== undefined ) {
-            if ( value === null ) {
-                elem.removeAttribute( attribute );
+    function attr(elem, attribute, value) {
+        if (value !== undefined) {
+            if (value === null) {
+                elem.removeAttribute(attribute);
             } else {
-                if ( attribute === "style" ) {
+                if (attribute === "style") {
                     // For IE.
                     elem.style.cssText = value;
                 }
-                elem.setAttribute( attribute, value );
+                elem.setAttribute(attribute, value);
             }
         } else {
-            return elem.getAttribute( attribute );
+            return elem.getAttribute(attribute);
         }
-
     }
     global.attr = attr;
 
@@ -1654,7 +1864,7 @@
 
     TODO: Add an option for converting hyphenated attributes into camelCase or underscores.
 */
-    function data( elem, key, value ) {
+    function data(elem, key, value) {
         // Return an object of all data attributes.
         var strData = "data-",
 
@@ -1666,16 +1876,16 @@
 
             ret;
 
-        if ( value !== undefined ) {
-            attr( elem, strData + key, value );
-        } else if ( key !== undefined ) {
-            ret = attr( elem, strData + key );
+        if (value !== undefined) {
+            attr(elem, strData + key, value);
+        } else if (key !== undefined) {
+            ret = attr(elem, strData + key);
         } else {
-            while( attributesLength-- ) {
-                attribute = attributes[ attributesLength ];
+            while(attributesLength--) {
+                attribute = attributes[attributesLength];
                 attributeName = attribute.nodeName;
-                if ( contains( attributeName, strData ) ) {
-                    attributesObject[ attributeName.replace( strData, "" ) ] = attribute.nodeValue;
+                if (contains(attributeName, strData)) {
+                    attributesObject[attributeName.replace(strData, "")] = attribute.nodeValue;
                 }
             }
             ret = attributesObject;
@@ -1695,7 +1905,8 @@
         var cookies = document.cookie.split(";"),
             cookieObject = {},
             cookiePair,
-            i, l,
+            i,
+            l,
             expires,
             date;
 
@@ -1738,16 +1949,16 @@
         // Fetch cookies.
         } else {
             // First, populate the cookie object.
-            for (i = 0, l = cookies.length; i < l; i++) {
+            for (i = 0, l = cookies.length; i < l; i += 1) {
                 cookiePair = cookies[i].split("=");
                 cookieObject[trim(decode(cookiePair[0]))] = trim(decode(cookiePair[1]));
             }
 
             if (key) {
                 return cookieObject[key] || null;
-            } else {
-                return cookieObject;
             }
+
+            return cookieObject;
         }
     }
     setup(cookie, {
@@ -1766,20 +1977,20 @@
     Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
     Supports multiple class additions.
 */
-    function addClass( elem, classNames ) {
+    function addClass(elem, classNames) {
         // Adding the class name greedily won't
         // hurt and keeps things small.
-        classNames = classNames.split( strSpace );
+        classNames = classNames.split(strSpace);
 
         var elemClassName = elem.className,
             className,
             l = classNames.length,
             reg;
 
-        while ( l-- ) {
+        while (l -= 1) {
             className = classNames[l];
             reg = new RegExp("(\\s|^)" + className + "(\\s|$)");
-            if ( ! reg.test( elem.className ) ) {
+            if (!reg.test(elem.className)) {
                 elemClassName += strSpace + className;
             }
         }
@@ -1789,22 +2000,22 @@
     global.addClass = addClass;
 
     // Supports multiple class removals.
-    function removeClass( elem, classNames ) {
+    function removeClass(elem, classNames) {
 
-        classNames = classNames.split( strSpace );
+        classNames = classNames.split(strSpace);
 
         var elemClassName = elem.className,
             className,
             l = classNames.length,
             reg;
 
-        while ( l-- ) {
+        while (l -= 1) {
             className = classNames[l];
             reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");
-            elemClassName = elemClassName.replace( reg, strSpace );
+            elemClassName = elemClassName.replace(reg, strSpace);
         }
 
-        elem.className = trim( elemClassName );
+        elem.className = trim(elemClassName);
     }
     global.removeClass = removeClass;
 
@@ -1830,15 +2041,16 @@
 */
     // Largely taken from the example at
     // http://robertnyman.com/2006/04/24/get-the-rendered-style-of-an-element/
-    function getStyle( element, property ) {
+    function getStyle(element, property) {
         var value;
 
-        if ( document.defaultView && document.defaultView.getComputedStyle ) {
+        if (document.defaultView && document.defaultView.getComputedStyle) {
             // The lovely way of retrieving computed style
-            value = document.defaultView.getComputedStyle( element, "" ).getPropertyValue( property );
+            value = document.defaultView.getComputedStyle(element, "").getPropertyValue(property);
         } else {
             // The... other (read: Microsoft) way
-            property = property.replace(/\-(\w)/g, function( match, prop ) { // Artz: match var is unused
+            property = property.replace(/\-(\w)/g, function (match, prop) {
+                // TODO: match var is unused - this ok?
                 return prop.toUpperCase();
             });
 
@@ -1857,7 +2069,7 @@
     Thanks Stoyan!
     http://www.phpied.com/dynamic-script-and-style-elements-in-ie/
 */
-    function inlineCSS( css ){
+    function inlineCSS(css) {
 
         var style = document.createElement("style"),
             textNode;
@@ -1867,15 +2079,15 @@
 //        style.setAttribute("type", "text/css");
 
         // This must happen before setting CSS for IE.
-        head.insertBefore( style, head.firstChild );
+        head.insertBefore(style, head.firstChild);
 
         // IE
-        if ( style.styleSheet ) {
+        if (style.styleSheet) {
             style.styleSheet.cssText = css;
         // The World
         } else {
-            textNode = document.createTextNode( css );
-            style.appendChild( textNode );
+            textNode = document.createTextNode(css);
+            style.appendChild(textNode);
         }
 
     }
@@ -1886,8 +2098,9 @@
     Boot.createHTML
 
     Research: http://domscripting.com/blog/display/99
+    TODO: Is documentFragment the more correct way to do this? Does it matter?
 */
-    function createHTML( html ) {
+    function createHTML(html) {
         var div = document.createElement("c");
         div.innerHTML = html;
         return div.firstChild;
@@ -1922,47 +2135,47 @@
             fontPath,
             fontFace,
             fontfaceCSS = [],
-            i = 0,
-            l = args.length;
+            i,
+            l;
 
         // Create the test <div> on demand so as not to impact performance up front.
-        if ( ! fontTestDiv ) {
+        if (!fontTestDiv) {
             // Removed these (from webfontloader):
             // height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
             fontTestDiv = createHTML("<div style=\"position:absolute;top:-999em;left:-999em;width:auto;font-size:300px;font-family:serif\">BESs</div>" );
         }
 
-        function fontReady( fontDiv, namespacedFontName ) {
+        function fontReady(fontDiv, namespacedFontName) {
 
             function fontReadyTest() {
                 // Insert the <div> wit font to be tested.
-                fontDivParent.insertBefore( fontDiv, fontDivParent.firstChild );
+                fontDivParent.insertBefore(fontDiv, fontDivParent.firstChild);
 
                 // Poll the DOM every interval to see if width changes.
-                poll(function(){
+                poll(function () {
 //                    alert( namespacedFontName + ": " + fontTestDiv.offsetWidth + "!==" + fontDiv.offsetWidth );
                     return fontTestDiv.offsetWidth !== fontDiv.offsetWidth;
-                }, function( isTimeout ){
-                    if ( isTimeout ) {
-                        removeClass( docElem, namespacedFontName + strLoading );
-                        addClass( docElem, namespacedFontName + strInactive );
-                        publish( eventNamespace + namespacedFontName + strInactive );
+                }, function (isTimeout) {
+                    if (isTimeout) {
+                        removeClass(docElem, namespacedFontName + strLoading);
+                        addClass(docElem, namespacedFontName + strInactive);
+                        publish(eventNamespace + namespacedFontName + strInactive);
                     } else {
-                        removeClass( docElem, namespacedFontName + strLoading );
-                        addClass( docElem, namespacedFontName + strActive );
-                        publish( eventNamespace + namespacedFontName + strActive );
+                        removeClass(docElem, namespacedFontName + strLoading);
+                        addClass(docElem, namespacedFontName + strActive);
+                        publish(eventNamespace + namespacedFontName + strActive);
                     }
-                    if ( callback ) {
-                        callback( namespacedFontName, isTimeout );
+                    if (callback) {
+                        callback(namespacedFontName, isTimeout);
                     }
                 }, pollDelay, options.timeout );
             }
 
-            if ( fontTestDivStatus === 2 ) {
+            if (fontTestDivStatus === 2) {
                 fontReadyTest();
             } else {
                 // IE 6/7 is not ready yet, wait until it is.
-                poll(function(){
+                poll(function () {
                     return fontTestDivStatus === 2;
                 }, fontReadyTest, pollDelay);
             }
@@ -1972,24 +2185,24 @@
         // font requests and wait until a <body> element exists.
         // Lots of polling and waiting going on here.  Good news
         // is that all other browsers zip on through this mess.
-        if ( ! fontTestDivStatus ) {
+        if (!fontTestDivStatus) {
 
             // Indicate we already inserted the font test <div>.
-            docElem.insertBefore( fontTestDiv, docElem.firstChild );
+            docElem.insertBefore(fontTestDiv, docElem.firstChild);
             fontTestDivStatus = 1;
 
             // We detect if our <div> has a 0 width, something that
             // only happens in IE6/7.  Internet Explorer appears to
             // need a test element inside the <body> to apply CSS.
-            if ( fontTestDiv.offsetWidth === 0 ) {
+            if (fontTestDiv.offsetWidth === 0) {
 
                 // Poll until we have a body.  When we do, update
                 // our status so anyone watching knows.
-                poll(function(){
+                poll(function () {
                     return document.body;
-                }, function(){
+                }, function () {
                     fontDivParent = document.body;
-                    fontDivParent.insertBefore( fontTestDiv, fontDivParent.firstChild );
+                    fontDivParent.insertBefore(fontTestDiv, fontDivParent.firstChild);
                     fontTestDivStatus = 2;
                 }, pollDelay);
             } else {
@@ -1998,48 +2211,48 @@
         }
 
         // Boot.each might be a cleaner approach, revisit someday (maybe).
-        for (; i < l; i++ ) {
+        for (i = 0, l = args.length; i < l; i++) {
 
             arg = args[i];
 
-            if ( isString(arg) ) {
+            if (isString(arg)) {
 
                 fontName = arg.toLowerCase();
 
-                fontPath = options.path.replace( fontTemplate, fontName );
+                fontPath = options.path.replace(fontTemplate, fontName);
 
-                fontFace = options.fontface.replace( fontTemplate, fontName ).replace( fontPathTemplate, fontPath );
+                fontFace = options.fontface.replace(fontTemplate, fontName).replace(fontPathTemplate, fontPath);
 
-                fontfaceCSS.push( fontFace );
+                fontfaceCSS.push(fontFace);
 
-                fontDiv = fontTestDiv.cloneNode( true );
+                fontDiv = fontTestDiv.cloneNode(true);
 
                 fontDiv.style.fontFamily = "'" + fontName + "',serif";
 
                 namespacedFontName = options.namespace + fontName;
 
-                publish( eventNamespace + namespacedFontName + strLoading );
+                publish(eventNamespace + namespacedFontName + strLoading);
 
                 // Add the "loading" class for this font.
-                addClass( docElem, namespacedFontName + strLoading );
+                addClass(docElem, namespacedFontName + strLoading);
 
-                fontReady( fontDiv, namespacedFontName );
+                fontReady(fontDiv, namespacedFontName);
 
             // If we have an object, extend our current options.
-            } else if ( isObject(arg) ) {
-                extend( options, arg );
+            } else if (isObject(arg)) {
+                extend(options, arg);
             // If a function is present, add it as a callback to options.
-            } else if ( isFunction(arg) ) {
+            } else if (isFunction(arg)) {
                 callback = arg;
             }
         }
 
         // Inject the @fontface rules into the head.
-        inlineCSS( fontfaceCSS.join("") );
+        inlineCSS(fontfaceCSS.join(""));
 
     }
 
-    setup( getFont, {
+    setup(getFont, {
         namespace: "wf-",
         path: "fonts/{f}/{f}-webfont",
         pollDelay: 100,
@@ -2059,7 +2272,7 @@
     Consider ditching this, ef IE and yay media queries?
     Update: People actually need this.
 */
-    var screens = [ 320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920 ],
+    var screens = [320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920],
         screensLength = screens.length,
         screenWidth,
         screenClasses = "";
@@ -2077,20 +2290,20 @@
         // This is needed for IE 6/7 support, where the
         // resize event is fired whenever any element
         // on the page resizes (retarded).
-        if ( currentWidth !== screenWidth ) {
+        if (currentWidth !== screenWidth) {
 
-            for ( i = 0; i < screensLength; i++ ) {
+            for (i = 0; i < screensLength; i += 1) {
                 width = screens[i];
-                currentClasses.push( (currentWidth <= width ? "lt-" : "gt-") + width );
+                currentClasses.push((currentWidth <= width ? "lt-" : "gt-") + width);
             }
 
-            currentClasses = currentClasses.join( strSpace );
+            currentClasses = currentClasses.join(strSpace);
 
-            if ( currentClasses !== screenClasses ) {
-                removeClass( docElem, screenClasses );
-                addClass( docElem, currentClasses );
+            if (currentClasses !== screenClasses) {
+                removeClass(docElem, screenClasses);
+                addClass(docElem, currentClasses);
                 screenClasses = currentClasses;
-                publish( eventNamespace + "screen-update", { screens: screenClasses, width: currentWidth });
+                publish(eventNamespace + "screen-update", { screens: screenClasses, width: currentWidth });
             }
         }
     }
@@ -2098,7 +2311,7 @@
     screenSize();
 
     // Throttling seemed to be more desirable than debouncing.
-    bind( window, "resize", throttle( screenSize, 100 ) );
+    bind(window, "resize", throttle(screenSize, 100));
 
 
 /*
@@ -2117,20 +2330,20 @@
         browserVersion,
         browserClasses = [];
 
-    userAgent = /(firefox)[ \/]([\w.]+)/.exec( userAgent ) ||
-        /(chrome)[ \/]([\w.]+)/.exec( userAgent ) ||
-        (contains( userAgent, "safari" ) && /(version)[ \/]([\w.]+)/.exec( userAgent )) ||
-        /(opera)(?:.*version)?[ \/]([\w.]+)/.exec( userAgent ) ||
-        /(msie) ([\w.]+)/.exec( userAgent ) ||
-        /(webkit)[ \/]([\w.]+)/.exec( userAgent ) || [];
+    userAgent = /(firefox)[ \/]([\w.]+)/.exec(userAgent) ||
+        /(chrome)[ \/]([\w.]+)/.exec(userAgent) ||
+        (contains(userAgent, "safari") && /(version)[ \/]([\w.]+)/.exec(userAgent)) ||
+        /(opera)(?:[.]*version)?[ \/]([\w.]+)/.exec(userAgent) ||
+        /(msie) ([\w.]+)/.exec(userAgent) ||
+        /(webkit)[ \/]([\w.]+)/.exec(userAgent) || [];
 
     browserName = userAgent[1];
     browserVersion = userAgent[2];
 
-    if ( browserName === "msie" ) {
+    if (browserName === "msie") {
         browserName = "ie";
         browserVersion = document.documentMode || browserVersion;
-    } else if ( browserName === "version" ) {
+    } else if (browserName === "version") {
         browserName = "safari";
     }
 
@@ -2139,31 +2352,31 @@
 
     // Mobile detection
     // TODO: Refactor this, DRY!
-    if ( /iPad/.test(navigatorUserAgent) ) {
+    if (/iPad/.test(navigatorUserAgent)) {
         browserClasses.push("ipad");
         browser.iPad = true;
-    } else if ( /iPhone/.test(navigatorUserAgent) ) {
+    } else if (/iPhone/.test(navigatorUserAgent)) {
         browserClasses.push("iphone");
         browser.iPhone = true;
-    } else if ( /Android/.test(navigatorUserAgent) ) {
+    } else if (/Android/.test(navigatorUserAgent)) {
         browserClasses.push("android");
         browser.android = true;
     }
 
-    browserClasses.push( "js" ); // JavaScript CSS class
+    browserClasses.push("js"); // JavaScript CSS class
 
-    browserClasses.push( browserName );
-    browserClasses.push( browserName + parseInt( browserVersion, 10 ) ); // Major version
-    browserClasses.push( browserName + browserVersion.toString().replace(strDot, "-").replace(/\..*/, "" ) ); // Minor version
+    browserClasses.push(browserName);
+    browserClasses.push(browserName + parseInt(browserVersion, 10)); // Major version
+    browserClasses.push(browserName + browserVersion.toString().replace(strDot, "-").replace(/\..*/, "" )); // Minor version
 
     // Add classes all at once for performance reasons.
-    addClass( docElem, browserClasses.join( strSpace ) );
+    addClass(docElem, browserClasses.join( strSpace ));
 
     // Remove no-js class if one exists.
-    removeClass( docElem, "no-js" );
+    removeClass(docElem, "no-js");
 
     // Open up Boot.browser
-    browser[ browserName ] = true;
+    browser[browserName] = true;
 
     global.browser = browser;
 
@@ -2173,44 +2386,43 @@
     http://html5doctor.com/how-to-get-html5-working-in-ie-and-firefox-2/
     Research need for print protection: http://www.iecss.com/print-protector/
 */
-/*
-    if ( browser.ie ) {
+    if (browser.ie) {
         // HTML5 support for IE
-        each( "abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split( strSpace ), function( elem ) {
-            document.createElement( elem );
+        each("abbr article aside audio canvas details figcaption figure footer header hgroup mark meter nav output progress section summary time video".split(strSpace), function (elem) {
+            document.createElement(elem);
         });
     }
-*/
 
 
 /*
     Boot.feature
     Based on API by head.js
+    Provides Modernizr like testability.
 */
 /*
     var features = {};
-    function feature( key, test ) {
+    function feature(key, test) {
 
         var result = false,
             i;
 
-        if ( isFunction( test ) || isBoolean( test ) ) {
-            if ( test === true || test() ) {
+        if (isFunction(test) || isBoolean(test)) {
+            if (test === true || test()) {
                 result = true;
-                addClass( docElem, key );
+                addClass(docElem, key);
             } else {
                 result = false;
-                addClass( docElem, "no-" + key );
+                addClass(docElem, "no-" + key);
             }
-            features[ key ] = result;
-        } else if ( isObject( key ) ) {
-            for ( i in key ) {
-                if ( key.hasOwnProperty( i ) ) {
-                    feature( i, key[ i ] );
+            features[key] = result;
+        } else if (isObject(key)) {
+            for (i in key) {
+                if (key.hasOwnProperty(i)) {
+                    feature(i, key[i]);
                 }
             }
         } else {
-            result = features[ key ];
+            result = features[key];
         }
 
         return result;
@@ -2237,22 +2449,22 @@
 
         Boot.disableTextSelect( myElement );
 */
-
+/*
     // The actual cross-browserness of this has NOT been tested
     // This is an initial pass based on a stackoverflow example
     // http://stackoverflow.com/questions/826782/css-rule-to-disable-text-selection-highlighting
-/*
-    function disableTextSelect( element ) {
-        if ( getStyle( element, "-khtml-user-select" ) ) {
+
+    function disableTextSelect(element) {
+        if (getStyle(element, "-khtml-user-select")) {
             // Set style for older webkit
             element.style["-khtml-user-select"] = "none";
-        } else if ( getStyle( element, "-webkit-user-select" ) ) {
+        } else if (getStyle(element, "-webkit-user-select")) {
             // Set style for webkit
             element.style["-webkit-user-select"] = "none";
-        } else if ( getStyle( element, "-moz-user-select" ) ) {
+        } else if (getStyle(element, "-moz-user-select")) {
             // Set style for mozilla
             element.style["-moz-user-select"] = "-moz-none";
-        } else if ( getStyle( element, "user-select" ) ) {
+        } else if (getStyle(element, "user-select")) {
             // Set style for mozilla
             element.style["user-select"] = "none";
         } else {
@@ -2267,213 +2479,11 @@
 
 
 /*
-    UNDERSCORE UTILITIES
-    Helper utilities based on Underscore Library.
-    http://documentcloud.github.com/underscore/underscore.js
-*/
-  // Return the results of applying the iterator to each element.
-  // Delegates to **ECMAScript 5**'s native `map` if available.
-/*    function map( obj, iterator, context ) {
-        var results = [];
-        each( obj, function( value, index, list ) {
-            results.push( iterator.call( context, value, index, list ) );
-        });
-        return results;
-    }*/
-//    global.map = map;
-
-    // Delays a function for the given number of milliseconds, and then calls
-    // it with the arguments supplied.
-    function delay( func, wait ) {
-        var args = slice.call( arguments, 2 );
-        return SetTimeout( function(){ return func.apply(func, args); }, wait );
-    }
-
-    // Defers a function, scheduling it to run after the current call stack has
-    // cleared.
-    function defer( func ) {
-        // return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
-        SetTimeout( func, 0 );
-    }
-    global.defer = defer;
-
-    // Internal function used to implement throttle() and debounce()
-    function limit( func, wait, debounce ) {
-
-        var timeout;
-
-        return function() {
-
-            function throttler() {
-                timeout = undefined;
-                func.call( this );
-            }
-
-            if ( debounce ) {
-                clearTimeout( timeout );
-            }
-
-            if ( debounce || ! timeout ) {
-                timeout = SetTimeout( throttler, wait );
-            }
-        };
-    }
-
-    // Returns a function, that, when invoked, will only be triggered at most once
-    // during a given window of time.
-    function throttle( func, wait ) {
-        return limit( func, wait, false );
-    }
-    global.throttle = throttle;
-
-    // Returns a function, that, as long as it continues to be invoked, will not
-    // be triggered. The function will be called after it stops being called for
-    // N milliseconds.
-    function debounce( func, wait ) {
-        return limit( func, wait, true );
-    }
-    global.debounce = debounce;
-
-
-/*
-    Returns a new function with "this" (ie, the scope) set to a specified argument
-
-    Parameters
-
-        scope - Sets "this" in the function to the object passed as scope
-        fn - The function to set scope for
-        args - an optional array of arguments
-*/
-    function proxy( scope, fn, args ) {
-        return (function() {
-            ( args ) ? fn.apply( scope, args ) : fn.call( scope );
-        });
-    }
-    global.proxy = proxy;
-
-
-/*
-    Function: Boot.globalEval
-
-    Evaluates code in the global scope.
-
-    Parameters:
-
-        src - The source code to execute.
-
-    Returns:
-
-    Boot
-
-    Research:
-    http://web// logs.java.net/b// log/driscoll/archive/2009/09/08/eval-javascript-global-context
-*/
-/*
-    function globalEval( data ) {
-        ( window.execScript || function( data ) {
-            window[ "eval" ].call( window, data );
-        } )( data );
-    }
-    global.globalEval = globalEval;
-*/
-
-
-/*
-    Function: Boot.trim
-
-    Trims whitespace before and after a string.
-
-    Parameters
-
-        str - The string to trim leading whitespace.
-
-    Returns
-
-    String - The trimmed string.
-*/
-    function trim( str ) {
-        return str.replace(/^\s+/, "").replace(/\s+$/, "");
-    }
-    global.trim = trim;
-
-
-/*
-    Function: Boot.param
-*/
-    function param( obj ) {
-
-        var params = [],
-            name;
-
-        for ( name in obj ) {
-            if ( obj.hasOwnProperty( name ) ) {
-                params.push( encode( name ) + "=" + encode( obj[ name ] ) );
-            }
-        }
-
-        return params.join("&");
-    }
-    global.param = param;
-
-
-/*
-    Function: Boot.parseJSON
-
-    Parses a valid JSON string into a JavaScript object. Thanks, jQuery!
-
-    Parameters
-
-        data - The string of data to parse.
-
-    Returns:
-
-    Object - Parsed JSON object.
-*/
-/*
-    Removing because it's too heavy and developers need to be smart.
-    var rvalidchars = /^[\],:{}\s]*$/,
-        rvalidescape = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,
-        rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,
-        rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g;
-*/
-    function parseJSON( data ) {
-        try {
-            // Make sure leading/trailing whitespace is removed (IE can't handle it)
-            data = trim( data );
-
-            // Attempt to parse using the native JSON parser first
-            if ( JSON && JSON.parse ) {
-                return JSON.parse( data );
-            }
-
-            // Make sure the incoming data is actual JSON
-            // // logic borrowed from http://json.org/json2.js
-            // *Removing this to decrease weight of the library.
-        //    if ( rvalidchars.test(
-        //            data.replace( rvalidescape, "@" )
-        //                .replace( rvalidtokens, "]" )
-        //                .replace( rvalidbraces, "") ) ) {
-
-            return (new Function( "return " + data ))();
-
-        //    }
-        } catch (e) {
-            // This function may raise eyebrows so be sure to
-            // inform developers why it failed.
-            if ( window.console ) {
-                console.log( "Bad JSON: " + data );
-            }
-        }
-    }
-    global.parseJSON = parseJSON;
-
-
-/*
     Boot.getJSONP
     Simple function for returning JSONP data.
 */
     var jsonpId = 0;
-    function getJSONP( url, callback ) {
+    function getJSONP(url, callback) {
 
         // If URL contains a question mark, replace it
         // with our special callback.
@@ -2483,25 +2493,25 @@
             var callbackId = "_JSONP_" + jsonpId;
             url = url.replace("=?", "=" + namespace + "." + callbackId);
 
-            global[ callbackId ] = function( data ) {
+            global[callbackId] = function(data) {
 
                 // Pass data to the callback.
-                callback && callback.call( window, data );
+                callback && callback.call(window, data);
 
                 // Cleanup function reference.
-                delete global[ callbackId ];
+                delete global[callbackId];
             };
 
         }
 
-        return getScript( url );
+        return getScript(url);
     }
     global.getJSONP = getJSONP;
 
 
     // AMD to the MAX
     // Expose our internal utilities through a module definition.
-/*    define( namespace.toLowerCase() + ".core", {
+/*    define(namespace.toLowerCase() + ".core", {
 
         now: now,
         log: log,
@@ -2519,6 +2529,20 @@
 
         each: each,
         extend: extend,
+
+        // map: map,
+        delay: delay,
+        defer: defer,
+        limit: limit,
+        throttle: throttle,
+        debounce: debounce,
+        proxy: proxy,
+
+        globalEval: globalEval,
+
+        trim: trim,
+        param: param,
+        parseJSON: parseJSON,
 
         setup: setup,
 
@@ -2541,9 +2565,10 @@
         modules: modules,
         define: define,
         require: require,
-        widget: widget,
 
         query: query,
+
+        widget: widget,
 
         attr: attr,
         data: data,
@@ -2563,20 +2588,6 @@
 
         disableTextSelect: disableTextSelect,
 
-        // map: map,
-        delay: delay,
-        defer: defer,
-        limit: limit,
-        throttle: throttle,
-        debounce: debounce,
-        proxy: proxy,
-
-        globalEval: globalEval,
-
-        trim: trim,
-        param: param,
-
-        parseJSON: parseJSON,
         getJSONP: getJSONP
 
     });
