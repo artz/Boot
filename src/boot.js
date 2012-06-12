@@ -1490,7 +1490,8 @@
 
         var options = extend(require.option(), customOptions), // See how Boot.setup works.
             callbackArgs = [],
-            concatModules = [],
+            concatScripts = [],
+            concatStyles = [],
             moduleCount = 0;
 
         function moduleReady(i, moduleName, module) {
@@ -1582,7 +1583,12 @@
                 } else {
                     // If concat is enabled, push this module into our queue.
                     if (options.concat) {
-                        concatModules.push([i, moduleName]);
+                        if (/\.css$/.test(moduleName)) {
+                            concatStyles.push([i, moduleName]);
+                        } else {
+                            concatScripts.push([i, moduleName]);
+                        }
+                        // concatModules.push([i, moduleName]);
                     // Otherwise, fetch the module now.
                     } else {
                         get(resolve(options, moduleName), function () {
@@ -1595,25 +1601,32 @@
 
         });
 
-        // If we happened upon concatenated scripts, get 'em.
-        if (concatModules.length) {
+        // If we happened upon concatenated scripts or stylesheets, get 'em.
+        each([concatScripts, concatStyles], function (concatModules) {
 
             var concatURL,
-                concatScripts = [];
+                moduleName,
+                concatFiles = [],
+                getFile;
 
-            each(concatModules, function (concatModule) {
-                concatScripts.push(resolve(options, concatModule[1]));
-            });
+            if (concatModules.length) {
 
-            concatURL = getConcatURL.apply(window, [options].concat(concatScripts))
-
-            getScript(concatURL, function () {
                 each(concatModules, function (concatModule) {
-                    defineModule(concatModule[0], concatModule[1]);
+                    moduleName = concatModule[1];
+                    concatFiles.push(resolve(options, concatModule[1]));
                 });
-            });
-        }
 
+                if (concatFiles.length) {
+                    concatURL = getConcatURL.apply(window, [options].concat(concatFiles));
+                    getFile = /\.css$/.test(concatURL) ? getCSS : getScript;
+                    getFile(concatURL, function () {
+                        each(concatModules, function (concatModule) {
+                            defineModule(concatModule[0], concatModule[1]);
+                        });
+                    });
+                }
+            }
+        });
     }
 
     setup(require);

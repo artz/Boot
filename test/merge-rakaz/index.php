@@ -30,10 +30,25 @@
     $cssdir   = dirname(__FILE__) . '/css';
     $jsdir    = dirname(__FILE__) . '/js';
 
-    $type = $_GET['type'];
+    // If files is not specified, exit.
+    if (empty($_GET['files'])) {
+        header ("HTTP/1.0 503 Not Implemented");
+        exit;
+    } else {
+        $elements = explode(',', $_GET['files']);
+    }
 
-    if ( $type == "js" ) {
-        $type = "javascript";
+    // Add support for unknown type.
+    if (empty($_GET['type'])) {
+        if (strstr($elements[0], '.js')) {
+            $content_type = 'text/javascript';
+            $type = 'js';
+        } else {
+            $content_type = 'text/css';
+            $type = 'css';
+        }
+    } else {
+        $type = $_GET['type'];
     }
 
     // Determine the directory and type we should use
@@ -41,7 +56,7 @@
         case 'css':
             $base = realpath($cssdir);
             break;
-        case 'javascript':
+        case 'js':
             $base = realpath($jsdir);
             break;
         default:
@@ -49,15 +64,14 @@
             exit;
     };
 
-
-    $elements = explode(',', $_GET['files']);
-
     // Determine last modification date of the files
     $lastmodified = 0;
+
     while (list(,$element) = each($elements)) {
+
         $path = realpath($base . '/' . $element);
 
-        if (($type == 'javascript' && substr($path, -3) != '.js') ||
+        if (($type == 'js' && substr($path, -3) != '.js') ||
             ($type == 'css' && substr($path, -4) != '.css')) {
             header ("HTTP/1.0 403 Forbidden");
             exit;
@@ -116,7 +130,7 @@
                         header ("Content-Encoding: " . $encoding);
                     }
 
-                    header ("Content-Type: text/" . $type);
+                    header ("Content-Type: " . $content_type);
                     header ("Content-Length: " . filesize($cachedir . '/' . $cachefile));
 
                     fpassthru($fp);
@@ -135,7 +149,7 @@
         }
 
         // Send Content-Type
-        header ("Content-Type: text/" . $type);
+        header ("Content-Type: " . $content_type);
 
         if (isset($encoding) && $encoding != 'none')
         {
