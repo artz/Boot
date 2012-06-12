@@ -41,14 +41,19 @@
     // Add support for unknown type.
     if (empty($_GET['type'])) {
         if (strstr($elements[0], '.js')) {
-            $content_type = 'text/javascript';
             $type = 'js';
         } else {
-            $content_type = 'text/css';
             $type = 'css';
         }
     } else {
         $type = $_GET['type'];
+    }
+
+    // Set content type
+    if ($type === 'js') {
+        $content_type = 'text/javascript';
+    } else if ($type === 'css') {
+        $content_type = 'text/css';
     }
 
     // Determine the directory and type we should use
