@@ -122,4 +122,19 @@
         });
     });
 
+    asyncTest("Require a module with CSS dependencies.", function () {
+        Boot.require({ basePath: "js/" }, ["style.css", "csslib/foo"], function (csslib) {
+            equal(csslib.css, true);
+            start();
+        });
+    });
+
+    asyncTest("Concatenated CSS and JS require.", function () {
+        Boot.require({ basePath: "", concat: true, concatPath: "merge-rakaz/?files=" }, ["css1.css", "css2.css", "amd1", "amd2"], function (amd1, amd2) {
+            equal(amd1.amd, 1);
+            equal(amd2.amd, 2);
+            start();
+        });
+    });
+
 }());
