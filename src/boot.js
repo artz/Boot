@@ -29,7 +29,7 @@
         // Localize global objects and functions for better compression.
         document = window.document,
         JSON = window.JSON,
-        SetTimeout = window.setTimeout,
+        setTimeout = window.setTimeout,
 
         slice = Array.prototype.slice,
         encode = encodeURIComponent,
@@ -98,7 +98,7 @@
         startTime = now(),
         logEnabled = 0;
 
-    function log(msg, ul) {
+    function log(msg) {
 
         if (!body) {
             body = document.body;
@@ -107,9 +107,11 @@
         logItems.push((now() - startTime) + "ms: " + msg);
 
         if (logEnabled) {
-            if (logList ||
-               (logList = ul) ||
-               (body && (logList = document.createElement("div")) && body.insertBefore(logList, body.firstChild))) {
+            if (!logList && body) {
+                logList = document.createElement("div");
+                body.insertBefore(logList, body.firstChild);
+            }
+            if (logList) {
                 logList.innerHTML = ["<ul><li>", logItems.join("</li><li>"), "</li></ul>"].join('');
             }
         }
@@ -318,14 +320,14 @@
     // it with the arguments supplied.
     function delay(func, wait) {
         var args = slice.call(arguments, 2);
-        return SetTimeout(function () { return func.apply(func, args); }, wait);
+        return setTimeout(function () { return func.apply(func, args); }, wait);
     }
 
     // Defers a function, scheduling it to run after the current call stack has
     // cleared.
     function defer(func) {
         // return delay.apply({}, [func, 1].concat( slice.call(arguments, 1) ));
-        SetTimeout(func, 0);
+        setTimeout(func, 0);
     }
     global.defer = defer;
 
@@ -346,7 +348,7 @@
             }
 
             if (debounce || !timeout) {
-                timeout = SetTimeout(throttler, wait);
+                timeout = setTimeout(throttler, wait);
             }
         };
     }
@@ -377,9 +379,13 @@
         args - an optional array of arguments
 */
     function proxy(scope, fn, args) {
-        return (function () {
-            (args) ? fn.apply(scope, args) : fn.call(scope);
-        });
+        return function () {
+            if (args) {
+                fn.apply(scope, args);
+            } else {
+                fn.call(scope);
+            }
+        };
     }
     global.proxy = proxy;
 
@@ -558,7 +564,11 @@
 
             time = now() - start;
 
-            if (check() || (timeout && (isTimeout = time > timeout))) {
+            if (timeout && time > timeout) {
+                isTimeout = true;
+            }
+
+            if (check() || isTimeout) {
                 callback.call(window, isTimeout, time);
                 clearInterval(timers[name]);
             }
@@ -630,7 +640,7 @@
             if ( checkReady() ) {
                 execReady();
             } else {
-                SetTimeout( pollReadyState, 50 );
+                setTimeout( pollReadyState, 50 );
             }
         },
 */
@@ -852,9 +862,11 @@
             object = undefined;
         }
 
-        var eventQueue = events[event] || (events[event] = []);
+        if (!events[event]) {
+            events[event] = [];
+        }
 
-        eventQueue.push([object, callback]);
+        events[event].push([object, callback]);
 
     }
     global.subscribe = subscribe;
@@ -989,7 +1001,9 @@
         // log( "Boot.getJS (cacheScript): Caching script (" + src + ")" );
         var elem;
 
-        body || (body = document.body);
+        if (!body) {
+            body = document.body;
+        }
 
         if (cacheDelay) {
             // Convert cacheDelay to seconds.
@@ -1000,7 +1014,7 @@
         if (body) {
 
             // Cache the script after the optional cacheDelay.
-            SetTimeout(function () {
+            setTimeout(function () {
                 // Gecko gets an object, everyone else gets an image.
                 // See /test/boot.cachescript.html
                 elem = document.createElement(isGecko ? strObject : "img");
@@ -1093,7 +1107,7 @@
 
                     // Remove this script in the next available UI thread.
                     // * Removing this to reduce KB.  If people really care, we will add back.
-//                  SetTimeout(function(){
+//                  setTimeout(function(){
 //                      firstScriptParent.removeChild( script );
 //                  }, 0);
 
@@ -1192,12 +1206,12 @@
                 execScripts();
             } else {
                 // TODO: Use defer instead.
-                SetTimeout(function () {
+                defer(function () {
                     // For other browsers, we continue to manage things
-                    // manually using paced SetTimeouts.  IE likes it.
+                    // manually using paced setTimeouts.  IE likes it.
                     nextScript(nextScript.t);
                     execScripts();
-                }, 0);
+                });
             }
         }
     }
@@ -1497,7 +1511,8 @@
         function moduleReady(i, moduleName, module) {
 
             var args = [],
-                i, l;
+                j,
+                k;
 
             if (module) {
                 modules[moduleName] = module;
@@ -1510,9 +1525,9 @@
             if (moduleCount === moduleNames.length) {
                 // Remove CSS from callbackArgs
                 // TODO: Instead of this, maintain a callbackArgIndex
-                for (i = 0, l = callbackArgs.length; i < l; i += 1) {
-                    if (!/\.css$/.test(moduleNames[i])) {
-                        args.push(callbackArgs[i]);
+                for (j = 0, k = callbackArgs.length; j < k; j += 1) {
+                    if (!/\.css$/.test(moduleNames[j])) {
+                        args.push(callbackArgs[j]);
                     }
                 }
                 callback.apply(global, args);
@@ -1523,7 +1538,7 @@
             }
         }
 
-        function defineModule(i, moduleName){
+        function defineModule(i, moduleName) {
 
             var module,
                 moduleDependencies,
@@ -1531,7 +1546,8 @@
 
             if (moduleDefinition) {
 
-                if (moduleDependencies = moduleDefinition.d) {
+                moduleDependencies = moduleDefinition.d;
+                if (moduleDependencies) {
 
                     require(customOptions, moduleDependencies, function () {
                         module = isFunction(moduleDefinition) ? moduleDefinition.apply(global, arguments) : moduleDefinition;
@@ -1574,7 +1590,7 @@
 
                 // Temporarily give this guy something so incoming
                 // module requests wait until the event is emmitted.
-                modules[ moduleName ] = undefined;
+                modules[moduleName] = undefined;
 
                 // If the module was defined by some other script
                 if (moduleDefinitions[moduleName]) {
@@ -1659,7 +1675,7 @@
     function listToArray(collection) {
         var array = [],
             l = collection.length;
-        while (l--) {
+        while (l -= 1) {
             array[l] = collection[l];
         }
         return array;
@@ -1673,12 +1689,13 @@
         var elements = element.getElementsByTagName("*"),
             className,
             matches = [],
-            i, l;
+            i,
+            l;
 
         for (i = 0, l = elements.length; i < l; i += 1) {
             className = elements[i].className;
             if (className && (new RegExp("(\\s|^)" + className + "(\\s|$)").test(selector))) {
-                matches.push( elements[i] );
+                matches.push(elements[i]);
             }
         }
         return matches;
@@ -1686,30 +1703,30 @@
 
     // Our simple selector engine.
     var querySelectorAll = document.querySelectorAll ? // Runtime feature detect.
-            function( selector, element ) {
+            function (selector, element) {
 
                 element = element || document;
 
                 // Helps ensure that if we were given a descendant
                 // selector we only take the first segment.
-                selector = selector.split( strSpace )[0];
+                selector = selector.split(strSpace)[0];
 
-                return listToArray( element.querySelectorAll( selector ) );
+                return listToArray(element.querySelectorAll(selector));
 
-            } : function( selector, element ) {
+            } : function (selector, element) {
 
         element = element || document;
 
         // Helps ensure that if we were given a descendant
         // selector we only take the first segment.
-        selector = selector.split( strSpace )[0];
+        selector = selector.split(strSpace)[0];
 
         // Grabs the first character, which informs our selector engine.
         var firstChar = selector.charAt(0),
             nodes;
 
         if (firstChar === "#") {
-            nodes = [ element.getElementById(selector.replace(firstChar, "")) ];
+            nodes = [element.getElementById(selector.replace(firstChar, ""))];
         } else if (firstChar === strDot) {
             nodes = getElementsByClassName(selector.replace(firstChar, ""), element);
         } else {
@@ -1748,19 +1765,19 @@
 
         // Loop through each selector segment and
         // find elements matching inside context.
-        for (x = 0, y = selector.length; x < y; x++) {
+        for (x = 0, y = selector.length; x < y; x += 1) {
 
             context = elems;
             elems = [];
 
             // Loop through each item in context
             // and find elements.
-            for (i = 0, l = context.length; i < l; i++) {
+            for (i = 0, l = context.length; i < l; i += 1) {
 
                 // Look for items matching the first
                 // segement of the selector and add
                 // them to our result set.
-                elems = elems.concat( querySelectorAll( selector[x], context[i] ) );
+                elems = elems.concat(querySelectorAll(selector[x], context[i]));
 
             }
         }
@@ -1768,221 +1785,6 @@
         return elems;
     }
     global.query = query;
-
-
-/*
-    Boot.widget
-
-    The Widget factory is a wrapper function that
-    binds an element to a module using a defined
-    object specification.
-
-    Note: This is a work in progress!
-*/
-    function widget(widgetName, elem, options) {
-
-        var source = modules[widgetName],
-            instance,
-            x,
-            ui;
-
-        if (elem.widget && elem.widget[widgetName]) {
-
-            instance = elem.widget[widgetName];
-
-        } else {
-
-            instance = extend({}, source, {
-                element: elem,
-                name: widgetName.replace(strDot, "-"),
-                namespace: widgetName,
-                option: function (key, value) {
-                    // TODO: Implement dynamic option setting like jQuery UI
-                },
-                ui: {},
-                options: options || {}
-            });
-
-            ui = extend( instance.ui, instance.options.ui );
-
-            // Convert UI selectors to elements.
-            if (ui) {
-                for (x in ui) {
-                    if (ui.hasOwnProperty(x)) {
-                        ui[x] = query(ui[x], elem);
-                    }
-                }
-            }
-
-            addClass(elem, instance.name);
-
-            // Initialize the widget.
-            if (instance.create) {
-                instance._create();
-            }
-
-            // Save the instance on the element for later access.
-            if (!elem.widget) {
-                elem.widget = {};
-            }
-            elem.widget[widgetName] = instance;
-
-        }
-
-        return instance;
-
-    }
-    global.widget = widget;
-
-
-/*
-    Function: Boot.attr
-
-    Shorthand for setting and retrieving an attribute from an element.
-    Note this is not currently used by Boot, but used by Easync and ModuleT
-
-    Parameters:
-
-        elem - The object with the attribute to fetch.
-        attribute - The attribute to fetch.
-        value - The value to set.
-
-    Returns:
-
-    Attribute value (getting) or Boot (setting)
-*/
-    function attr(elem, attribute, value) {
-        if (value !== undefined) {
-            if (value === null) {
-                elem.removeAttribute(attribute);
-            } else {
-                if (attribute === "style") {
-                    // For IE.
-                    elem.style.cssText = value;
-                }
-                elem.setAttribute(attribute, value);
-            }
-        } else {
-            return elem.getAttribute(attribute);
-        }
-    }
-    global.attr = attr;
-
-
-/*
-    Boot.data
-
-    Function for extracting data attributes and storing
-    arbitrary data on elements.
-
-    TODO: Add an option for converting hyphenated attributes into camelCase or underscores.
-*/
-    function data(elem, key, value) {
-        // Return an object of all data attributes.
-        var strData = "data-",
-
-            attribute,
-            attributeName,
-            attributes = elem.attributes,
-            attributesLength = attributes.length,
-            attributesObject = {},
-
-            ret;
-
-        if (value !== undefined) {
-            attr(elem, strData + key, value);
-        } else if (key !== undefined) {
-            ret = attr(elem, strData + key);
-        } else {
-            while(attributesLength--) {
-                attribute = attributes[attributesLength];
-                attributeName = attribute.nodeName;
-                if (contains(attributeName, strData)) {
-                    attributesObject[attributeName.replace(strData, "")] = attribute.nodeValue;
-                }
-            }
-            ret = attributesObject;
-        }
-        return ret;
-    }
-    global.data = data;
-
-
-/*
- * Boot.cookie
- * Simple interface for interacting with document.cookie.
- * https://developer.mozilla.org/en/DOM/document.cookie
- */
-    function cookie(key, value, options) {
-
-        var cookies = document.cookie.split(";"),
-            cookieObject = {},
-            cookiePair,
-            i,
-            l,
-            expires,
-            date;
-
-        // Create, update, or delete a cookie.
-        if (value !== undefined) {
-
-            // Set up options.
-            options = options || {};
-            extend(options, cookie.option());
-
-            // Set up expiration
-            expires = options.expires;
-
-            if (value === "" || value === null) {
-                // Delete the cookie.
-                expires = -1;
-            }
-
-            if (isNumber(expires)) {
-                date = new Date();
-                // Convert to milliseconds.
-                expires = expires * 24 * 60 * 60 * 1000;
-                // Offset curent time.
-                date.setTime(date.getTime() + expires);
-            }
-
-            // Create, update, or expire the cookie.
-            document.cookie = [
-                encode(key),
-                "=",
-                encode(value), // Ensure an encoded string.
-                date ? "; expires=" + date.toUTCString() : "",
-                options.path    ? "; path=" + options.path : "",
-                options.domain  ? "; domain=" + options.domain : "",
-                options.secure  ? "; secure" : ""
-            ].join("");
-
-            return true;
-
-        // Fetch cookies.
-        } else {
-            // First, populate the cookie object.
-            for (i = 0, l = cookies.length; i < l; i += 1) {
-                cookiePair = cookies[i].split("=");
-                cookieObject[trim(decode(cookiePair[0]))] = trim(decode(cookiePair[1]));
-            }
-
-            if (key) {
-                return cookieObject[key] || null;
-            }
-
-            return cookieObject;
-        }
-    }
-    setup(cookie, {
-        // Default to the fully qualified domain name; this
-        // prevents cookie pollution to top-level domain.
-//      path: "/", // Should "/" (sitewide) be default?
-//      domain: location.hostname
-//      expires: 0 // Time in days
-//      secure: false
-    });
-    global.cookie = cookie;
 
 
 /*
@@ -2122,6 +1924,219 @@
 
 
 /*
+    Boot.widget
+
+    The Widget factory is a wrapper function that
+    binds an element to a module using a defined
+    object specification.
+
+    Note: This is a work in progress!
+*/
+    function widget(widgetName, elem, options) {
+
+        var source = modules[widgetName],
+            instance,
+            x,
+            ui;
+
+        if (elem.widget && elem.widget[widgetName]) {
+
+            instance = elem.widget[widgetName];
+
+        } else {
+
+            instance = extend({}, source, {
+                element: elem,
+                name: widgetName.replace(strDot, "-"),
+                namespace: widgetName,
+                option: function (key, value) {
+                    // TODO: Implement dynamic option setting like jQuery UI
+                },
+                ui: {},
+                options: options || {}
+            });
+
+            ui = extend(instance.ui, instance.options.ui);
+
+            // Convert UI selectors to elements.
+            if (ui) {
+                for (x in ui) {
+                    if (ui.hasOwnProperty(x)) {
+                        ui[x] = query(ui[x], elem);
+                    }
+                }
+            }
+
+            addClass(elem, instance.name);
+
+            // Initialize the widget.
+            if (instance._create) {
+                instance._create();
+            }
+
+            // Save the instance on the element for later access.
+            if (!elem.widget) {
+                elem.widget = {};
+            }
+            elem.widget[widgetName] = instance;
+
+        }
+
+        return instance;
+
+    }
+    global.widget = widget;
+
+
+/*
+    Function: Boot.attr
+
+    Shorthand for setting and retrieving an attribute from an element.
+    Note this is not currently used by Boot, but used by Easync and ModuleT
+
+    Parameters:
+
+        elem - The object with the attribute to fetch.
+        attribute - The attribute to fetch.
+        value - The value to set.
+
+    Returns:
+
+    Attribute value (getting) or Boot (setting)
+*/
+    function attr(elem, attribute, value) {
+        if (value !== undefined) {
+            if (value === null) {
+                elem.removeAttribute(attribute);
+            } else {
+                if (attribute === "style") {
+                    // For IE.
+                    elem.style.cssText = value;
+                }
+                elem.setAttribute(attribute, value);
+            }
+        } else {
+            return elem.getAttribute(attribute);
+        }
+    }
+    global.attr = attr;
+
+
+/*
+    Boot.data
+
+    Function for extracting data attributes and storing
+    arbitrary data on elements.
+
+    TODO: Add an option for converting hyphenated attributes into camelCase or underscores.
+*/
+    function data(elem, key, value) {
+        // Return an object of all data attributes.
+        var strData = "data-",
+
+            attribute,
+            attributeName,
+            attributes = elem.attributes,
+            attributesLength = attributes.length,
+            attributesObject = {},
+
+            ret;
+
+        if (value !== undefined) {
+            attr(elem, strData + key, value);
+        } else if (key !== undefined) {
+            ret = attr(elem, strData + key);
+        } else {
+            while (attributesLength -= 1) {
+                attribute = attributes[attributesLength];
+                attributeName = attribute.nodeName;
+                if (contains(attributeName, strData)) {
+                    attributesObject[attributeName.replace(strData, "")] = attribute.nodeValue;
+                }
+            }
+            ret = attributesObject;
+        }
+        return ret;
+    }
+    global.data = data;
+
+
+/*
+ * Boot.cookie
+ * Simple interface for interacting with document.cookie.
+ * https://developer.mozilla.org/en/DOM/document.cookie
+ */
+    function cookie(key, value, options) {
+
+        var cookies = document.cookie.split(";"),
+            cookieObject = {},
+            cookiePair,
+            i,
+            l,
+            expires,
+            date;
+
+        // Create, update, or delete a cookie.
+        if (value !== undefined) {
+
+            // Set up options.
+            options = options || {};
+            extend(options, cookie.option());
+
+            // Set up expiration
+            expires = options.expires;
+
+            if (value === "" || value === null) {
+                // Delete the cookie.
+                expires = -1;
+            }
+
+            if (isNumber(expires)) {
+                date = new Date();
+                // Convert to milliseconds.
+                expires = expires * 24 * 60 * 60 * 1000;
+                // Offset curent time.
+                date.setTime(date.getTime() + expires);
+            }
+
+            // Create, update, or expire the cookie.
+            document.cookie = [
+                encode(key),
+                "=",
+                encode(value), // Ensure an encoded string.
+                date ? "; expires=" + date.toUTCString() : "",
+                options.path    ? "; path=" + options.path : "",
+                options.domain  ? "; domain=" + options.domain : "",
+                options.secure  ? "; secure" : ""
+            ].join("");
+
+            return true;
+        }
+
+        // Fetch cookies.
+        for (i = 0, l = cookies.length; i < l; i += 1) {
+            cookiePair = cookies[i].split("=");
+            cookieObject[trim(decode(cookiePair[0]))] = trim(decode(cookiePair[1]));
+        }
+
+        if (key) {
+            return cookieObject[key] || null;
+        }
+
+        return cookieObject;
+    }
+    setup(cookie, {
+        // Default to the fully qualified domain name; this
+        // prevents cookie pollution to top-level domain.
+//      path: "/", // Should "/" (sitewide) be default?
+//      domain: location.hostname
+//      expires: 0 // Time in days
+//      secure: false
+    });
+    global.cookie = cookie;
+
+
+/*
     Boot.getFont
 */
     var fontTestDiv, // Keep it empty until invoked the first time.
@@ -2155,7 +2170,7 @@
         if (!fontTestDiv) {
             // Removed these (from webfontloader):
             // height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
-            fontTestDiv = createHTML("<div style=\"position:absolute;top:-999em;left:-999em;width:auto;font-size:300px;font-family:serif\">BESs</div>" );
+            fontTestDiv = createHTML("<div style=\"position:absolute;top:-999em;left:-999em;width:auto;font-size:300px;font-family:serif\">BESs</div>");
         }
 
         function fontReady(fontDiv, namespacedFontName) {
@@ -2181,7 +2196,7 @@
                     if (callback) {
                         callback(namespacedFontName, isTimeout);
                     }
-                }, pollDelay, options.timeout );
+                }, pollDelay, options.timeout);
             }
 
             if (fontTestDivStatus === 2) {
@@ -2224,7 +2239,7 @@
         }
 
         // Boot.each might be a cleaner approach, revisit someday (maybe).
-        for (i = 0, l = args.length; i < l; i++) {
+        for (i = 0, l = args.length; i < l; i += 1) {
 
             arg = args[i];
 
@@ -2380,10 +2395,10 @@
 
     browserClasses.push(browserName);
     browserClasses.push(browserName + parseInt(browserVersion, 10)); // Major version
-    browserClasses.push(browserName + browserVersion.toString().replace(strDot, "-").replace(/\..*/, "" )); // Minor version
+    browserClasses.push(browserName + browserVersion.toString().replace(strDot, "-").replace(/\.[.]*/, "")); // Minor version
 
     // Add classes all at once for performance reasons.
-    addClass(docElem, browserClasses.join( strSpace ));
+    addClass(docElem, browserClasses.join(strSpace));
 
     // Remove no-js class if one exists.
     removeClass(docElem, "no-js");
@@ -2506,10 +2521,12 @@
             var callbackId = "_JSONP_" + jsonpId;
             url = url.replace("=?", "=" + namespace + "." + callbackId);
 
-            global[callbackId] = function(data) {
+            global[callbackId] = function (data) {
 
                 // Pass data to the callback.
-                callback && callback.call(window, data);
+                if (callback) {
+                    callback.call(window, data);
+                }
 
                 // Cleanup function reference.
                 delete global[callbackId];
@@ -2581,18 +2598,18 @@
 
         query: query,
 
-        widget: widget,
-
-        attr: attr,
-        data: data,
-        cookie: cookie,
-
         addClass: addClass,
         removeClass: removeClass,
         getStyle: getStyle,
         inlineCSS: inlineCSS,
 
         createHTML: createHTML,
+
+        widget: widget,
+
+        attr: attr,
+        data: data,
+        cookie: cookie,
 
         getFont: getFont,
 
