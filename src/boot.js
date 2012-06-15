@@ -994,7 +994,7 @@
     Consider making this a generic cacheResource function that can cache CSS too?
     Or we can simply do cacheCSS = cacheScript (or cacheJS?)
 */
-    var isGecko = "MozAppearance" in docElem.style;
+    var isGecko = docElem.style.MozAppearance !== undefined;
 
     function cacheScript(src, cacheDelay) {
 
