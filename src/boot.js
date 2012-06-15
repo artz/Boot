@@ -1,5 +1,5 @@
 /*global console*/
-/*jslint vars: true, browser: true, newcap: true*/
+/*jslint vars: true, browser: true, nomen: true*/
 /*
     BOOT UTILITY LIBRARY
     Version 0.3
@@ -19,7 +19,7 @@
 
     "use strict";
 
-    // Return if global is already defined. (Optional behavior)
+      // Return if global is already defined. (Optional behavior)
 //    if (window[namespace]) {
 //        return;
 //    }
@@ -1604,7 +1604,6 @@
                         } else {
                             concatScripts.push([i, moduleName]);
                         }
-                        // concatModules.push([i, moduleName]);
                     // Otherwise, fetch the module now.
                     } else {
                         get(resolve(options, moduleName), function () {
@@ -1675,8 +1674,9 @@
     function listToArray(collection) {
         var array = [],
             l = collection.length;
-        while (l -= 1) {
+        while (l) {
             array[l] = collection[l];
+            l -= 1;
         }
         return array;
     }
@@ -1802,12 +1802,13 @@
             l = classNames.length,
             reg;
 
-        while (l -= 1) {
+        while (l) {
             className = classNames[l];
             reg = new RegExp("(\\s|^)" + className + "(\\s|$)");
             if (!reg.test(elem.className)) {
                 elemClassName += strSpace + className;
             }
+            l -= 1;
         }
 
         elem.className = elemClassName;
@@ -1824,10 +1825,11 @@
             l = classNames.length,
             reg;
 
-        while (l -= 1) {
+        while (l) {
             className = classNames[l];
             reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");
             elemClassName = elemClassName.replace(reg, strSpace);
+            l -= 1;
         }
 
         elem.className = trim(elemClassName);
@@ -2047,12 +2049,13 @@
         } else if (key !== undefined) {
             ret = attr(elem, strData + key);
         } else {
-            while (attributesLength -= 1) {
+            while (attributesLength) {
                 attribute = attributes[attributesLength];
                 attributeName = attribute.nodeName;
                 if (contains(attributeName, strData)) {
                     attributesObject[attributeName.replace(strData, "")] = attribute.nodeValue;
                 }
+                attributesLength -= 1;
             }
             ret = attributesObject;
         }
@@ -2568,7 +2571,7 @@
         debounce: debounce,
         proxy: proxy,
 
-        globalEval: globalEval,
+        // globalEval: globalEval,
 
         trim: trim,
         param: param,
@@ -2614,9 +2617,9 @@
         getFont: getFont,
 
         browser: browser,
-        feature: feature,
+        // feature: feature,
 
-        disableTextSelect: disableTextSelect,
+        // disableTextSelect: disableTextSelect,
 
         getJSONP: getJSONP
 
