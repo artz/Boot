@@ -1492,6 +1492,8 @@
 /*
     Boot.require
     Based on YUI's use() function and RequireJS.
+    TODO: We have a lot of conditional checks for CSS. Refactor after our
+    solution has been road tested.
 */
     function require(customOptions, moduleNames, callback) {
 
@@ -1545,7 +1547,12 @@
 
             var module,
                 moduleDependencies,
+                moduleDefinition;
+
+            // If it is not a CSS resource, grab the defined module.
+            if (!/\.css$/.test(moduleName)) {
                 moduleDefinition = moduleDefinitions[moduleName] || definedModules.shift();
+            }
 
             if (moduleDefinition) {
 
