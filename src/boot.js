@@ -1,5 +1,5 @@
 /*global console*/
-/*jslint vars: true, browser: true, newcap: true*/
+/*jslint vars: true, browser: true, nomen: true*/
 /*
     BOOT UTILITY LIBRARY
     Version 0.3
@@ -19,7 +19,7 @@
 
     "use strict";
 
-    // Return if global is already defined. (Optional behavior)
+      // Return if global is already defined. (Optional behavior)
 //    if (window[namespace]) {
 //        return;
 //    }
@@ -1089,7 +1089,10 @@
             // Not ideal, but we found <object> to be MUCH slower
             // DOM nodes in Firefox.
             // Check out /test/benchmarks/speed-test-* (need to update files)
-            script.async = options.async || false;
+            // Default for getScript will be true as per spec.
+            if (options.async !== undefined) {
+                script.async = options.async;
+            }
 
             function loadHandler() {
                 if (isNormal || /loaded|complete/.test(script.readyState)) {
@@ -1164,7 +1167,7 @@
 
 
         // If the browser supports asynchronous executing scripts. (Firefox 3.6, Opera, Chrome 12)
-        isScriptAsync = isGecko || window.opera || document.createElement(strScript).async, /* === true */
+        isScriptAsync = isGecko || window.opera || document.createElement(strScript).async,
 
         scriptType = isScriptAsync ? "" : "c";
 
@@ -1189,7 +1192,7 @@
                 getScript(nextScript, function () {
                     nextScriptIndex += 1;
                     execScripts();
-                });
+                }, { async: false });
             }
 
         } else if (isFunction(nextScript)) {
@@ -1216,7 +1219,7 @@
         }
     }
 
-    function getJS() { /* url, callback, or options */
+    function getJS() { // url, callback, or options
 
         function dispatchScriptQueue(queue) {
 
@@ -1341,7 +1344,7 @@
                     getScript(src, function () {
                         isScriptDone[src] = 1;
                         execScripts();
-                    }, { type: scriptType /* , text: options.text*/ }); // Removing text support, IE problems.
+                    }, { type: scriptType, async: false }); // Removing text support, IE problems.
                 }
 
                 // Push the callback into the queue if we had one.
@@ -1604,7 +1607,6 @@
                         } else {
                             concatScripts.push([i, moduleName]);
                         }
-                        // concatModules.push([i, moduleName]);
                     // Otherwise, fetch the module now.
                     } else {
                         get(resolve(options, moduleName), function () {
@@ -1675,7 +1677,8 @@
     function listToArray(collection) {
         var array = [],
             l = collection.length;
-        while (l -= 1) {
+        while (l) {
+            l -= 1;
             array[l] = collection[l];
         }
         return array;
@@ -1802,7 +1805,8 @@
             l = classNames.length,
             reg;
 
-        while (l -= 1) {
+        while (l) {
+            l -= 1;
             className = classNames[l];
             reg = new RegExp("(\\s|^)" + className + "(\\s|$)");
             if (!reg.test(elem.className)) {
@@ -1824,7 +1828,8 @@
             l = classNames.length,
             reg;
 
-        while (l -= 1) {
+        while (l) {
+            l -= 1;
             className = classNames[l];
             reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");
             elemClassName = elemClassName.replace(reg, strSpace);
@@ -2047,7 +2052,8 @@
         } else if (key !== undefined) {
             ret = attr(elem, strData + key);
         } else {
-            while (attributesLength -= 1) {
+            while (attributesLength) {
+                attributesLength -= 1;
                 attribute = attributes[attributesLength];
                 attributeName = attribute.nodeName;
                 if (contains(attributeName, strData)) {
@@ -2350,7 +2356,6 @@
 
     Code too bloaty for what you get?  Do we really want to advocate pixel-perfect targeting?
 */
-
     var navigatorUserAgent = navigator.userAgent,
         userAgent = navigatorUserAgent.toLowerCase(),
         browser,
@@ -2568,7 +2573,7 @@
         debounce: debounce,
         proxy: proxy,
 
-        globalEval: globalEval,
+        // globalEval: globalEval,
 
         trim: trim,
         param: param,
@@ -2614,9 +2619,9 @@
         getFont: getFont,
 
         browser: browser,
-        feature: feature,
+        // feature: feature,
 
-        disableTextSelect: disableTextSelect,
+        // disableTextSelect: disableTextSelect,
 
         getJSONP: getJSONP
 
