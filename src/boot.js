@@ -934,44 +934,67 @@
     Function: Boot.getCSS
 
     Fetches a CSS file and appends it to the DOM.
+    Callback is provided for when CSS loads.
+
 */
     var docElem = document.documentElement,
         head = document.head || document.getElementsByTagName("head")[0] || docElem,
-        cssLoading = {};
+        navigatorUserAgent = navigator.userAgent,
+
+        getCSSNormal = (function () {
+
+            // Match Firefox versions less than 9.
+            // https://developer.mozilla.org/en/Firefox_7_for_developers
+            var match = /Firefox[ \/]([0-9]+)/.exec(navigatorUserAgent),
+                version;
+            if (match) {
+                version = +match[1];
+                if (version < 9) {
+                    return false;
+                }
+            }
+            // Match all versions of Safari.
+            if (contains(navigatorUserAgent, "Safari") &&
+                    !contains(navigatorUserAgent, "Chrome")) {
+                return false;
+            }
+
+            // If we made it here, we are normal.
+            return true;
+
+        }());
 
     function getCSS(src, callback) {
 
-        if (!cssLoading[src]) {
+        var navigatorUserAgent = navigator.userAgent,
+            styleSheet = getCSSNormal ? "link" : "style",
+            timer;
 
-            cssLoading[src] = 1;
+        styleSheet = document.createElement(styleSheet);
 
-            defer(function () {
+        if (getCSSNormal) {
 
-                var styleSheet = document.createElement("link"),
-                    image;
+            styleSheet.rel = "stylesheet";
+            styleSheet.href = src;
 
-                function loadHandler() {
-                    // Append is used to maintain CSS cascade order.
-                    head.appendChild(styleSheet);
+            if (callback) {
+                styleSheet.onload = callback;
+            }
+
+        } else {
+            styleSheet.textContent = '@import "' + src + '"';
+
+            timer = setInterval(function () {
+                try {
+                    styleSheet.sheet.cssRules;
                     callback();
-                }
-
-                styleSheet.rel = "stylesheet";
-                styleSheet.href = src;
-
-                // If there's a callback, load as image first then
-                // reload to parse styles.
-                if (callback) {
-                    image = new Image();
-                    image.onerror = loadHandler;
-                    image.src = src;
-                } else {
-                    head.appendChild(styleSheet);
-                }
-            });
-        } else if (callback) {
-            callback();
+                    clearInterval(timer);
+                } catch (e) {}
+            }, 10);
         }
+
+        head.appendChild(styleSheet);
+
     }
     global.getCSS = getCSS;
 
