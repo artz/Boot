@@ -944,7 +944,7 @@
         getCSSNormal = (function () {
 
             // Match Firefox versions less than 9.
-            // https://developer.mozilla.org/en/Firefox_7_for_developers
+            // https://developer.mozilla.org/en/Firefox_9_for_developers
             var match = /Firefox[ \/]([0-9]+)/.exec(navigatorUserAgent),
                 version;
             if (match) {
@@ -1464,7 +1464,7 @@
     // https://github.com/amdjs/amdjs-api/wiki/AMD
     define.amd = {};
 
-    global.define = window.define = define;
+    global.define = define;
 
     // Expose modules externally.
     // global.modules = modules;
