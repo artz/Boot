@@ -2336,7 +2336,7 @@
     Consider ditching this, ef IE and yay media queries?
     Update: People actually need this.
 */
-    var screens = [320, 640, 800, 1024, 1152, 1280, 1366, 1440, 1600, 1680, 1920],
+    var screens = [320, 480, 640, 768, 980, 1152, 1280, 1366, 1440, 1600, 1680, 1920],
         screensLength = screens.length,
         screenWidth,
         screenClasses = "";
@@ -2345,6 +2345,8 @@
 
         // We did not use window.outerWidth to have the same property across browsers.
         // http://www.howtocreate.co.uk/tutorials/javascript/browserwindow
+        // TODO: The iPhone appears to report its width as 768 even in horizontal
+        // orientation.  Investigate swapping the height and width in this case.
         var currentWidth = docElem.clientWidth,
             currentClasses = [],
             width,
@@ -2376,6 +2378,10 @@
 
     // Throttling seemed to be more desirable than debouncing.
     bind(window, "resize", throttle(screenSize, 100));
+
+    // Bind to orientation changes as well.
+    // http://stackoverflow.com/questions/5284878/how-do-i-correctly-detect-orientation-change-using-javascript-and-phonegap-in-io
+    window.onorientationchange = screenSize;
 
 
 /*
@@ -2413,34 +2419,32 @@
     // Create browser object.
     browser = { version: browserVersion };
 
-    // Mobile detection
-    // TODO: Refactor this, DRY!
-    if (/iPad/.test(navigatorUserAgent)) {
-        browserClasses.push("ipad");
-        browser.iPad = true;
-    } else if (/iPhone/.test(navigatorUserAgent)) {
-        browserClasses.push("iphone");
-        browser.iPhone = true;
-    } else if (/Android/.test(navigatorUserAgent)) {
-        browserClasses.push("android");
-        browser.android = true;
+    // Device detection.
+    each(["iPad", "iPhone", "Android", "Kindle Fire"], function (brand) {
+        if (contains(navigatorUserAgent, brand)) {
+            brand = brand.toLowerCase().replace(" ", "-");
+            browserClasses.push(brand);
+            browser[brand] = true;
+        }
+    });
+
+    if (browserName && browserVersion) {
+        browserClasses.push(browserName);
+        browserClasses.push(browserName + parseInt(browserVersion, 10)); // Major version
+        browserClasses.push(browserName + browserVersion.toString().replace(strDot, "-").replace(/\.[.]*/, "")); // Minor version
+        browser[browserName] = true;
     }
 
+    // Indicate we support JavaScript.
     browserClasses.push("js"); // JavaScript CSS class
-
-    browserClasses.push(browserName);
-    browserClasses.push(browserName + parseInt(browserVersion, 10)); // Major version
-    browserClasses.push(browserName + browserVersion.toString().replace(strDot, "-").replace(/\.[.]*/, "")); // Minor version
-
-    // Add classes all at once for performance reasons.
-    addClass(docElem, browserClasses.join(strSpace));
 
     // Remove no-js class if one exists.
     removeClass(docElem, "no-js");
 
-    // Open up Boot.browser
-    browser[browserName] = true;
+    // Add classes all at once for performance reasons.
+    addClass(docElem, browserClasses.join(strSpace));
 
+    // Open up browser info.
     global.browser = browser;
 
 
