@@ -1,468 +1,472 @@
-(function(global, window, document){
+/*global setInterval, clearInterval, document*/
+
+(function (global, window, document) {
+
+    "use strict";
+
+	var timers = {},
+		timerId = 0,
+		strSpace = " ",
+
+		head = document.head || document.getElementsByTagName("head")[0] || document.documentElement,
+
+		fontTestDiv, // Keep it empty until invoked the first time.
+		fontTestDivStatus,
+
+		strLoading = "-loading",
+		strActive = "-active",
+		strInactive = "-inactive",
+
+		docElem = document.documentElement;
 
 /*
-    Function: Boot.now
+	Function: Boot.now
 
-    Gets a current timestamp.
+	Gets a current timestamp.
 
-    Returns:
+	Returns:
 
-    Timestamp
+	Timestamp
 */
-    function now() {
-        return new Date().getTime();
-    }
-//    global.now = now;
+	function now() {
+		return new Date().getTime();
+	}
+//	global.now = now;
 
 
 /*
-    Function: Boot.trim
+	Function: Boot.trim
 
-    Trims whitespace before and after a string.
+	Trims whitespace before and after a string.
 
-    Parameters
+	Parameters
 
-        str - The string to trim leading whitespace.
+		str - The string to trim leading whitespace.
 
-    Returns
+	Returns
 
-    String - The trimmed string.
+	String - The trimmed string.
 */
-    function trim( str ) {
-        return str.replace(/^\s+/, "").replace(/\s+$/, "");
-    }
+	function trim(str) {
+		return str.replace(/^\s+/, "").replace(/\s+$/, "");
+	}
 //   global.trim = trim;
 
 /*
-    Function: Boot.contains
+	Function: Boot.contains
 
-    Determines if the given string contains given text.
+	Determines if the given string contains given text.
 
-    Parameters:
+	Parameters:
 
-        haystack - The string to search inside.
-        needle - The string to find.
+		haystack - The string to search inside.
+		needle - The string to find.
 
-    Returns:
+	Returns:
 
-    Boolean
+	Boolean
 
-    Usage:
-    if ( contains( "a", "abcde" ) ) {
-        // true
-        Do something knowing this value contains it.
-    }
+	Usage:
+	if ( contains( "a", "abcde" ) ) {
+		// true
+		Do something knowing this value contains it.
+	}
 */
-    function contains( haystack, needle ){
-        return haystack && haystack.indexOf( needle ) !== -1;
-    }
-//    global.contains = contains;
+	function contains(haystack, needle) {
+		return haystack && haystack.indexOf(needle) !== -1;
+	}
+//	global.contains = contains;
 
 
-    var strString = "string",
-        strObject = "object",
-        strSpace = " ",
-
-        head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
-
-    function is( str, type ) {
-        return typeof str === type;
-    }
-    function isArray( obj ) {
-        return obj && contains( obj.constructor.toString(), "rray" );
-    }
-    function isObject( obj ) {
-        return obj !== null && is( obj, strObject );
-    }
-    function isString( obj ) {
-        return is( obj, strString );
-    }
-    function isFunction( obj ) {
-        return is( obj, "function" );
-    }
-    function isElement( obj ) {
-        return isObject( obj ) && obj.nodeType;
-    }
+	function isArray(obj) {
+		return obj && contains(obj.constructor.toString(), "rray");
+	}
+	function isObject(obj) {
+		return obj !== null && (typeof obj === "object");
+	}
+	function isString(obj) {
+		return typeof obj === "string";
+	}
+	function isfunction(obj) {
+		return typeof obj === "function";
+	}
+	function isElement(obj) {
+		return isObject(obj) && obj.nodeType;
+	}
 
 
 /*
-    Boot.extend
+	Boot.extend
 
-    Merge the contents of two or more objects together into the first object.
+	Merge the contents of two or more objects together into the first object.
 
-    Boot.extend( target, [object1], [objectN] )
+	Boot.extend( target, [object1], [objectN] )
 
-    Parameters
+	Parameters
 
-        target -  An object that will receive the new properties if additional
-                  objects are passed in [or that will extend the Boot namespace
-                  if it is the sole argument].
-        object1 - An object containing additional properties to merge in.
-        objectN - Additional objects containing properties to merge in.
+		target -  An object that will receive the new properties if additional
+				  objects are passed in [or that will extend the Boot namespace
+				  if it is the sole argument].
+		object1 - An object containing additional properties to merge in.
+		objectN - Additional objects containing properties to merge in.
 
 */
-    function extend() {
+	function extend() {
 
-        var args = arguments,
-            target = args[0],
-            name,
-            source,
-            i = 1, // Source pointer.
-            l = args.length;
+		var args = arguments,
+			target = args[0],
+			name,
+			source,
+			i = 0, // Source pointer.
+			l = args.length;
 
-        // Feature to consider:
-        // If it's a string, we should grab the
-        // object from our modules.
-//        if ( isString( target ) ) {
-//            target = modules[ target ];
-//        }
+		// Feature to consider:
+		// If it's a string, we should grab the
+		// object from our modules.
+//		if ( isString( target ) ) {
+//			target = modules[ target ];
+//		}
 
-    /*
-        // If the length is 1, extend Boot, and
-        // set the source to thefirst argument.
-        //
-        // Artz: Removing this, think this is not
-        // worth the bytes and/or non-intuitive.
+	/*
+		// If the length is 1, extend Boot, and
+		// set the source to thefirst argument.
+		//
+		// Artz: Removing this, think this is not
+		// worth the bytes and/or non-intuitive.
 
-        if ( l === i ) {
-            target = global;
-            i = 0;
-        }
-    */
+		if ( l === i ) {
+			target = global;
+			i = 0;
+		}
+	*/
 
-        for (; i < l; i++ ) {
-            source = args[i];
-            for ( name in source ) {
-                if ( source.hasOwnProperty(name) ) {
-                    // If an object or array and NOT a DOM node, we need to deep copy.
-                    // Artz: Should isObject weed out elements, maybe?
-                    if ( isObject( source[name] ) && ! isElement( source[name] ) ) {
-                        target[name] = extend( isArray( source[name] ) ? [] : {}, target[name], source[name] );
-                    } else {
-                        target[name] = source[name];
-                    }
-                }
-            }
-        }
-        return target;
-    }
-//    global.extend = extend;
+		for (i = 1; i < l; i += 1) {
+			source = args[i];
+			for (name in source) {
+				if (source.hasOwnProperty(name)) {
+					// If an object or array and NOT a DOM node, we need to deep copy.
+					// Artz: Should isObject weed out elements, maybe?
+					if (isObject(source[name]) && !isElement(source[name])) {
+						target[name] = extend(isArray(source[name]) ? [] : {}, target[name], source[name]);
+					} else {
+						target[name] = source[name];
+					}
+				}
+			}
+		}
+		return target;
+	}
+//	global.extend = extend;
 
 
 /*
-    Boot.setup
+	Boot.setup
 
-    A function that appends a new "option" method
-    on a method to allow developers to override
-    default options.
+	A function that appends a new "option" method
+	on a method to allow developers to override
+	default options.
 */
-    function setup( method, defaultOptions ) {
+	function setup(method, defaultOptions) {
 
-        defaultOptions = defaultOptions || {};
+		defaultOptions = defaultOptions || {};
 
-        // Create an option method on the method.
-        method.option = function( key, value ) {
-            if ( isString( key ) ) {
-                // Retrieve an option using the key.
-                if ( value === undefined ) {
-                    return defaultOptions[ key ];
-                // Set an option using a key.
-                } else {
-                    defaultOptions[ key ] = value;
-                }
-                // Extend the default options.
-            } else if ( isObject( key ) ) {
-                extend( defaultOptions, key );
-                // Return a copy of the current options.
-            } else {
-                return extend( {}, defaultOptions );
-            }
-        };
-//      return global;
-    }
+		// Create an option method on the method.
+		method.option = function (key, value) {
+			if (isString(key)) {
+				// Set an option using a key.
+				if (value !== undefined) {
+					defaultOptions[key] = value;
+				// Retrieve an option using the key.
+				} else {
+					return defaultOptions[key];
+				}
+				// Extend the default options.
+			} else if (isObject(key)) {
+				extend(defaultOptions, key);
+				// Return a copy of the current options.
+			} else {
+				return extend({}, defaultOptions);
+			}
+		};
+//	  return global;
+	}
 //  global.setup = setup;
 
 
 /*
-    Boot.poll
+	Boot.poll
 
-    Function useful for checking/polling something
-    and then executing a callback once it's true.
+	Function useful for checking/polling something
+	and then executing a callback once it's true.
 */
-    var timers = {},
-        timerId = 0;
 
-    function poll( check, callback, pollDelay, timeout ){
+	function poll(check, callback, pollDelay, timeout) {
 
-        var name = timerId++,
-            start = now(),
-            time,
-            isTimeout = false;
+		var name = timerId,
+			start = now(),
+			time,
+			isTimeout = false;
 
-        // Internet Explorer needs at least a 1 for setInterval.
-        pollDelay = pollDelay || 1;
+		timerId += 1;
 
-        timers[ name ] = setInterval(function(){
+		// Internet Explorer needs at least a 1 for setInterval.
+		pollDelay = pollDelay || 1;
 
-            time = now() - start;
+		timers[name] = setInterval(function () {
 
-            if ( check() || ( timeout && ( isTimeout = time > timeout )) ) {
-                callback.call( window, isTimeout, time );
-                clearInterval( timers[ name ] );
-            }
+			time = now() - start;
 
-        }, pollDelay );
+			if (check() || (timeout && (isTimeout = time > timeout))) {
+				callback.call(window, isTimeout, time);
+				clearInterval(timers[name]);
+			}
 
-    }
-//    global.poll = poll;
+		}, pollDelay);
+
+	}
+//	global.poll = poll;
 
 
 /*
-    Simple add/remove classname functions.
-    Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
-    Supports multiple class additions.
+	Simple add/remove classname functions.
+	Valuable as Boot.removeClass / Boot.addClass or jQuery's job?
+	Supports multiple class additions.
 */
-    function addClass( elem, classNames ) {
-        // Adding the class name greedily won't
-        // hurt and keeps things small.
-        classNames = classNames.split( strSpace );
+	function addClass(elem, classNames) {
+		// Adding the class name greedily won't
+		// hurt and keeps things small.
+		classNames = classNames.split(strSpace);
 
-        var elemClassName = elem.className,
-            className,
-            l = classNames.length,
-            reg;
+		var elemClassName = elem.className,
+			className,
+			l = classNames.length - 1,
+			reg;
 
-        while ( l-- ) {
-            className = classNames[l];
-            reg = new RegExp("(\\s|^)" + className + "(\\s|$)");
-            if ( ! reg.test( elem.className ) ) {
-                elemClassName += strSpace + className;
-            }
-        }
+		while (l) {
+			className = classNames[l];
+			reg = new RegExp("(\\s|^)" + className + "(\\s|$)");
+			if (!reg.test(elem.className)) {
+				elemClassName += strSpace + className;
+			}
+			l -= 1;
+		}
 
-        elem.className = elemClassName;
-    }
+		elem.className = elemClassName;
+	}
 
-    // Supports multiple class removals.
-    function removeClass( elem, classNames ) {
+	// Supports multiple class removals.
+	function removeClass(elem, classNames) {
 
-        classNames = classNames.split( strSpace );
+		classNames = classNames.split(strSpace);
 
-        var elemClassName = elem.className,
-            className,
-            l = classNames.length,
-            reg;
+		var elemClassName = elem.className,
+			className,
+			l = classNames.length - 1,
+			reg;
 
-        while ( l-- ) {
-            className = classNames[l];
-            reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");
-            elemClassName = elemClassName.replace( reg, strSpace );
-        }
+		while (l) {
+			className = classNames[l];
+			reg = new RegExp("(\\s|^)" + className + "(\\s|$)", "g");
+			elemClassName = elemClassName.replace(reg, strSpace);
+			l -= 1;
+		}
 
-        elem.className = trim( elemClassName );
-    }
+		elem.className = trim(elemClassName);
+	}
 
 
 /*
-    Boot.inlineCSS
+	Boot.inlineCSS
 
-    Thanks Stoyan!
-    http://www.phpied.com/dynamic-script-and-style-elements-in-ie/
+	Thanks Stoyan!
+	http://www.phpied.com/dynamic-script-and-style-elements-in-ie/
 */
-    function inlineCSS( css ){
+	function inlineCSS(css) {
 
-        var style = document.createElement("style"),
-            textNode;
+		var style = document.createElement("style"),
+			textNode;
 
-        // Stoyan says this is "absolutely required",
-        // but so far has passed all our unit tests.
-//        style.setAttribute("type", "text/css");
+		// Stoyan says this is "absolutely required",
+		// but so far has passed all our unit tests.
+//		style.setAttribute("type", "text/css");
 
-        // This must happen before setting CSS for IE.
-        head.insertBefore( style, head.firstChild );
+		// This must happen before setting CSS for IE.
+		head.insertBefore(style, head.firstChild);
 
-        // IE
-        if ( style.styleSheet ) {
-            style.styleSheet.cssText = css;
-        // The World
-        } else {
-            textNode = document.createTextNode( css );
-            style.appendChild( textNode );
-        }
+		// IE
+		if (style.styleSheet) {
+			style.styleSheet.cssText = css;
+		// The World
+		} else {
+			textNode = document.createTextNode(css);
+			style.appendChild(textNode);
+		}
 
-    }
-//    global.inlineCSS = inlineCSS;
+	}
+//	global.inlineCSS = inlineCSS;
 
 
 /*
-    Boot.createHTML
+	Boot.createHTML
 
-    Research: http://domscripting.com/blog/display/99
+	Research: http://domscripting.com/blog/display/99
 */
-    function createHTML( html ) {
-        var div = document.createElement("c");
-        div.innerHTML = html;
-        return div.firstChild;
-    }
-//    global.createHTML = createHTML;
+	function createHTML(html) {
+		var div = document.createElement("c");
+		div.innerHTML = html;
+		return div.firstChild;
+	}
+//	global.createHTML = createHTML;
 
 
 /*
-    Boot.getFont
+	Boot.getFont
 */
-    var fontTestDiv, // Keep it empty until invoked the first time.
-        fontTestDivStatus,
 
-        strLoading = "-loading",
-        strActive = "-active",
-        strInactive = "-inactive",
+	function getFont() {
 
-        docElem = document.documentElement;
+		var args = arguments,
+			arg,
+			options = getFont.option(),
+			pollDelay = options.pollDelay,
+			callback = options.callback,
+			fontTemplate = /\{f\}/g,
+			fontPathTemplate = /\{p\}/g,
+			fontDiv,
+			fontDivParent = docElem,
+			fontName,
+			namespacedFontName,
+			fontPath,
+			fontFace,
+			fontfaceCSS = [],
+			i = 0,
+			l = args.length;
 
-    function getFont() {
+		// Create the test <div> on demand so as not to impact performance up front.
+		if (!fontTestDiv) {
+			// Removed these (from webfontloader):
+			// height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
+			fontTestDiv = createHTML("<div style=\"position:absolute;top:-999em;left:-999em;width:auto;font-size:300px;font-family:serif\">BESs</div>");
+		}
 
-        var args = arguments,
-            arg,
-            options = getFont.option(),
-            pollDelay = options.pollDelay,
-            callback = options.callback,
-            fontTemplate = /\{f\}/g,
-            fontPathTemplate = /\{p\}/g,
-            fontDiv,
-            fontDivParent = docElem,
-            fontName,
-            namespacedFontName,
-            fontPath,
-            fontFace,
-            fontfaceCSS = [],
-            i = 0,
-            l = args.length;
-
-        // Create the test <div> on demand so as not to impact performance up front.
-        if ( ! fontTestDiv ) {
-            // Removed these (from webfontloader):
-            // height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;
-            fontTestDiv = createHTML("<div style=\"position:absolute;top:-999em;left:-999em;width:auto;font-size:300px;font-family:serif\">BESs</div>" );
-        }
-
-        function fontReady( fontDiv, namespacedFontName ) {
+		function fontReady(fontDiv, namespacedFontName) {
 
 
-            function fontReadyTest() {
-                // Insert the <div> with font to be tested.
-                fontDivParent.insertBefore( fontDiv, fontDivParent.firstChild );
+			function fontReadyTest() {
+				// Insert the <div> with font to be tested.
+				fontDivParent.insertBefore(fontDiv, fontDivParent.firstChild);
 
-                // Poll the DOM every interval to see if width changes.
-                poll(function(){
-//                    alert( namespacedFontName + ": " + fontTestDiv.offsetWidth + "!==" + fontDiv.offsetWidth );
-                    return fontTestDiv.offsetWidth !== fontDiv.offsetWidth;
-                }, function( isTimeout ){
-                    if ( isTimeout ) {
+				// Poll the DOM every interval to see if width changes.
+				poll(function () {
+//					alert( namespacedFontName + ": " + fontTestDiv.offsetWidth + "!==" + fontDiv.offsetWidth );
+					return fontTestDiv.offsetWidth !== fontDiv.offsetWidth;
+				}, function (isTimeout) {
+					if (isTimeout) {
 
-                        removeClass( docElem, namespacedFontName + strLoading );
-                        addClass( docElem, namespacedFontName + strInactive );
-//                      publish( eventNamespace + namespacedFontName + strInactive );
-                    } else {
-                        removeClass( docElem, namespacedFontName + strLoading );
-                        addClass( docElem, namespacedFontName + strActive );
-//                      publish( eventNamespace + namespacedFontName + strActive );
-                    }
-                    if ( callback ) {
-                        callback( namespacedFontName, isTimeout );
-                    }
-                }, pollDelay, options.timeout );
-            }
+						removeClass(docElem, namespacedFontName + strLoading);
+						addClass(docElem, namespacedFontName + strInactive);
+//					  publish( eventNamespace + namespacedFontName + strInactive );
+					} else {
+						removeClass(docElem, namespacedFontName + strLoading);
+						addClass(docElem, namespacedFontName + strActive);
+//					  publish( eventNamespace + namespacedFontName + strActive );
+					}
+					if (callback) {
+						callback(namespacedFontName, isTimeout);
+					}
+				}, pollDelay, options.timeout);
+			}
 
-            if ( fontTestDivStatus === 2 ) {
-                fontReadyTest();
-            } else {
-                // IE 6/7 is not ready yet, wait until it is.
-                poll(function(){
-                    return fontTestDivStatus === 2;
-                }, fontReadyTest, pollDelay);
-            }
-        }
+			if (fontTestDivStatus === 2) {
+				fontReadyTest();
+			} else {
+				// IE 6/7 is not ready yet, wait until it is.
+				poll(function () {
+					return fontTestDivStatus === 2;
+				}, fontReadyTest, pollDelay);
+			}
+		}
 
-        // Artz: Not proud of this code but IE6/7 need to queue up
-        // font requests and wait until a <body> element exists.
-        // Lots of polling and waiting going on here.  Good news
-        // is that all other browsers zip on through this mess.
-        if ( ! fontTestDivStatus ) {
+		// Artz: Not proud of this code but IE6/7 need to queue up
+		// font requests and wait until a <body> element exists.
+		// Lots of polling and waiting going on here.  Good news
+		// is that all other browsers zip on through this mess.
+		if (!fontTestDivStatus) {
 
-            // Indicate we already inserted the font test <div>.
-            docElem.insertBefore( fontTestDiv, docElem.firstChild );
-            fontTestDivStatus = 1;
+			// Indicate we already inserted the font test <div>.
+			docElem.insertBefore(fontTestDiv, docElem.firstChild);
+			fontTestDivStatus = 1;
 
-            // We detect if our <div> has a 0 width, something that
-            // only happens in IE6/7.  Internet Explorer appears to
-            // need a test element inside the <body> to apply CSS.
-            if ( fontTestDiv.offsetWidth === 0 ) {
+			// We detect if our <div> has a 0 width, something that
+			// only happens in IE6/7.  Internet Explorer appears to
+			// need a test element inside the <body> to apply CSS.
+			if (fontTestDiv.offsetWidth === 0) {
 
-                // Poll until we have a body.  When we do, update
-                // our status so anyone watching knows.
-                poll(function(){
-                    return document.body;
-                }, function(){
-                    fontDivParent = document.body;
-                    fontDivParent.insertBefore( fontTestDiv, fontDivParent.firstChild );
-                    fontTestDivStatus = 2;
-                }, pollDelay);
-            } else {
-                fontTestDivStatus = 2;
-            }
-        }
+				// Poll until we have a body.  When we do, update
+				// our status so anyone watching knows.
+				poll(function () {
+					return document.body;
+				}, function () {
+					fontDivParent = document.body;
+					fontDivParent.insertBefore(fontTestDiv, fontDivParent.firstChild);
+					fontTestDivStatus = 2;
+				}, pollDelay);
+			} else {
+				fontTestDivStatus = 2;
+			}
+		}
 
-        // Boot.each might be a cleaner approach, revisit someday (maybe).
-        for (; i < l; i++ ) {
+		// Boot.each might be a cleaner approach, revisit someday (maybe).
+		for (i = 0; i < l; i += 1) {
 
-            arg = args[i];
+			arg = args[i];
 
-            if ( isString(arg) ) {
+			if (isString(arg)) {
 
-                fontName = arg.toLowerCase();
+				fontName = arg.toLowerCase();
 
-                fontPath = options.path.replace( fontTemplate, fontName );
+				fontPath = options.path.replace(fontTemplate, fontName);
 
-                fontFace = options.fontface.replace( fontTemplate, fontName ).replace( fontPathTemplate, fontPath );
+				fontFace = options.fontface.replace(fontTemplate, fontName).replace(fontPathTemplate, fontPath);
 
-                fontfaceCSS.push( fontFace );
+				fontfaceCSS.push(fontFace);
 
-                fontDiv = fontTestDiv.cloneNode( true );
+				fontDiv = fontTestDiv.cloneNode(true);
 
-                fontDiv.style.fontFamily = "'" + fontName + "',serif";
+				fontDiv.style.fontFamily = "'" + fontName + "',serif";
 
-                namespacedFontName = options.namespace + fontName;
+				namespacedFontName = options.namespace + fontName;
 
-                // Add the "loading" class for this font.
-                addClass( docElem, namespacedFontName + strLoading );
+				// Add the "loading" class for this font.
+				addClass(docElem, namespacedFontName + strLoading);
 
-                fontReady( fontDiv, namespacedFontName );
+				fontReady(fontDiv, namespacedFontName);
 
-            // If we have an object, extend our current options.
-            } else if ( isObject(arg) ) {
-                extend( options, arg );
-            // If a function is present, add it as a callback to options.
-            } else if ( isFunction(arg) ) {
-                callback = arg;
-            }
-        }
+			// If we have an object, extend our current options.
+			} else if (isObject(arg)) {
+				extend(options, arg);
+			// If a function is present, add it as a callback to options.
+			} else if (isfunction(arg)) {
+				callback = arg;
+			}
+		}
 
-        // Inject the @fontface rules into the head.
-        inlineCSS( fontfaceCSS.join("") );
+		// Inject the @fontface rules into the head.
+		inlineCSS(fontfaceCSS.join(""));
 
-    }
+	}
 
-    setup( getFont, {
-        namespace: "wf-",
-        path: "fonts/{f}/{f}-webfont",
-        pollDelay: 100,
-        timeout: 10000,
-        fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
-    });
+	setup(getFont, {
+		namespace: "wf-",
+		path: "fonts/{f}/{f}-webfont",
+		pollDelay: 100,
+		timeout: 10000,
+		fontface: "@font-face { font-family: '{f}'; src: url('{p}.eot'); src: url('{p}.eot?#iefix') format('embedded-opentype'), url('{p}.woff') format('woff'), url('{p}.ttf') format('truetype'), url('{p}.svg#{f}') format('svg'); font-weight: normal; font-style: normal; }"
+	});
 
-    if ( ! window[ global ] ) {
-        window[ global ] = {};
-    }
-    window[ global ].getFont = getFont;
+	if (!window[global]) {
+		window[global] = {};
+	}
+	window[global].getFont = getFont;
 
 }("Boot", this, document));
