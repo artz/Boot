@@ -2346,7 +2346,7 @@
 
     Consider ditching this, ef IE and yay media queries?
     Update: People actually need this.
-*/
+
     var screens = [320, 480, 640, 768, 980, 1152, 1280, 1366, 1440, 1600, 1680, 1920],
         screensLength = screens.length,
         screenWidth,
@@ -2393,6 +2393,7 @@
     // Bind to orientation changes as well.
     // http://stackoverflow.com/questions/5284878/how-do-i-correctly-detect-orientation-change-using-javascript-and-phonegap-in-io
     window.onorientationchange = screenSize;
+*/
 
 
 /*
