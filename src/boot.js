@@ -2385,6 +2385,104 @@
 
 
 /*
+    Boot.respond
+    Utility for simplifying conditional logic for responsive design websites.
+
+    Great reading:
+        http://www.quirksmode.org/mobile/viewports.html
+        http://www.quirksmode.org/mobile/viewports2.html
+
+    Sweet reference for planning responsive layouts:
+        http://www.metaltoad.com/blog/simple-device-diagram-responsive-design-planning
+
+    TODO: Deprecate Boot.screen stuff?
+*/
+    var currentLayout,
+        layoutBreakpoints = {};
+
+    function respondEvent() {
+
+        var layout,
+            breakpoint,
+            trigger = false;
+
+        // Loop through layouts, and if changed trigger it.
+        for (layout in layoutBreakpoints) {
+            if (layout !== currentLayout) {
+                breakpoint = layoutBreakpoints[layout];
+                respond(breakpoint, function (results) {
+                    breakpoint = results;
+                    trigger = true;
+                });
+                if (trigger) {
+                    trigger = false;
+                    currentLayout = layout;
+                    breakpoint.layout = layout;
+                    publish(eventNamespace + "respond", breakpoint);
+                }
+            }
+        }
+    }
+
+    function respond(breakpoints, callback) {
+
+        var limits,
+            width = docElem.clientWidth,
+            max,
+            min,
+            load = true;
+
+        if (isFunction(callback)) {
+            if (isString(breakpoints)) {
+                // If breakpoints is a string, it's a layout preset.
+                limits = layoutBreakpoints[breakpoints];
+                limits.layout = breakpoints;
+            } else {
+                // Otherwise, we expect a min and max.
+                limits = breakpoints;
+            }
+
+            max = limits.max;
+            min = limits.min;
+
+            // If current client width is in range, execute callback.
+            if ((max && width > max) || (min && width < min)) {
+                load = false;
+            }
+
+            if (load) {
+                limits.width = width;
+                callback(limits);
+            }
+
+        } else if (breakpoints) {
+
+            // Reset layout breakpoints.
+            layoutBreakpoints = breakpoints;
+
+            // If callback is set to true, indicates event binding.
+            if (callback) {
+                // Bind respond event.
+                // TODO: Add support for unsubscribe.
+                bind(window, "resize", throttle(respondEvent, 100));
+
+                // Bind to orientation changes as well.
+                // http://stackoverflow.com/questions/5284878/how-do-i-correctly-detect-orientation-change-using-javascript-and-phonegap-in-io
+                window.onorientationchange = respondEvent;
+
+                // Trigger event now.
+                respondEvent();
+            }
+        } else {
+            // Return current layout (or undefined).
+            return currentLayout;
+        }
+    }
+
+    global.respond = respond;
+
+
+/*
     Boot.browser + CSS browser class targeting
     Code based on head.js - http://headjs.com
     Thanks Tero Piirainen!
