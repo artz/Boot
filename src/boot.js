@@ -1888,6 +1888,17 @@
 
         var height = Boot.getStyle( myDiv, "height" );
 
+    // TODO: Consider refactoring to something simpler:
+    function currentStyle(elem, property) {
+        var style;
+        if (window.getComputedStyle) {
+            style = window.getComputedStyle(elem);
+        } else {
+            style = elem.currentStyle;
+        }
+        return style[property];
+    }
+
 */
     // Largely taken from the example at
     // http://robertnyman.com/2006/04/24/get-the-rendered-style-of-an-element/
@@ -2396,54 +2407,114 @@
         http://www.metaltoad.com/blog/simple-device-diagram-responsive-design-planning
 
     TODO: Deprecate Boot.screen stuff?
+
+    Usage:
+
+    Execute code that falls within a given max and min.
+
+        Boot.respond({ max: 599 }, function (results) {
+          console.log("Screen is less than 600px.", results);
+        });
+        Boot.respond({ min: 600, max: 1000 }, function (results) {
+          console.log("Screen is greater than 599 and less than 1001px.", results);
+        });
+        Boot.respond({ min: 1001 }, function (results) {
+          console.log("Screen is greater than 1000px.", results);
+        });
+
+    Set up media queries for predefined responsive layouts.
+
+        // Smartphone
+        @media only screen and (max-width: 599px) {
+          html {
+            content: "smartphone";
+          }
+        }
+        // Tablet
+        @media only screen and (min-width: 600px) and (max-width: 1000px) {
+          html {
+            content: "tablet";
+          }
+        }
+        // Desktop
+        @media only screen and (min-width: 1001px) {
+          html {
+            content: "desktop";
+          }
+        }
+
+    Now layout can be specified and execute code that meets layout.
+
+        Boot.respond("smartphone", function (width) {
+          console.log("Smartphone callback.", width);
+        });
+        Boot.respond("tablet", function (width) {
+          console.log("Tablet callback.", width);
+        });
+        Boot.respond("desktop", function (width) {
+          console.log("Desktop callback.", width);
+        });
+
+        // Respond to multiple layouts.
+        Boot.respond("desktop tablet", function (width) {
+          console.log("Desktop or tablet callback.", width);
+        });
+
+    Additionally this layout gets published when user resizes/re-orients client.
+
+    Here's how to subscribe:
+
+        // Subscribe before setting up breakpoints
+        // to execute on init.
+        Boot.subscribe("boot.respond", function (layout) {
+          switch(layout) {
+            case "smartphone":
+              console.log("Respond event: ", layout);
+              break;
+            case "tablet":
+              console.log("Respond event: ", layout);
+              break;
+            case "desktop":
+              console.log("Respond event: ", layout);
+              break;
+          }
+        });
+
+        // Force publish of respond event immediately.
+        Boot.respond();
 */
-    var currentLayout,
-        layoutBreakpoints = {};
+    var currentLayout;
 
     function respondEvent() {
-
-        var layout,
-            breakpoint,
-            trigger = false;
-
-        // Loop through layouts, and if changed trigger it.
-        for (layout in layoutBreakpoints) {
-            if (layout !== currentLayout) {
-                breakpoint = layoutBreakpoints[layout];
-                respond(breakpoint, function (results) {
-                    breakpoint = results;
-                    trigger = true;
-                });
-                if (trigger) {
-                    trigger = false;
-                    currentLayout = layout;
-                    breakpoint.layout = layout;
-                    publish(eventNamespace + "respond", breakpoint);
-                }
-            }
+        var layout = getStyle(docElem, 'content');
+        if (layout !== currentLayout) {
+            currentLayout = layout;
+            publish(eventNamespace + 'respond', layout);
         }
     }
 
-    function respond(breakpoints, callback) {
+    function respond(layout, callback) {
 
-        var limits,
-            width = docElem.clientWidth,
-            max,
+        var max,
             min,
-            load = true;
+            width = docElem.clientWidth,
+            load = true,
+            style,
+            content;
 
-        if (isFunction(callback)) {
-            if (isString(breakpoints)) {
-                // If breakpoints is a string, it's a layout preset.
-                limits = layoutBreakpoints[breakpoints];
-                limits.layout = breakpoints;
-            } else {
-                // Otherwise, we expect a min and max.
-                limits = breakpoints;
+        if (isString(layout) && isFunction(callback)) {
+
+            // Look in HTML content property for layout.
+            content = getStyle(docElem, 'content');
+
+            if (contains(' ' + layout + ' ', ' ' + content + ' ')) {
+                callback({ width: width, layout: content });
             }
 
-            max = limits.max;
-            min = limits.min;
+        } else if (isObject(layout) && isFunction(callback)) {
+
+            min = layout.min;
+            max = layout.max;
 
             // If current client width is in range, execute callback.
             if ((max && width > max) || (min && width < min)) {
@@ -2451,33 +2522,21 @@
             }
 
             if (load) {
-                limits.width = width;
-                callback(limits);
+                callback({ width: width, min: min, max: max });
             }
 
-        } else if (breakpoints) {
-
-            // Reset layout breakpoints.
-            layoutBreakpoints = breakpoints;
-
-            // If callback is set to true, indicates event binding.
-            if (callback) {
-                // Bind respond event.
-                // TODO: Add support for unsubscribe.
-                bind(window, "resize", throttle(respondEvent, 100));
-
-                // Bind to orientation changes as well.
-                // http://stackoverflow.com/questions/5284878/how-do-i-correctly-detect-orientation-change-using-javascript-and-phonegap-in-io
-                window.onorientationchange = respondEvent;
-
-                // Trigger event now.
-                respondEvent();
-            }
         } else {
-            // Return current layout (or undefined).
-            return currentLayout;
+            respondEvent();
         }
     }
+
+    // Bind respond event.
+    // TODO: Add support for unsubscribe.
+    bind(window, "resize", throttle(respondEvent, 100));
+
+    // Bind to orientation changes as well.
+    // http://stackoverflow.com/questions/5284878/how-do-i-correctly-detect-orientation-change-using-javascript-and-phonegap-in-io
+    window.onorientationchange = respondEvent;
 
     global.respond = respond;
 

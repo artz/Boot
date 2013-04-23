@@ -27,35 +27,66 @@
 <h2 id="qunit-userAgent"></h2>
 <ol id="qunit-tests"></ol>
 <div id="qunit-fixture">test markup</div>
-
+<style>
+/* Alternative initialization via media queries using content property. */
+/* Smartphone */
+@media only screen and (max-width: 599px) {
+  html {
+    content: "smartphone";
+  }
+}
+/* Tablet */
+@media only screen and (min-width: 600px) and (max-width: 1000px) {
+  html {
+    content: "tablet";
+  }
+}
+/* Desktop */
+@media only screen and (min-width: 1001px) {
+  html {
+    content: "desktop";
+  }
+}
+</style>
+<b class="respond">Experience: </b>
 <script>
-Boot.respond({ max: 599 }, function (width) {
-  console.log("Screen is less than 600px.", width);
+
+document.write("<p>HTML Content Property: " + getComputedStyle(document.documentElement).getPropertyValue('content') + "</p>");
+
+Boot.respond({ max: 599 }, function (results) {
+  console.log("Screen is less than 600px.", results);
 });
-Boot.respond({ min: 600, max: 1000 }, function (width) {
-  console.log("Screen is greater than 600 and less than 1001px.", width);
+Boot.respond({ min: 600, max: 1000 }, function (results) {
+  console.log("Screen is greater than 599 and less than 1001px.", results);
 });
-Boot.respond({ min: 1001 }, function (width) {
-  console.log("Screen is greater than 1000px.", width);
+Boot.respond({ min: 1001 }, function (results) {
+  console.log("Screen is greater than 1000px.", results);
 });
 
 // Subscribe before setting up breakpoints
 // to execute on init.
-Boot.subscribe("boot.respond", function (options) {
-  switch(options.layout) {
+Boot.subscribe("boot.respond", function (layout) {
+  switch(layout) {
     case "smartphone":
-      console.log("Smartphone: ", options);
+      console.log("Respond event: ", layout);
       break;
     case "tablet":
-      console.log("Tablet: ", options);
+      console.log("Respond event: ", layout);
       break;
     case "desktop":
-      console.log("Desktop: ", options);
+      console.log("Respond event: ", layout);
       break;
   }
 });
 
+// Force publish of respond event.
+Boot.respond();
+
 // Set up breakpoints.
+// This functionality has been deprecated
+// in place of CSS media queries and the
+// "content" property.
+/*
 Boot.respond({
   smartphone: {
       max: 519
@@ -68,7 +99,10 @@ Boot.respond({
       min: 960
   }
 }, true); // Enables publish of respond event.
+*/
 
+// Callback is based on the HTML element's
+// current content CSS property.
 Boot.respond("smartphone", function (width) {
   console.log("Smartphone callback.", width);
 });
@@ -79,7 +113,10 @@ Boot.respond("desktop", function (width) {
   console.log("Desktop callback.", width);
 });
 
-console.log(Boot.respond());
+// Respond to multiple layouts.
+Boot.respond("desktop tablet", function (width) {
+  console.log("Desktop or tablet callback.", width);
+});
 
 </script>
 </body>
