@@ -2506,7 +2506,9 @@
         if (isString(layout) && isFunction(callback)) {
 
             // Look in HTML content property for layout.
-            content = getStyle(docElem, 'content');
+            // Note: Firefox implements quotes around the property,
+            // so we strip them if they are present.
+            content = getStyle(docElem, 'content').replace(/^"/, '').replace(/"$/, '');
 
             if (contains(' ' + layout + ' ', ' ' + content + ' ')) {
                 callback({ width: width, layout: content });
