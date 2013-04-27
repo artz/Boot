@@ -404,6 +404,10 @@
         }
     }
 
+    function getLayout() {
+        return getStyle(docElem, 'content').replace(/^"/, '').replace(/"$/, '');
+    }
+
     function respond(layout, callback) {
 
         var max,
@@ -418,7 +422,7 @@
             // Look in HTML content property for layout.
             // Note: Firefox implements quotes around the property,
             // so we strip them if they are present.
-            content = getStyle(docElem, 'content').replace(/^"/, '').replace(/"$/, '');
+            content = getLayout();
 
             if (contains(' ' + layout + ' ', ' ' + content + ' ')) {
                 callback({ width: width, layout: content });
@@ -438,8 +442,11 @@
                 callback({ width: width, min: min, max: max });
             }
 
+        } else if (isFunction(layout)) {
+            layout(getLayout());
         } else {
             respondEvent();
+            return getLayout();
         }
     }
 
