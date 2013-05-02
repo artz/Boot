@@ -2486,16 +2486,16 @@
 */
     var currentLayout;
 
+    function getLayout() {
+      return getStyle(docElem, 'font-family').replace(/^"/, '').replace(/"$/, '');
+    }
+
     function respondEvent() {
-        var layout = getStyle(docElem, 'content');
+        var layout = getLayout();
         if (layout !== currentLayout) {
             currentLayout = layout;
             publish(eventNamespace + 'respond', layout);
         }
-    }
-
-    function getLayout() {
-        return getStyle(docElem, 'content').replace(/^"/, '').replace(/"$/, '');
     }
 
     function respond(layout, callback) {

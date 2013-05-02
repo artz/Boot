@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Boot.respond Demo</title>
+    <style>
+      /* For help on setting responsive design breakpoints:
+          http://www.metaltoad.com/blog/simple-device-diagram-responsive-design-planning
+      */
+      /* Set the default layout via the html "content" CSS property. */
+      html {
+        font-family: desktop;
+      }
+
+      body {
+        width: 960px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+      .content {
+        float: left;
+        width: 620px;
+      }
+      .sidebar {
+        float: right;
+        width: 300px;
+        height: 600px;
+        background-color: #ccc;
+      }
+
+      @media only screen
+      and (min-width: 520px)
+      and (max-width: 959px) {
+
+        /* Override "content" property. */
+        html {
+          font-family: tablet;
+        }
+
+        body {
+          position: relative;
+          width: auto;
+          max-width: 959px;
+        }
+        .content {
+          float: left;
+          width: auto;
+          margin-right: 320px;
+        }
+        .sidebar {
+          float: none;
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 300px;
+          height: 600px;
+          background-color: #ccc;
+        }
+      }
+
+      @media only screen
+      and (max-width: 519px) {
+
+        /* Override "font-family" property. */
+        html {
+          font-family: smartphone;
+        }
+
+        body {
+          width: auto;
+          max-width: 519px;
+        }
+        .content {
+          float: none;
+          width: auto;
+        }
+        .sidebar {
+          float: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Include Boot.respond JS file at the top of the <body> (after CSS) -->
+    <script src="boot.respond.js"></script>
+    <p>Initial layout:
+    <script>
+      document.write(Boot.respond());
+    </script>
+    </p>
+    <div class="content">
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed fringilla nunc vitae nisi ultrices vitae venenatis tellus hendrerit. Nulla nec lacus nibh. Vestibulum in erat quam, a aliquet quam. Aenean vel lorem nec arcu pretium pellentesque at a eros. Proin felis diam, scelerisque eget cursus ut, porttitor ac nisi. Sed sed enim nulla. Cras erat erat, bibendum accumsan varius eu, rutrum a sem. Maecenas felis dui, dictum in rutrum ut, mollis sagittis diam. Nulla facilisi.</p>
+
+<p>Cras sed lacus massa, at ornare nibh. Nam justo nisi, commodo at tempus vel, euismod eu lorem. Proin eleifend mollis ultrices. Praesent accumsan tincidunt magna, pretium consectetur lorem hendrerit bibendum. Donec faucibus, quam id vehicula laoreet, nulla leo placerat sem, ac pellentesque dolor lectus id mauris. Pellentesque nec velit a tellus tristique consectetur ut ac odio. Suspendisse potenti. Quisque ut sapien ut eros dictum sollicitudin a id lorem. Vestibulum vel convallis massa. Sed eget erat elit, nec lacinia nunc. Praesent ornare, sem id gravida pretium, diam leo blandit lectus, non dictum ipsum eros et lacus. Proin consectetur urna sed est tempus at lacinia diam fermentum. Morbi fringilla dictum justo id bibendum.</p>
+
+<p>Etiam elementum accumsan ligula, ut sollicitudin arcu imperdiet ut. Vestibulum risus eros, rutrum vitae tempus non, tempor eu erat. Vestibulum ipsum odio, vestibulum eu tempor et, feugiat tempor nisi. Donec et odio dolor, eu porta nulla. Pellentesque convallis accumsan eleifend. Quisque blandit ornare nisl at rutrum. Suspendisse magna est, venenatis nec vestibulum sit amet, tristique a leo. Nam tincidunt accumsan justo, id viverra urna vestibulum nec. Phasellus vulputate dui non quam luctus ultrices. Morbi a aliquet odio. Praesent varius, neque sit amet euismod dignissim, augue urna faucibus ante, vitae lobortis arcu eros in arcu. Nulla interdum scelerisque felis, at molestie lorem vehicula et. Quisque turpis augue, mollis sit amet ultrices et, tempus ac turpis.</p>
+
+<p>Vivamus risus massa, sagittis et facilisis ac, gravida fringilla nunc. Ut fringilla quam vel purus consectetur et dictum libero interdum. Proin semper mattis diam, a sollicitudin mauris cursus dapibus. Morbi id magna id magna lobortis porta vel sit amet ligula. Aenean venenatis consequat est, nec mattis nibh condimentum eget. Donec pellentesque nulla ac metus volutpat sagittis. Etiam odio quam, tincidunt eget pretium convallis, suscipit in dolor. Suspendisse eget odio odio, non dictum tellus. Maecenas sem lectus, pellentesque vel ultricies nec, varius ut dui.</p>
+
+<p>In nisi erat, dapibus vel condimentum sit amet, accumsan vitae justo. Suspendisse lobortis lorem ligula. Phasellus interdum venenatis fringilla. Sed sed dignissim est. Morbi a nunc dolor. Sed sit amet mi nunc, mattis commodo ipsum. Maecenas gravida aliquam velit eu fermentum. Pellentesque tincidunt ante id urna dignissim fermentum eget a eros. </p>
+    </div>
+    <div class="sidebar">
+
+    </div>
+<script>
+// Subscribe before setting up breakpoints
+// to execute on init.
+Boot.subscribe("boot.respond", function (layout) {
+  switch(layout) {
+    case "smartphone":
+      console.log("Respond event: ", layout);
+      break;
+    case "tablet":
+      console.log("Respond event: ", layout);
+      break;
+    case "desktop":
+      console.log("Respond event: ", layout);
+      break;
+  }
+});
+// Force publish of respond event (triggers subscribers).
+Boot.respond();
+
+// Callback is based on the HTML element's
+// current content CSS property.
+Boot.respond("smartphone", function (results) {
+  console.log("Smartphone callback.", results);
+});
+Boot.respond("tablet", function (results) {
+  console.log("Tablet callback.", results);
+});
+Boot.respond("desktop", function (results) {
+  console.log("Desktop callback.", results);
+});
+
+// Callback gets the current layout.
+Boot.respond(function (layout) {
+  console.log("Callback layout: " + layout);
+});
+
+// Return current layout.
+console.log("Layout: " + Boot.respond());
+
+// Respond to multiple layouts.
+Boot.respond("desktop tablet", function (results) {
+  console.log("Desktop or tablet callback.", results);
+});
+
+// Custom breakpoints.
+Boot.respond({ max: 599 }, function (results) {
+  console.log("Screen is less than 600px.", results);
+});
+Boot.respond({ min: 600, max: 1000 }, function (results) {
+  console.log("Screen is greater than 599 and less than 1001px.", results);
+});
+Boot.respond({ min: 1001 }, function (results) {
+  console.log("Screen is greater than 1000px.", results);
+});
+</script>
+</body>
+</html>
