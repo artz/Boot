@@ -2490,9 +2490,9 @@
       return getStyle(docElem, 'font-family').replace(/^"/, '').replace(/"$/, '');
     }
 
-    function respondEvent() {
+    function respondEvent(force) {
         var layout = getLayout();
-        if (layout !== currentLayout) {
+        if (layout !== currentLayout || force) {
             currentLayout = layout;
             publish(eventNamespace + 'respond', layout);
         }
@@ -2532,10 +2532,10 @@
                 callback({ width: width, min: min, max: max });
             }
 
-        } else if (isFunction(layout)) {
-            layout(getLayout());
         } else {
-            respondEvent();
+            if (layout) {
+              respondEvent(true);
+            }
             return getLayout();
         }
     }

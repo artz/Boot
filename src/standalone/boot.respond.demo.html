@@ -84,9 +84,10 @@
     <script src="boot.respond.js"></script>
     <p>Initial layout:
     <script>
-      document.write(Boot.respond());
+      document.write('<i>' + Boot.respond() + '</i>');
     </script>
     </p>
+    <p>Current layout: <i id="current-layout"></i></p>
     <div class="content">
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed fringilla nunc vitae nisi ultrices vitae venenatis tellus hendrerit. Nulla nec lacus nibh. Vestibulum in erat quam, a aliquet quam. Aenean vel lorem nec arcu pretium pellentesque at a eros. Proin felis diam, scelerisque eget cursus ut, porttitor ac nisi. Sed sed enim nulla. Cras erat erat, bibendum accumsan varius eu, rutrum a sem. Maecenas felis dui, dictum in rutrum ut, mollis sagittis diam. Nulla facilisi.</p>
 
@@ -104,7 +105,12 @@
 <script>
 // Subscribe before setting up breakpoints
 // to execute on init.
+var currentLayout = document.getElementById('current-layout');
+
 Boot.subscribe("boot.respond", function (layout) {
+
+  currentLayout.innerHTML = layout;
+
   switch(layout) {
     case "smartphone":
       console.log("Respond event: ", layout);
@@ -118,7 +124,7 @@ Boot.subscribe("boot.respond", function (layout) {
   }
 });
 // Force publish of respond event (triggers subscribers).
-Boot.respond();
+Boot.respond(true);
 
 // Callback is based on the HTML element's
 // current content CSS property.
