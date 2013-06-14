@@ -6,14 +6,30 @@
 div { border: 3px solid red }
 iframe { border: 3px solid black }
 </style>
-<script src="http://browsertest.web.aol.com/ads/adsWrapper030612/adsWrapperFileless.js"></script>
+<!--<script src="http://o.aolcdn.com/ads/adsWrapper.js"></script>-->
+<!--<script src="http://browsertest.web.aol.com/ads/adsWrapper030612/adsWrapperFileless.js"></script>-->
+<script src="http://browsertest.web.aol.com/ads/adsWrapper061813/adsWrapperFileless.js"></script>
 </head>
 <body>
-<div id="ad1"></div>
+<div id="ad"></div>
 <script src="boot.fif.js"></script>
 <script>
-// Expandable Wallpaper
-Boot.fif( adsGetURL('2274078', '948', '240'), "948", "240", "ad1" );
+(function () {
+	var get = (function () {
+			var params = location.search.replace(/^\?/, '').split('&'),
+			object = {};
+			for (var i in params) {
+				var param = params[i].split('=');
+				object[param[0]] = param[1];
+			}
+			return object;
+		}()),
+	magicNumber = get.mn || '2800240',
+	width = get.width || '728',
+	height = get.height || '90',
+
+	Boot.fif(htmlAdWHF(magicNumber, width, height), width, height, 'ad');
+}());
 </script>
 </body>
 </html>
