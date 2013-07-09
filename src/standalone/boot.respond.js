@@ -30,19 +30,19 @@
         // Smartphone
         @media only screen and (max-width: 599px) {
           html {
-            content: "smartphone";
+            font-family: "smartphone";
           }
         }
         // Tablet
         @media only screen and (min-width: 600px) and (max-width: 1000px) {
           html {
-            content: "tablet";
+            font-family: "tablet";
           }
         }
         // Desktop
         @media only screen and (min-width: 1001px) {
           html {
-            content: "desktop";
+            font-family: "desktop";
           }
         }
 
@@ -397,6 +397,7 @@
         currentLayout;
 
     function getLayout() {
+      // Look at root HTML node's font-family property for layout.
       return getStyle(docElem, 'font-family').replace(/^"/, '').replace(/"$/, '');
     }
 
@@ -415,17 +416,16 @@
             width = docElem.clientWidth,
             load = true,
             style,
-            content;
+            cssLayout;
 
         if (isString(layout) && isFunction(callback)) {
 
-            // Look in HTML content property for layout.
             // Note: Firefox implements quotes around the property,
             // so we strip them if they are present.
-            content = getLayout();
+            cssLayout = getLayout();
 
-            if (contains(' ' + layout + ' ', ' ' + content + ' ')) {
-                callback({ width: width, layout: content });
+            if (contains(' ' + layout + ' ', ' ' + cssLayout + ' ')) {
+                callback({ width: width, layout: cssLayout });
             }
 
         } else if (isObject(layout) && isFunction(callback)) {

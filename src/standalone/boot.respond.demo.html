@@ -6,7 +6,7 @@
       /* For help on setting responsive design breakpoints:
           http://www.metaltoad.com/blog/simple-device-diagram-responsive-design-planning
       */
-      /* Set the default layout via the html "content" CSS property. */
+      /* Set the default layout via the html "font-family" CSS property. */
       html {
         font-family: desktop;
       }
@@ -31,7 +31,7 @@
       and (min-width: 520px)
       and (max-width: 959px) {
 
-        /* Override "content" property. */
+        /* Override "font-family" property. */
         html {
           font-family: tablet;
         }
@@ -127,7 +127,7 @@ Boot.subscribe("boot.respond", function (layout) {
 Boot.respond(true);
 
 // Callback is based on the HTML element's
-// current content CSS property.
+// current font-family CSS property.
 Boot.respond("smartphone", function (results) {
   console.log("Smartphone callback.", results);
 });
