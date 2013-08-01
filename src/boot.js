@@ -2428,19 +2428,19 @@
         // Smartphone
         @media only screen and (max-width: 599px) {
           html {
-            content: "smartphone";
+            font-family: "smartphone";
           }
         }
         // Tablet
         @media only screen and (min-width: 600px) and (max-width: 1000px) {
           html {
-            content: "tablet";
+            font-family: "tablet";
           }
         }
         // Desktop
         @media only screen and (min-width: 1001px) {
           html {
-            content: "desktop";
+            font-family: "desktop";
           }
         }
 
@@ -2505,17 +2505,17 @@
             width = docElem.clientWidth,
             load = true,
             style,
-            content;
+            htmlFontFamily;
 
         if (isString(layout) && isFunction(callback)) {
 
-            // Look in HTML content property for layout.
+            // Look at root HTML node's font-family property for layout.
             // Note: Firefox implements quotes around the property,
             // so we strip them if they are present.
-            content = getLayout();
+            htmlFontFamily = getLayout();
 
-            if (contains(' ' + layout + ' ', ' ' + content + ' ')) {
-                callback({ width: width, layout: content });
+            if (contains(' ' + layout + ' ', ' ' + htmlFontFamily + ' ')) {
+                callback({ width: width, layout: htmlFontFamily });
             }
 
         } else if (isObject(layout) && isFunction(callback)) {
@@ -2532,6 +2532,8 @@
                 callback({ width: width, min: min, max: max });
             }
 
+        } else if (isFunction(layout)) {
+            layout(getLayout());
         } else {
             if (layout) {
               respondEvent(true);
@@ -2542,11 +2544,11 @@
 
     // Bind respond event.
     // TODO: Add support for unsubscribe.
-    bind(window, "resize", throttle(respondEvent, 100));
+    bind(window, 'resize', throttle(respondEvent, 100));
 
     // Bind to orientation changes as well.
     // http://stackoverflow.com/questions/5284878/how-do-i-correctly-detect-orientation-change-using-javascript-and-phonegap-in-io
-    window.onorientationchange = respondEvent;
+    bind(window, 'orientationchange', respondEvent);
 
     global.respond = respond;
 
