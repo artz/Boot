@@ -88,7 +88,7 @@
 */
 (function (namespace, window, undefined) {
 
-    "use strict";
+    'use strict';
 
     // Initialize the library's namespace.
     // This is controlled via arguments injected
@@ -98,7 +98,7 @@
     }
 
     var global = window[namespace],
-        eventNamespace = namespace.toLowerCase() + ".";
+        eventNamespace = namespace.toLowerCase() + '.';
 
 
 /*
@@ -397,6 +397,7 @@
         currentLayout;
 
     function getLayout() {
+      // Look at root HTML node's font-family property for layout.
       return getStyle(docElem, 'font-family').replace(/^"/, '').replace(/"$/, '');
     }
 
