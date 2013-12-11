@@ -172,7 +172,7 @@
     }
 
     function isArray(obj) {
-        return obj && contains(obj.constructor.toString(), "rray");
+        return obj && obj instanceof Array;
     }
     global.isArray = isArray;
 
