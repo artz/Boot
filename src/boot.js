@@ -561,15 +561,18 @@
         pollDelay = pollDelay || 1;
 
         timers[name] = setInterval(function () {
-
+            var result = check();
             time = now() - start;
 
             if (timeout && time > timeout) {
                 isTimeout = true;
             }
 
-            if (check() || isTimeout) {
+            if (result) {
                 callback.call(window, isTimeout, time);
+            }
+
+            if (result || isTimeout){
                 clearInterval(timers[name]);
             }
 
