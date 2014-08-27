@@ -28,6 +28,7 @@
 
         // Localize global objects and functions for better compression.
         document = window.document,
+        version = "0.3",
         JSON = window.JSON,
         setTimeout = window.setTimeout,
 
@@ -126,6 +127,12 @@
 
     global.log = log;
 
+/*
+    Function: Boot.version
+
+    The current version of boot being used
+*/
+    global.version = version;
 
 /*
     Function: Boot.contains
